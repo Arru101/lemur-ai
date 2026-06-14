@@ -852,9 +852,9 @@ export default function Home() {
                   model === "smart-router" ? t.smartRouter :
                   model === "gemini-flash" ? "Gemini 2.5 Flash" :
                   model === "deepseek-r1" ? "DeepSeek R1" :
-                  model === "qwen-coder" ? "Qwen 2.5 Coder 32B" :
-                  model === "llama-3" ? "Llama 3 8B" :
-                  model === "mistral-7b" ? "Mistral 7B" : model
+                  model === "qwen-coder" ? "Qwen 3 Coder" :
+                  model === "llama-3" ? "Llama 3.3 70B" :
+                  model === "mistral-7b" ? "Gemma 4 31B" : model
                 }</span>
                 
                 <ChevronDown className="w-3.5 h-3.5 text-neutral-500" />
@@ -906,7 +906,7 @@ export default function Home() {
                   >
                     <Code2 className="w-4 h-4 mt-0.5 text-emerald-400 flex-shrink-0" />
                     <div>
-                      <p className="text-xs font-bold">Qwen 2.5 Coder 32B</p>
+                      <p className="text-xs font-bold">Qwen 3 Coder</p>
                       <p className="text-[10px] text-neutral-500 leading-tight mt-0.5">Coding expert & debugging</p>
                     </div>
                   </button>
@@ -918,8 +918,8 @@ export default function Home() {
                   >
                     <Cpu className="w-4 h-4 mt-0.5 text-orange-400 flex-shrink-0" />
                     <div>
-                      <p className="text-xs font-bold">Llama 3 8B</p>
-                      <p className="text-[10px] text-neutral-500 leading-tight mt-0.5">High speed general chat</p>
+                      <p className="text-xs font-bold">Llama 3.3 70B</p>
+                      <p className="text-[10px] text-neutral-500 leading-tight mt-0.5">High intelligence reasoning</p>
                     </div>
                   </button>
 
@@ -930,8 +930,8 @@ export default function Home() {
                   >
                     <Compass className="w-4 h-4 mt-0.5 text-sky-400 flex-shrink-0" />
                     <div>
-                      <p className="text-xs font-bold">Mistral 7B</p>
-                      <p className="text-[10px] text-neutral-500 leading-tight mt-0.5">Creative prose & instruction</p>
+                      <p className="text-xs font-bold">Gemma 4 31B</p>
+                      <p className="text-[10px] text-neutral-500 leading-tight mt-0.5">Google open model chat</p>
                     </div>
                   </button>
                 </div>

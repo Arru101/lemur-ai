@@ -60,7 +60,7 @@ const MODELS: Record<string, ModelInfo> = {
     name: "Gemini 2.5 Flash",
     provider: "google",
     id: "gemini-2.5-flash",
-    openrouterId: "google/gemini-2.5-flash:free",
+    openrouterId: "openrouter/free",
   },
   "deepseek-r1": {
     name: "DeepSeek R1",
@@ -69,22 +69,22 @@ const MODELS: Record<string, ModelInfo> = {
     openrouterId: "deepseek/deepseek-r1:free",
   },
   "qwen-coder": {
-    name: "Qwen 2.5 Coder 32B",
+    name: "Qwen 3 Coder",
     provider: "openrouter",
-    id: "qwen/qwen-2.5-coder-32b-instruct:free",
-    openrouterId: "qwen/qwen-2.5-coder-32b-instruct:free",
+    id: "qwen/qwen3-coder:free",
+    openrouterId: "qwen/qwen3-coder:free",
   },
   "llama-3": {
-    name: "Llama 3 8B",
+    name: "Llama 3.3 70B",
     provider: "openrouter",
-    id: "meta-llama/llama-3-8b-instruct:free",
-    openrouterId: "meta-llama/llama-3-8b-instruct:free",
+    id: "meta-llama/llama-3.3-70b-instruct:free",
+    openrouterId: "meta-llama/llama-3.3-70b-instruct:free",
   },
   "mistral-7b": {
-    name: "Mistral 7B",
+    name: "Gemma 4 31B",
     provider: "openrouter",
-    id: "mistralai/mistral-7b-instruct:free",
-    openrouterId: "mistralai/mistral-7b-instruct:free",
+    id: "google/gemma-4-31b-it:free",
+    openrouterId: "google/gemma-4-31b-it:free",
   },
 };
 
@@ -168,65 +168,98 @@ Use professional formatting with clear markdown headings, lists, and tables wher
 If code is requested, write complete, production-ready code with concise inline explanations.
 IMPORTANT: You MUST respond and converse in ${targetLanguage}. Keep all your answers in ${targetLanguage} unless the user explicitly requests otherwise.`;
 
-    // 4. Handle Direct Google Gemini API call if configured and model is gemini-flash
+    // 4. Handle Providers and Fallbacks based on configured keys
     const geminiKey = process.env.GEMINI_API_KEY;
     const openrouterKey = process.env.OPENROUTER_API_KEY;
 
-    if (activeModelKey === "gemini-flash" && geminiKey) {
+    // If only GEMINI_API_KEY is available, force routing to Direct Gemini.
+    // If only OPENROUTER_API_KEY is available, force routing to OpenRouter.
+    let provider = activeModel.provider;
+    if (geminiKey && !openrouterKey) {
+      provider = "google";
+    } else if (!geminiKey && openrouterKey) {
+      provider = "openrouter";
+    }
+
+    let lastError: any = null;
+
+    // Attempt direct Google Gemini call if applicable
+    if (provider === "google" && geminiKey) {
       try {
         const directGeminiResponse = await callDirectGemini(messages, systemPrompt, file, geminiKey);
         return NextResponse.json({
           text: directGeminiResponse,
-          model: activeModel.name,
+          model: activeModel.name.includes("Gemini") ? activeModel.name : `Gemini 2.5 Flash (via ${activeModel.name})`,
           routedModelKey: activeModelKey,
           isSmartRouted
         });
-      } catch (err) {
-        console.error("Direct Gemini API error, falling back to OpenRouter: ", err);
-        // Fall back to OpenRouter if direct call fails
+      } catch (err: any) {
+        console.error("Direct Gemini API error:", err);
+        lastError = err;
+        // Fall through to OpenRouter if openrouterKey is also configured
       }
     }
 
-    // 5. OpenRouter Call
+    // Attempt OpenRouter call if applicable
     if (openrouterKey) {
-      try {
-        const openrouterResponse = await callOpenRouter(
-          messages,
-          systemPrompt,
-          activeModel.openrouterId || "google/gemini-2.5-flash:free",
-          file,
-          openrouterKey
-        );
-        return NextResponse.json({
-          text: openrouterResponse,
-          model: activeModel.name,
-          routedModelKey: activeModelKey,
-          isSmartRouted
-        });
-      } catch (err) {
-        console.error("OpenRouter API error: ", err);
-        // Fallback inside OpenRouter to a secondary free model
-        if (activeModelKey !== "gemini-flash") {
-          try {
-            console.log("Attempting fallback to Gemini Flash via OpenRouter...");
-            const fallbackResponse = await callOpenRouter(
-              messages,
-              systemPrompt,
-              "google/gemini-2.5-flash:free",
-              file,
-              openrouterKey
-            );
-            return NextResponse.json({
-              text: fallbackResponse,
-              model: `${MODELS["gemini-flash"].name} (Fallback)`,
-              routedModelKey: "gemini-flash",
-              isSmartRouted: false,
-              warning: "Original model was rate-limited or timed out. Switched to fallback."
-            });
-          } catch (fallbackErr) {
-            console.error("Fallback model also failed: ", fallbackErr);
+      // Determine target model and fallback sequence
+      const primaryModelId = activeModel.openrouterId || "openrouter/free";
+      
+      const fallbackModels = [
+        primaryModelId,
+        "openrouter/free",
+        "meta-llama/llama-3.3-70b-instruct:free",
+        "meta-llama/llama-3.2-3b-instruct:free"
+      ];
+      
+      const uniqueModels = Array.from(new Set(fallbackModels));
+      
+      for (let i = 0; i < uniqueModels.length; i++) {
+        const currentModelId = uniqueModels[i];
+        try {
+          console.log(`Attempting OpenRouter call with model: ${currentModelId}`);
+          const openrouterResponse = await callOpenRouter(
+            messages,
+            systemPrompt,
+            currentModelId,
+            file,
+            openrouterKey
+          );
+          
+          let responseModelName = activeModel.name;
+          if (i > 0) {
+            responseModelName = `${activeModel.name} (Fallback: ${currentModelId.split('/').pop()?.replace(':free', '')})`;
           }
+          
+          return NextResponse.json({
+            text: openrouterResponse,
+            model: responseModelName,
+            routedModelKey: activeModelKey,
+            isSmartRouted,
+            warning: i > 0 ? "Selected model was unavailable. Switched to fallback." : undefined
+          });
+        } catch (err: any) {
+          console.warn(`OpenRouter call failed for model ${currentModelId}:`, err.message || err);
+          lastError = err;
         }
+      }
+    }
+
+    // Ultimate Direct Gemini Fallback (if OpenRouter fails but Gemini key is available)
+    if (geminiKey && openrouterKey) {
+      try {
+        console.log("All OpenRouter models failed. Attempting ultimate fallback to Direct Gemini...");
+        const directGeminiResponse = await callDirectGemini(messages, systemPrompt, file, geminiKey);
+        return NextResponse.json({
+          text: directGeminiResponse,
+          model: "Gemini 2.5 Flash (Ultimate Fallback)",
+          routedModelKey: "gemini-flash",
+          isSmartRouted: false,
+          warning: "OpenRouter services were unavailable. Switched to direct Gemini backup."
+        });
+      } catch (geminiErr: any) {
+        console.error("Ultimate Direct Gemini fallback also failed:", geminiErr);
+        lastError = geminiErr;
       }
     }
 
@@ -241,7 +274,7 @@ IMPORTANT: You MUST respond and converse in ${targetLanguage}. Keep all your ans
     }
 
     return NextResponse.json(
-      { error: "Failed to generate a response from the AI models. Please try again." },
+      { error: `Failed to generate a response from the AI models. Details: ${lastError?.message || lastError}` },
       { status: 502 }
     );
   } catch (error: any) {
