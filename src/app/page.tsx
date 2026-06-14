@@ -1032,7 +1032,7 @@ export default function Home() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl mt-4">
                 <div 
                   onClick={(e) => handleSubmit(e, t.suggestDescCoding)}
-                  className="glass-effect bg-white/5 dark:bg-neutral-900/20 border-glass-border hover:border-primary/40 p-4 rounded-2xl cursor-pointer text-left hover:scale-[1.01] transition-all duration-200 group glow-primary"
+                  className="glass-effect bg-white/5 dark:bg-neutral-900/20 border-glass-border hover:border-primary/40 hover:-translate-y-1 hover:scale-[1.01] p-4 rounded-2xl cursor-pointer text-left transition-all duration-300 ease-out group hover:glow-primary active:scale-[0.98]"
                 >
                   <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors flex items-center gap-2">
                     <Code2 className="w-4.5 h-4.5 text-primary flex-shrink-0" />
@@ -1045,7 +1045,7 @@ export default function Home() {
 
                 <div 
                   onClick={(e) => handleSubmit(e, t.suggestDescMath)}
-                  className="glass-effect bg-white/5 dark:bg-neutral-900/20 border-glass-border hover:border-secondary/40 p-4 rounded-2xl cursor-pointer text-left hover:scale-[1.01] transition-all duration-200 group glow-secondary"
+                  className="glass-effect bg-white/5 dark:bg-neutral-900/20 border-glass-border hover:border-secondary/40 hover:-translate-y-1 hover:scale-[1.01] p-4 rounded-2xl cursor-pointer text-left transition-all duration-300 ease-out group hover:glow-secondary active:scale-[0.98]"
                 >
                   <h3 className="text-sm font-bold text-foreground group-hover:text-secondary transition-colors flex items-center gap-2">
                     <Calculator className="w-4.5 h-4.5 text-secondary flex-shrink-0" />
@@ -1058,7 +1058,7 @@ export default function Home() {
 
                 <div 
                   onClick={(e) => handleSubmit(e, t.suggestDescCreative)}
-                  className="glass-effect bg-white/5 dark:bg-neutral-900/20 border-glass-border hover:border-accent/40 p-4 rounded-2xl cursor-pointer text-left hover:scale-[1.01] transition-all duration-200 group"
+                  className="glass-effect bg-white/5 dark:bg-neutral-900/20 border-glass-border hover:border-accent/40 hover:-translate-y-1 hover:scale-[1.01] p-4 rounded-2xl cursor-pointer text-left transition-all duration-300 ease-out group hover:shadow-[0_0_40px_-5px_rgba(244,63,94,0.3)] active:scale-[0.98]"
                 >
                   <h3 className="text-sm font-bold text-foreground group-hover:text-pink-500 transition-colors flex items-center gap-2">
                     <PenTool className="w-4.5 h-4.5 text-accent flex-shrink-0" />
@@ -1071,7 +1071,7 @@ export default function Home() {
 
                 <div 
                   onClick={(e) => handleSubmit(e, t.suggestDescExplain)}
-                  className="glass-effect bg-white/5 dark:bg-neutral-900/20 border-glass-border hover:border-indigo-400/40 p-4 rounded-2xl cursor-pointer text-left hover:scale-[1.01] transition-all duration-200 group"
+                  className="glass-effect bg-white/5 dark:bg-neutral-900/20 border-glass-border hover:border-indigo-400/40 hover:-translate-y-1 hover:scale-[1.01] p-4 rounded-2xl cursor-pointer text-left transition-all duration-300 ease-out group hover:shadow-[0_0_40px_-5px_rgba(99,102,241,0.3)] active:scale-[0.98]"
                 >
                   <h3 className="text-sm font-bold text-foreground group-hover:text-indigo-400 transition-colors flex items-center gap-2">
                     <BookOpen className="w-4.5 h-4.5 text-indigo-400 flex-shrink-0" />

@@ -74,7 +74,7 @@ export default function ChatMessage({
   };
 
   return (
-    <div className={`flex w-full gap-3 sm:gap-4 py-4 px-3 sm:py-6 sm:px-6 rounded-2xl transition-all duration-300 ${
+    <div className={`group flex w-full gap-3 sm:gap-4 py-4 px-3 sm:py-6 sm:px-6 rounded-2xl transition-all duration-300 ${
       isUser 
         ? "justify-end" 
         : "glass-effect bg-white/5 dark:bg-neutral-900/40 border-glass-border shadow-md"
@@ -212,7 +212,7 @@ export default function ChatMessage({
         </div>
 
         {/* Message Action Bar */}
-        <div className="flex items-center gap-3 mt-3 select-none text-neutral-500 dark:text-neutral-400">
+        <div className="flex items-center gap-3 mt-3 select-none text-neutral-500 dark:text-neutral-400 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
           {/* User message Edit Controls */}
           {isUser && !isEditing && onEdit && (
             <button
