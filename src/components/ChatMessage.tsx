@@ -24,6 +24,7 @@ interface ChatMessageProps {
   isSpeaking: boolean;
   onToggleSpeech: () => void;
   isLast: boolean;
+  onSelectQuestion?: (question: string) => void;
 }
 
 export default function ChatMessage({
@@ -35,10 +36,35 @@ export default function ChatMessage({
   isSpeaking,
   onToggleSpeech,
   isLast,
+  onSelectQuestion,
 }: ChatMessageProps) {
   const isUser = message.role === "user";
   const [copiedText, setCopiedText] = useState(false);
   const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null);
+
+  // Helper to parse related questions from content
+  const parseContentAndQuestions = (rawContent: string) => {
+    const regex = /<related_questions>([\s\S]*?)<\/related_questions>/i;
+    const match = rawContent.match(regex);
+    
+    if (match) {
+      const questionsText = match[1];
+      const cleanedContent = rawContent.replace(regex, "").trim();
+      
+      // Extract lines starting with '-' or digit list
+      const questions = questionsText
+        .split("\n")
+        .map(q => q.trim().replace(/^[-*\d.]+\s*/, ""))
+        .filter(q => q.length > 0)
+        .slice(0, 3);
+        
+      return { content: cleanedContent, questions };
+    }
+    
+    return { content: rawContent, questions: [] };
+  };
+
+  const { content: displayContent, questions } = parseContentAndQuestions(message.content);
 
   // Inline user edit states
   const [isEditing, setIsEditing] = useState(false);
@@ -206,7 +232,7 @@ export default function ChatMessage({
                 },
               }}
             >
-              {message.content}
+              {displayContent}
             </ReactMarkdown>
           )}
         </div>
@@ -295,6 +321,24 @@ export default function ChatMessage({
             </button>
           )}
         </div>
+
+        {/* Related Questions block */}
+        {!isUser && questions.length > 0 && onSelectQuestion && (
+          <div className="flex flex-col gap-2 mt-4 w-full select-none animate-slide-up">
+            <span className="text-[10px] uppercase tracking-wider text-neutral-500 font-bold">Related Questions</span>
+            <div className="flex flex-wrap gap-2">
+              {questions.map((q, qIdx) => (
+                <button
+                  key={qIdx}
+                  onClick={() => onSelectQuestion(q)}
+                  className="text-xs text-left px-3.5 py-2 rounded-xl bg-white/5 dark:bg-neutral-900/40 border border-glass-border hover:border-primary/40 hover:bg-primary/5 text-foreground/90 hover:text-primary transition-all duration-200 active:scale-95 shadow-sm"
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* User Avatar */}

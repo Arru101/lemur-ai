@@ -533,8 +533,10 @@ export default function Home() {
   };
 
   // --- Main Submit Handler ---
-  const handleSubmit = async (e: React.FormEvent, customPrompt?: string) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent | null, customPrompt?: string) => {
+    if (e && typeof e.preventDefault === "function") {
+      e.preventDefault();
+    }
     const promptToSend = customPrompt || input;
     if (!promptToSend.trim() && !attachedFile) return;
 
@@ -1094,6 +1096,7 @@ export default function Home() {
                   onRegenerate={idx === messages.length - 1 ? handleRegenerate : undefined}
                   onFeedback={(type) => handleFeedback(idx, type)}
                   onEdit={(newContent) => handleEditUserMessage(idx, newContent)}
+                  onSelectQuestion={(q) => handleSubmit(null, q)}
                   isSpeaking={speakingIdx === idx}
                   onToggleSpeech={() => handleToggleSpeech(idx, msg.content)}
                   isLast={idx === messages.length - 1}

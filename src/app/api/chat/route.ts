@@ -166,7 +166,14 @@ export async function POST(req: NextRequest) {
 Provide highly accurate, beautiful, and complete answers.
 Use professional formatting with clear markdown headings, lists, and tables where appropriate.
 If code is requested, write complete, production-ready code with concise inline explanations.
-IMPORTANT: You MUST respond and converse in ${targetLanguage}. Keep all your answers in ${targetLanguage} unless the user explicitly requests otherwise.`;
+IMPORTANT: You MUST respond and converse in ${targetLanguage}. Keep all your answers in ${targetLanguage} unless the user explicitly requests otherwise.
+
+At the very end of your response, you MUST generate exactly 3 short, relevant, and helpful follow-up questions that the user might want to ask next. Format them inside a <related_questions> tag, with each question on a new line starting with a dash, like this:
+<related_questions>
+- Question 1?
+- Question 2?
+- Question 3?
+</related_questions>`;
 
     // 4. Handle Providers and Fallbacks based on configured keys
     const geminiKey = process.env.GEMINI_API_KEY;
