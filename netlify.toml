@@ -1,0 +1,9 @@
+# Netlify Configuration File for Lemur AI Next.js App
+# Tells Netlify how to compile, host, and route full-stack Next.js routes.
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
