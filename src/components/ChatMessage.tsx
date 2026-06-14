@@ -74,20 +74,20 @@ export default function ChatMessage({
   };
 
   return (
-    <div className={`flex w-full gap-4 py-6 px-4 md:px-6 rounded-2xl transition-all duration-300 ${
+    <div className={`flex w-full gap-3 sm:gap-4 py-4 px-3 sm:py-6 sm:px-6 rounded-2xl transition-all duration-300 ${
       isUser 
         ? "justify-end" 
         : "glass-effect bg-white/5 dark:bg-neutral-900/40 border-glass-border shadow-md"
     }`}>
       {/* Bot Icon / Avatar */}
       {!isUser && (
-        <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-primary to-secondary text-white shadow-lg glow-primary">
-          <Cpu className="w-5 h-5" />
+        <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-primary to-secondary text-white shadow-lg glow-primary">
+          <Cpu className="w-4 h-4 sm:w-5 sm:h-5" />
         </div>
       )}
 
       {/* Message Content Area */}
-      <div className={`flex flex-col max-w-[85%] md:max-w-[75%] gap-2 w-full ${isUser ? "items-end" : "items-start"}`}>
+      <div className={`flex flex-col max-w-[calc(100%-2.5rem)] sm:max-w-[85%] md:max-w-[75%] gap-2 w-full ${isUser ? "items-end" : "items-start"}`}>
         {/* Model metadata if assistant */}
         {!isUser && message.model && (
           <span className="flex items-center gap-1.5 text-xs text-secondary font-medium tracking-wide mb-1 select-none">
@@ -299,7 +299,7 @@ export default function ChatMessage({
 
       {/* User Avatar */}
       {isUser && (
-        <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-xl bg-neutral-200 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 font-bold shadow-md select-none border border-glass-border">
+        <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-neutral-200 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 font-bold shadow-md select-none border border-glass-border text-xs sm:text-sm">
           ME
         </div>
       )}

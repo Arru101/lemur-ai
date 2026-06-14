@@ -120,6 +120,64 @@ export default function Home() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // --- Lock Inspect / Developer Tools Options ---
+  useEffect(() => {
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "F12") {
+        e.preventDefault();
+        return false;
+      }
+      
+      const isCmdOrCtrl = e.ctrlKey || e.metaKey;
+      const isShift = e.shiftKey;
+      const isAlt = e.altKey;
+
+      if (
+        isCmdOrCtrl && 
+        (
+          (isShift && (e.key === "I" || e.key === "i" || e.key === "J" || e.key === "j" || e.key === "C" || e.key === "c")) || 
+          (e.key === "U" || e.key === "u") || 
+          (e.key === "S" || e.key === "s")
+        )
+      ) {
+        e.preventDefault();
+        return false;
+      }
+
+      if (isCmdOrCtrl && isAlt && (e.key === "I" || e.key === "i" || e.key === "J" || e.key === "j" || e.key === "C" || e.key === "c")) {
+        e.preventDefault();
+        return false;
+      }
+    };
+
+    const debuggerInterval = setInterval(() => {
+      try {
+        (function() {
+          const startTime = performance.now();
+          debugger;
+          const endTime = performance.now();
+          if (endTime - startTime > 100) {
+            console.clear();
+            console.warn("DevTools inspection is disabled.");
+          }
+        })();
+      } catch (err) {}
+    }, 100);
+
+    document.addEventListener("contextmenu", handleContextMenu);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("contextmenu", handleContextMenu);
+      document.removeEventListener("keydown", handleKeyDown);
+      clearInterval(debuggerInterval);
+    };
+  }, []);
+
   // --- Load localStorage on Mount ---
   useEffect(() => {
     // Theme Loading
@@ -940,9 +998,9 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="text-xs text-emerald-500 font-semibold flex items-center gap-1 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+            <span className="text-xs text-emerald-500 font-semibold flex items-center gap-1.5 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Free Access
+              <span className="hidden sm:inline">Free Access</span>
             </span>
           </div>
         </header>
@@ -951,7 +1009,7 @@ export default function Home() {
         <div 
           ref={chatContainerRef}
           onScroll={handleContainerScroll}
-          className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 scrollbar-thin"
+          className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 space-y-6 scrollbar-thin"
         >
           {messages.length === 0 ? (
             /* Empty Chat State - Suggestive Cards dashboard */
@@ -1150,7 +1208,7 @@ export default function Home() {
                 <div className="flex items-center gap-2">
                   
                   {/* Character gauge tracker */}
-                  <span className="text-[10px] text-neutral-500 font-mono mr-1 select-none">
+                  <span className="hidden sm:inline text-[10px] text-neutral-500 font-mono mr-1 select-none">
                     {input.length.toLocaleString()} / 4,000
                   </span>
 
