@@ -24,7 +24,8 @@ import {
   ChevronDown,
   Calculator,
   PenTool,
-  BookOpen
+  BookOpen,
+  PanelLeft
 } from "lucide-react";
 
 interface Message {
@@ -125,6 +126,7 @@ export default function Home() {
   const [language, setLanguage] = useState("en");
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [loading, setLoading] = useState(false);
   
   // Custom dropdown selector state
@@ -176,6 +178,11 @@ export default function Home() {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         chatInputRef.current?.focus();
+      }
+      // Ctrl+\ or Cmd+\: Toggle sidebar
+      if ((e.ctrlKey || e.metaKey) && (e.key === "\\" || e.key === "|")) {
+        e.preventDefault();
+        setSidebarCollapsed((prev) => !prev);
       }
       // Escape: Close any open dropdowns or mobile sidebar
       if (e.key === "Escape") {
@@ -923,6 +930,8 @@ export default function Home() {
         onExport={handleExport}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        isCollapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
 
       {/* Main Workspace Frame */}
@@ -937,8 +946,19 @@ export default function Home() {
               className="touch-target flex items-center justify-center p-2 rounded-xl lg:hidden hover:bg-white/10 text-foreground transition-all duration-150 active:scale-95 flex-shrink-0"
               title="Open Navigation"
             >
-              <Menu className="w-5 h-5" />
+              <Menu className="w-5 h-5 stroke-[1.75]" />
             </button>
+
+            {/* Desktop Sidebar Expand toggle when minimized */}
+            {sidebarCollapsed && (
+              <button
+                onClick={() => setSidebarCollapsed(false)}
+                className="hidden lg:flex items-center justify-center p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-foreground apple-spring active:scale-95 flex-shrink-0 shadow-sm"
+                title="Expand Sidebar (⌘\)"
+              >
+                <PanelLeft className="w-4 h-4 stroke-[1.75]" />
+              </button>
+            )}
 
             {/* Custom Modern Model Selector Dropdown */}
             <div className="relative min-w-0" ref={dropdownRef}>
@@ -1080,90 +1100,94 @@ export default function Home() {
         <div 
           ref={chatContainerRef}
           onScroll={handleContainerScroll}
-          className="flex-1 overflow-y-auto p-2.5 sm:p-4 md:p-6 2xl:p-8 space-y-4 sm:space-y-6 scrollbar-thin smooth-scroll safe-left safe-right"
+          className={`flex-1 ${
+            messages.length === 0
+              ? "overflow-hidden flex flex-col justify-center items-center p-2 sm:p-4 no-scrollbar"
+              : "overflow-y-auto p-2.5 sm:p-4 md:p-6 2xl:p-8 space-y-4 sm:space-y-6 scrollbar-thin smooth-scroll"
+          } safe-left safe-right`}
         >
           {messages.length === 0 ? (
-            /* Empty Chat State - Modern Minimalist Hero */
-            <div className="max-w-3xl 2xl:max-w-4xl mx-auto py-10 sm:py-16 md:py-20 flex flex-col items-center text-center space-y-6 select-none msg-enter px-2">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl ios-glass-card flex items-center justify-center shadow-xl shadow-indigo-500/10 hover:scale-105 transition-transform duration-300">
-                <LemurLogo className="w-11 h-11 sm:w-14 sm:h-14" />
+            /* Empty Chat State - Modern Minimalist Hero (Fits Viewport Perfectly) */
+            <div className="max-w-2xl 2xl:max-w-3xl mx-auto flex flex-col items-center text-center space-y-3 sm:space-y-4 select-none msg-enter px-2 w-full my-auto">
+              <div className="w-13 h-13 sm:w-16 sm:h-16 rounded-2xl sm:rounded-3xl ios-glass-card flex items-center justify-center shadow-lg shadow-indigo-500/10 hover:scale-105 transition-transform duration-300">
+                <LemurLogo className="w-8 h-8 sm:w-10 sm:h-10" />
               </div>
 
-              <div className="space-y-2">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-neutral-900 dark:text-white font-sans">
+              <div className="space-y-1">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-neutral-900 dark:text-white font-sans">
                   {t.suggestHeading}
                 </h1>
-                <p className="text-xs sm:text-sm md:text-base text-neutral-500 dark:text-neutral-400 max-w-lg mx-auto font-normal">
+                <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 max-w-md mx-auto font-normal leading-relaxed">
                   {t.suggestSub}
                 </p>
               </div>
 
               {/* Grid Suggestions cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full max-w-2xl mt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 w-full max-w-xl mt-2">
                 <div 
                   onClick={(e) => handleSubmit(e, t.suggestDescCoding)}
-                  className="ios-glass-card p-4.5 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-2px] hover:border-primary/40"
+                  className="ios-glass-card p-3 sm:p-3.5 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-2px] hover:border-primary/40"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-primary/15 text-primary border border-primary/20 shadow-sm flex-shrink-0">
-                      <Code2 className="w-4 h-4" />
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-primary/15 text-primary border border-primary/20 shadow-sm flex-shrink-0">
+                      <Code2 className="w-3.5 h-3.5" />
                     </div>
                     <h3 className="text-xs sm:text-sm font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-primary transition-colors font-sans tracking-tight">
                       {t.suggestTitleCoding}
                     </h3>
                   </div>
-                  <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-2.5 line-clamp-2 leading-relaxed">
+                  <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-1.5 line-clamp-2 leading-relaxed">
                     {t.suggestDescCoding}
                   </p>
                 </div>
 
                 <div 
                   onClick={(e) => handleSubmit(e, t.suggestDescMath)}
-                  className="ios-glass-card p-4.5 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-2px] hover:border-emerald-500/40"
+                  className="ios-glass-card p-3 sm:p-3.5 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-2px] hover:border-emerald-500/40"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-emerald-500/15 text-emerald-500 border border-emerald-500/20 shadow-sm flex-shrink-0">
-                      <Calculator className="w-4 h-4" />
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-500 border border-emerald-500/20 shadow-sm flex-shrink-0">
+                      <Calculator className="w-3.5 h-3.5" />
                     </div>
                     <h3 className="text-xs sm:text-sm font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-emerald-500 transition-colors font-sans tracking-tight">
                       {t.suggestTitleMath}
                     </h3>
                   </div>
-                  <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-2.5 line-clamp-2 leading-relaxed">
+                  <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-1.5 line-clamp-2 leading-relaxed">
                     {t.suggestDescMath}
                   </p>
                 </div>
 
                 <div 
                   onClick={(e) => handleSubmit(e, t.suggestDescCreative)}
-                  className="ios-glass-card p-4.5 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-2px] hover:border-rose-500/40"
+                  className="ios-glass-card p-3 sm:p-3.5 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-2px] hover:border-rose-500/40"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-rose-500/15 text-rose-500 border border-rose-500/20 shadow-sm flex-shrink-0">
-                      <PenTool className="w-4 h-4" />
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-rose-500/15 text-rose-500 border border-rose-500/20 shadow-sm flex-shrink-0">
+                      <PenTool className="w-3.5 h-3.5" />
                     </div>
                     <h3 className="text-xs sm:text-sm font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-rose-500 transition-colors font-sans tracking-tight">
                       {t.suggestTitleCreative}
                     </h3>
                   </div>
-                  <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-2.5 line-clamp-2 leading-relaxed">
+                  <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-1.5 line-clamp-2 leading-relaxed">
                     {t.suggestDescCreative}
                   </p>
                 </div>
 
                 <div 
                   onClick={(e) => handleSubmit(e, t.suggestDescExplain)}
-                  className="ios-glass-card p-4.5 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-2px] hover:border-indigo-500/40"
+                  className="ios-glass-card p-3 sm:p-3.5 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-2px] hover:border-indigo-500/40"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-indigo-500/15 text-indigo-500 border border-indigo-500/20 shadow-sm flex-shrink-0">
-                      <BookOpen className="w-4 h-4" />
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-indigo-500/15 text-indigo-500 border border-indigo-500/20 shadow-sm flex-shrink-0">
+                      <BookOpen className="w-3.5 h-3.5" />
                     </div>
                     <h3 className="text-xs sm:text-sm font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-indigo-500 transition-colors font-sans tracking-tight">
                       {t.suggestTitleExplain}
                     </h3>
                   </div>
-                  <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-2.5 line-clamp-2 leading-relaxed">
+                  <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-1.5 line-clamp-2 leading-relaxed">
                     {t.suggestDescExplain}
                   </p>
                 </div>

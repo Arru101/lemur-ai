@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { Plus, Trash2, Globe, Sun, Moon, Download, Search, X, MessageSquare, Edit3 } from "lucide-react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { Plus, Trash2, Globe, Sun, Moon, Download, Search, X, MessageSquare, Edit3, PanelLeftClose, Check, ChevronUp } from "lucide-react";
 import { translations } from "../utils/translations";
 import { triggerConfetti } from "../utils/confetti";
 import LemurLogo from "./LemurLogo";
@@ -27,6 +27,8 @@ interface SidebarProps {
   onExport: (format: "md" | "txt" | "pdf") => void;
   isOpen: boolean;
   onClose: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 export const LANGUAGE_OPTIONS = [
@@ -69,6 +71,8 @@ export default function Sidebar({
   onExport,
   isOpen,
   onClose,
+  isCollapsed = false,
+  onToggleCollapse,
 }: SidebarProps) {
   const t = translations[language] || translations.en;
   
@@ -77,6 +81,58 @@ export default function Sidebar({
   const [searchQuery, setSearchQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
+
+  // --- Custom Language Dropup States ---
+  const [languageDropupOpen, setLanguageDropupOpen] = useState(false);
+  const [languageSearch, setLanguageSearch] = useState("");
+  const languageRef = useRef<HTMLDivElement>(null);
+
+  // Close language dropup when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (languageRef.current && !languageRef.current.contains(e.target as Node)) {
+        setLanguageDropupOpen(false);
+      }
+    };
+    if (languageDropupOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [languageDropupOpen]);
+
+  // Filtered languages for dropup search
+  const filteredLanguages = useMemo(() => {
+    if (!languageSearch.trim()) return LANGUAGE_OPTIONS;
+    const q = languageSearch.toLowerCase();
+    return LANGUAGE_OPTIONS.filter(
+      (l) => l.name.toLowerCase().includes(q) || l.native.toLowerCase().includes(q) || l.code.toLowerCase().includes(q)
+    );
+  }, [languageSearch]);
+
+  const currentLanguageObj = useMemo(() => {
+    return LANGUAGE_OPTIONS.find((l) => l.code === language) || LANGUAGE_OPTIONS[0];
+  }, [language]);
+
+  // --- Touch Swipe Left to Close on Mobile ---
+  const touchStartXRef = useRef<number | null>(null);
+  const touchStartYRef = useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartXRef.current = e.touches[0].clientX;
+    touchStartYRef.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartXRef.current === null) return;
+    const deltaX = touchStartXRef.current - e.changedTouches[0].clientX;
+    const deltaY = Math.abs((touchStartYRef.current || 0) - e.changedTouches[0].clientY);
+    // Swiped left by at least 45px and predominantly horizontal
+    if (deltaX > 45 && deltaX > deltaY) {
+      onClose();
+    }
+    touchStartXRef.current = null;
+    touchStartYRef.current = null;
+  };
 
   const renameInputRef = useRef<HTMLInputElement>(null);
 
@@ -146,8 +202,14 @@ export default function Sidebar({
 
       {/* Main Sidebar Drawer */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col w-[85vw] max-w-xs sm:w-80 lg:w-72 2xl:w-80 h-dvh-screen max-h-[100dvh] glass-sidebar transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 safe-top safe-left select-none ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col w-[85vw] max-w-xs sm:w-80 lg:w-72 2xl:w-80 h-dvh-screen max-h-[100dvh] glass-sidebar transition-all duration-300 cubic-bezier(0.16, 1, 0.3, 1) safe-top safe-left select-none ${
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        } ${
+          isCollapsed
+            ? "lg:-translate-x-full lg:w-0 lg:max-w-0 lg:p-0 lg:opacity-0 lg:pointer-events-none lg:overflow-hidden lg:border-r-0"
+            : "lg:static lg:translate-x-0"
         }`}
       >
         {/* Brand Header */}
@@ -165,14 +227,28 @@ export default function Sidebar({
               </span>
             </div>
           </div>
-          {/* Close button for mobile */}
-          <button
-            onClick={onClose}
-            className="p-2 rounded-xl lg:hidden hover:bg-white/10 text-neutral-400 hover:text-foreground apple-spring active:scale-95 flex items-center justify-center border-0 outline-none"
-            title="Close navigation"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          
+          <div className="flex items-center gap-1">
+            {/* Desktop Collapse Button */}
+            {onToggleCollapse && (
+              <button
+                onClick={onToggleCollapse}
+                className="hidden lg:flex items-center justify-center p-2 rounded-xl hover:bg-white/10 text-neutral-400 hover:text-foreground apple-spring active:scale-95 border-0 outline-none"
+                title="Minimize Sidebar (⌘\)"
+              >
+                <PanelLeftClose className="w-4 h-4 stroke-[1.75]" />
+              </button>
+            )}
+
+            {/* Close button for mobile */}
+            <button
+              onClick={onClose}
+              className="p-2 rounded-xl lg:hidden hover:bg-white/10 text-neutral-400 hover:text-foreground apple-spring active:scale-95 flex items-center justify-center border-0 outline-none"
+              title="Close navigation"
+            >
+              <X className="w-4 h-4 stroke-[1.75]" />
+            </button>
+          </div>
         </div>
 
         {/* Action Button: New Chat & Search */}
@@ -297,35 +373,102 @@ export default function Sidebar({
 
         {/* Settings Footer Panel */}
         <div className="p-3 sm:p-3.5 border-t border-white/10 space-y-2 bg-black/20 backdrop-blur-xl safe-bottom">
-          {/* Language Selector Capsule */}
-          <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 transition-colors">
-            <span className="text-xs font-medium text-neutral-400 flex items-center gap-2">
-              <Globe className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-              <span>{t.language}</span>
-            </span>
-            <select
-              value={language}
-              onChange={(e) => onLanguageChange(e.target.value)}
-              className="text-xs font-semibold bg-transparent border-0 outline-none ring-0 cursor-pointer text-foreground text-right max-w-[150px] truncate font-sans"
+          {/* Custom Apple Liquid Glass Language Dropup */}
+          <div className="relative" ref={languageRef}>
+            <button
+              type="button"
+              onClick={() => setLanguageDropupOpen((prev) => !prev)}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-foreground transition-all duration-150 apple-spring cursor-pointer shadow-sm active:scale-[0.99]"
             >
-              {LANGUAGE_OPTIONS.map((opt) => (
-                <option key={opt.code} value={opt.code} className="bg-neutral-900 text-foreground py-1">
-                  {opt.native} ({opt.name})
-                </option>
-              ))}
-            </select>
+              <div className="flex items-center gap-2 min-w-0">
+                <Globe className="w-3.5 h-3.5 text-primary flex-shrink-0 stroke-[1.75]" />
+                <span className="text-xs font-medium text-neutral-400 truncate">{t.language}</span>
+              </div>
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <span className="text-xs font-semibold text-foreground font-sans">{currentLanguageObj.native}</span>
+                <ChevronUp className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${languageDropupOpen ? "rotate-180 text-primary" : ""}`} />
+              </div>
+            </button>
+
+            {/* Floating Dropup Menu */}
+            {languageDropupOpen && (
+              <div className="absolute bottom-full left-0 right-0 mb-2 p-2 rounded-2xl ios-glass border border-white/15 shadow-2xl z-40 flex flex-col gap-1.5 msg-enter max-h-80">
+                {/* Search in Languages */}
+                <div className="relative flex items-center rounded-xl bg-white/[0.06] border border-white/10 px-2.5 py-1.5">
+                  <Search className="w-3.5 h-3.5 text-neutral-400 pointer-events-none mr-2 flex-shrink-0 stroke-[1.75]" />
+                  <input
+                    type="text"
+                    value={languageSearch}
+                    onChange={(e) => setLanguageSearch(e.target.value)}
+                    placeholder="Search languages..."
+                    autoFocus
+                    className="w-full text-xs bg-transparent border-0 outline-none ring-0 text-foreground placeholder-neutral-400 font-sans"
+                  />
+                  {languageSearch && (
+                    <button
+                      onClick={() => setLanguageSearch("")}
+                      className="p-0.5 rounded-full hover:bg-white/10 text-neutral-400 hover:text-foreground"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Language list */}
+                <div className="overflow-y-auto max-h-56 space-y-0.5 pr-0.5 scrollbar-thin">
+                  {filteredLanguages.length === 0 ? (
+                    <div className="py-4 text-center text-xs text-neutral-400 font-sans">
+                      No language found
+                    </div>
+                  ) : (
+                    filteredLanguages.map((opt) => {
+                      const isSelected = opt.code === language;
+                      return (
+                        <button
+                          key={opt.code}
+                          type="button"
+                          onClick={() => {
+                            onLanguageChange(opt.code);
+                            setLanguageDropupOpen(false);
+                            setLanguageSearch("");
+                          }}
+                          className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs apple-spring text-left ${
+                            isSelected
+                              ? "bg-primary/20 text-primary font-semibold border border-primary/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]"
+                              : "hover:bg-white/[0.08] text-neutral-300 hover:text-white"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="font-semibold font-sans">{opt.native}</span>
+                            <span className="text-[11px] text-neutral-400 font-normal truncate font-sans">({opt.name})</span>
+                          </div>
+                          {isSelected && <Check className="w-3.5 h-3.5 text-primary flex-shrink-0 stroke-[2.5]" />}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Theme Toggler Capsule */}
           <div 
             onClick={onThemeToggle}
-            className="flex items-center justify-between px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 transition-colors cursor-pointer"
+            className="flex items-center justify-between px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 transition-all duration-150 cursor-pointer apple-spring active:scale-[0.99] group shadow-sm"
           >
             <span className="text-xs font-medium text-neutral-400 flex items-center gap-2">
-              {theme === "dark" ? <Moon className="w-3.5 h-3.5 text-secondary flex-shrink-0" /> : <Sun className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />}
+              <div className="p-1 rounded-lg bg-white/[0.06] group-hover:bg-white/[0.1] transition-colors">
+                {theme === "dark" ? (
+                  <Moon className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0 stroke-[1.75] transition-transform duration-300 group-hover:-rotate-12" />
+                ) : (
+                  <Sun className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 stroke-[1.75] transition-transform duration-300 group-hover:rotate-45" />
+                )}
+              </div>
               <span>{t.theme}</span>
             </span>
-            <div className="flex items-center gap-1 text-[11px] font-semibold text-foreground">
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-foreground px-2 py-0.5 rounded-lg bg-white/[0.04] border border-white/5">
+              <span className={`w-1.5 h-1.5 rounded-full ${theme === "dark" ? "bg-indigo-400" : "bg-amber-400"}`} />
               <span>{theme === "dark" ? t.dark : t.light}</span>
             </div>
           </div>
