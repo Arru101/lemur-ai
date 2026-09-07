@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Sidebar from "../components/Sidebar";
 import ChatMessage from "../components/ChatMessage";
 import LemurLogo from "../components/LemurLogo";
+import Toast, { ToastItem, ToastType, setGlobalToastFn } from "../components/Toast";
 import { translations } from "../utils/translations";
 import { 
   Menu, 
@@ -119,6 +120,7 @@ const generateChatId = (): string => `chat-${Date.now()}-${Math.random().toStrin
 
 export default function Home() {
   // --- States ---
+  const [hydrated, setHydrated] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [input, setInput] = useState("");
@@ -148,6 +150,9 @@ export default function Home() {
   } | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
+  // Toast notifications
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
+
   // References
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -160,6 +165,22 @@ export default function Home() {
 
   const t = translations[language] || translations.en;
 
+  // --- Toast helpers ---
+  const addToast = useCallback((type: ToastType, message: string, duration?: number) => {
+    const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    setToasts((prev) => [...prev, { id, type, message, duration }]);
+  }, []);
+
+  const dismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  // Register global toast function
+  useEffect(() => {
+    setGlobalToastFn(addToast);
+    return () => setGlobalToastFn(null);
+  }, [addToast]);
+
   // --- Close model selector dropdown when clicking outside ---
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -171,72 +192,11 @@ export default function Home() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // --- Productive Global Keyboard Shortcuts & DevTools Security Locks ---
+  // Keep a ref to conversations to prevent storage sync re-renders
+  const conversationsRef = useRef<Conversation[]>(conversations);
   useEffect(() => {
-    // Lock Right-Click Context Menu (Inspect Element)
-    const handleContextMenu = (e: MouseEvent) => {
-      e.preventDefault();
-      return false;
-    };
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Lock F12 DevTools
-      if (e.key === "F12" || e.keyCode === 123) {
-        e.preventDefault();
-        return false;
-      }
-
-      // Lock Ctrl+Shift+I / Cmd+Option+I (Inspect DevTools)
-      // Lock Ctrl+Shift+J / Cmd+Option+J (Console)
-      // Lock Ctrl+Shift+C / Cmd+Option+C (Element Inspector)
-      if (
-        (e.ctrlKey || e.metaKey) &&
-        (e.shiftKey || e.altKey) &&
-        (e.key.toLowerCase() === "i" ||
-         e.key.toLowerCase() === "j" ||
-         e.key.toLowerCase() === "c")
-      ) {
-        e.preventDefault();
-        return false;
-      }
-
-      // Lock Ctrl+U / Cmd+Option+U (View Source)
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "u") {
-        e.preventDefault();
-        return false;
-      }
-
-      // Lock Ctrl+S / Cmd+S (Save Page)
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
-        e.preventDefault();
-        return false;
-      }
-
-      // Ctrl+K or Cmd+K: Focus chat input or create new chat
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        chatInputRef.current?.focus();
-      }
-      // Ctrl+\ or Cmd+\: Toggle sidebar
-      if ((e.ctrlKey || e.metaKey) && (e.key === "\\" || e.key === "|")) {
-        e.preventDefault();
-        setSidebarCollapsed((prev) => !prev);
-      }
-      // Escape: Close any open dropdowns or mobile sidebar
-      if (e.key === "Escape") {
-        setModelDropdownOpen(false);
-        setSidebarOpen(false);
-      }
-    };
-
-    document.addEventListener("contextmenu", handleContextMenu);
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("contextmenu", handleContextMenu);
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, []);
+    conversationsRef.current = conversations;
+  }, [conversations]);
 
   // --- Load localStorage on Mount ---
   useEffect(() => {
@@ -262,6 +222,7 @@ export default function Home() {
         try {
           const parsed = JSON.parse(savedChats);
           setConversations(parsed);
+          conversationsRef.current = parsed;
           if (parsed.length > 0) {
             setActiveId(parsed[0].id);
           }
@@ -269,28 +230,28 @@ export default function Home() {
           console.error("Error reading chat history", err);
         }
       }
+      setHydrated(true);
     });
   }, []);
 
   // --- Save Conversations to sessionStorage ---
-  const saveChats = (updated: Conversation[]) => {
+  const saveChats = useCallback((updated: Conversation[]) => {
     setConversations(updated);
+    conversationsRef.current = updated;
     safeStorage.setItem("lemur-chats", JSON.stringify(updated), true);
-  };
-
-
+  }, []);
 
   // --- Auto-scroll / Scroll Listeners with rAF throttling (O(1) 60fps smooth scrolling) ---
   const isUserScrolledUpRef = useRef(false);
   const scrollRafRef = useRef<number | null>(null);
   const autoScrollRafRef = useRef<number | null>(null);
 
-  const scrollToBottom = (behavior: "smooth" | "auto" = "smooth") => {
+  const scrollToBottom = useCallback((behavior: "smooth" | "auto" = "smooth") => {
     isUserScrolledUpRef.current = false;
     messagesEndRef.current?.scrollIntoView({ behavior });
-  };
+  }, []);
 
-  const autoScrollToBottom = () => {
+  const autoScrollToBottom = useCallback(() => {
     if (!isUserScrolledUpRef.current) {
       if (autoScrollRafRef.current) return;
       autoScrollRafRef.current = requestAnimationFrame(() => {
@@ -298,7 +259,7 @@ export default function Home() {
         messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
       });
     }
-  };
+  }, []);
 
   // Passive event listener for 60fps/120fps compositor-driven scrolling
   useEffect(() => {
@@ -338,25 +299,40 @@ export default function Home() {
   }, [activeId]);
 
   // --- Handle Theme Toggle ---
-  const handleThemeToggle = () => {
-    const nextTheme = theme === "dark" ? "light" : "dark";
-    setTheme(nextTheme);
-    safeStorage.setItem("lemur-theme", nextTheme);
-    document.documentElement.setAttribute("data-theme", nextTheme);
-  };
+  const handleThemeToggle = useCallback(() => {
+    setTheme((currentTheme) => {
+      const nextTheme = currentTheme === "dark" ? "light" : "dark";
+      safeStorage.setItem("lemur-theme", nextTheme);
+      document.documentElement.setAttribute("data-theme", nextTheme);
+      return nextTheme;
+    });
+  }, []);
 
   // --- Handle Language Change ---
-  const handleLanguageChange = (lang: string) => {
+  const handleLanguageChange = useCallback((lang: string) => {
     setLanguage(lang);
     safeStorage.setItem("lemur-lang", lang);
-  };
+  }, []);
 
   // --- active chat references ---
-  const activeConversation = conversations.find(c => c.id === activeId) || null;
-  const messages = activeConversation ? activeConversation.messages : [];
+  const activeConversation = useMemo(() => {
+    return conversations.find((c) => c.id === activeId) || null;
+  }, [conversations, activeId]);
+
+  const messages = useMemo(() => {
+    return activeConversation ? activeConversation.messages : [];
+  }, [activeConversation]);
 
   // --- Start new chat ---
-  const handleNewChat = () => {
+  const handleNewChat = useCallback(() => {
+    // If active chat exists and is already empty, just focus input without creating duplicate ghost
+    if (activeConversation && activeConversation.messages.length === 0) {
+      setInput("");
+      setAttachedFile(null);
+      setImagePreview(null);
+      chatInputRef.current?.focus();
+      return;
+    }
     const newId = generateChatId();
     const newChat: Conversation = {
       id: newId,
@@ -369,12 +345,46 @@ export default function Home() {
     setActiveId(newId);
     setAttachedFile(null);
     setImagePreview(null);
-    setTimeout(() => chatInputRef.current?.focus(), 100);
-  };
+    queueMicrotask(() => chatInputRef.current?.focus());
+  }, [activeConversation, conversations, saveChats, t.newChat]);
+
+  const handleNewChatRef = useRef(handleNewChat);
+  useEffect(() => {
+    handleNewChatRef.current = handleNewChat;
+  }, [handleNewChat]);
+
+  // --- Global Keyboard Shortcuts ---
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+K or Cmd+K: Focus chat input
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        chatInputRef.current?.focus();
+      }
+      // Ctrl+\ or Cmd+\: Toggle sidebar
+      if ((e.ctrlKey || e.metaKey) && (e.key === "\\" || e.key === "|")) {
+        e.preventDefault();
+        setSidebarCollapsed((prev) => !prev);
+      }
+      // Ctrl+N or Cmd+N: New chat
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "n") {
+        e.preventDefault();
+        handleNewChatRef.current();
+      }
+      // Escape: Close any open dropdowns or mobile sidebar
+      if (e.key === "Escape") {
+        setModelDropdownOpen(false);
+        setSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   // --- Delete chat ---
-  const handleDeleteChat = (id: string) => {
-    const updated = conversations.filter(c => c.id !== id);
+  const handleDeleteChat = useCallback((id: string) => {
+    const updated = conversations.filter((c) => c.id !== id);
     saveChats(updated);
     if (activeId === id) {
       if (updated.length > 0) {
@@ -383,26 +393,26 @@ export default function Home() {
         setActiveId(null);
       }
     }
-  };
+  }, [conversations, activeId, saveChats]);
 
   // --- Clear all chats ---
-  const handleClearAll = () => {
+  const handleClearAll = useCallback(() => {
     saveChats([]);
     setActiveId(null);
     setAttachedFile(null);
     setImagePreview(null);
-  };
+  }, [saveChats]);
 
   // --- Select chat ---
-  const handleSelectChat = (id: string) => {
+  const handleSelectChat = useCallback((id: string) => {
     setActiveId(id);
     setAttachedFile(null);
     setImagePreview(null);
-    setTimeout(() => chatInputRef.current?.focus(), 100);
-  };
+    queueMicrotask(() => chatInputRef.current?.focus());
+  }, []);
 
   // --- Rename chat ---
-  const handleRenameChat = (id: string, newTitle: string) => {
+  const handleRenameChat = useCallback((id: string, newTitle: string) => {
     const updated = conversations.map((c) => {
       if (c.id === id) {
         return { ...c, title: newTitle };
@@ -410,18 +420,18 @@ export default function Home() {
       return c;
     });
     saveChats(updated);
-  };
+  }, [conversations, saveChats]);
 
   // --- File Uploading Helpers ---
-  const handleFileClick = () => {
+  const handleFileClick = useCallback(() => {
     fileInputRef.current?.click();
-  };
+  }, []);
 
-  const processFile = (fileObj: File) => {
+  const processFile = useCallback((fileObj: File) => {
     if (!fileObj) return;
 
     if (fileObj.size > 5 * 1024 * 1024) {
-      alert("File size exceeds 5MB limit.");
+      addToast("error", "File size exceeds 5MB limit.");
       return;
     }
 
@@ -459,30 +469,30 @@ export default function Home() {
       };
       reader.readAsText(fileObj);
     } else {
-      alert(t.unsupportedFile);
+      addToast("error", t.unsupportedFile || "Unsupported file format.");
     }
-  };
+  }, [addToast, t.unsupportedFile]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const fileObj = e.target.files?.[0];
     if (fileObj) processFile(fileObj);
-  };
+  }, [processFile]);
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-  };
+  }, []);
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     const fileObj = e.dataTransfer.files?.[0];
     if (fileObj) processFile(fileObj);
-  };
+  }, [processFile]);
 
-  const removeAttachment = () => {
+  const removeAttachment = useCallback(() => {
     setAttachedFile(null);
     setImagePreview(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
-  };
+  }, []);
 
   // --- Voice Dictation (Speech to Text) ---
   const handleVoiceInput = () => {
@@ -493,7 +503,7 @@ export default function Home() {
       win.SpeechRecognition || win.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      alert(t.speechNotSupported);
+      addToast("error", t.speechNotSupported || "Speech recognition is not supported in this browser.");
       return;
     }
 
@@ -544,7 +554,7 @@ export default function Home() {
     recognition.onerror = (event: ISpeechRecognitionErrorEvent) => {
       console.error("Speech recognition error: ", event.error);
       if (event.error === "not-allowed") {
-        alert(t.micAccessDenied);
+        addToast("error", t.micAccessDenied || "Microphone access denied.");
       }
     };
 
@@ -558,7 +568,7 @@ export default function Home() {
   // --- Global TTS (Text to Speech) Controller ---
   const handleToggleSpeech = (msgIdx: number, text: string) => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-      alert("Text-to-speech is not supported in this browser.");
+      addToast("error", "Text-to-speech is not supported in this browser.");
       return;
     }
 
@@ -618,6 +628,7 @@ export default function Home() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+    addToast("success", `Chat exported as .${format}`);
   };
 
   // --- Thumbs Feedback Hook ---
@@ -638,7 +649,7 @@ export default function Home() {
 
     saveChats(updated);
     if (type === "up") {
-      alert(t.feedbackGood);
+      addToast("success", t.feedbackGood || "Thank you for your feedback!");
     }
   };
 
@@ -652,7 +663,7 @@ export default function Home() {
   };
 
   // --- Helpers for O(1) Conversation Updates ---
-  const updateChatMessages = (chatId: string, newMessages: Message[], newTitle?: string) => {
+  const updateChatMessages = useCallback((chatId: string, newMessages: Message[], newTitle?: string) => {
     setConversations((prev) => {
       const updated = prev.map((c) => {
         if (c.id === chatId) {
@@ -664,14 +675,15 @@ export default function Home() {
         }
         return c;
       });
+      conversationsRef.current = updated;
       safeStorage.setItem("lemur-chats", JSON.stringify(updated), true);
       return updated;
     });
-  };
+  }, []);
 
-  const updateLastAssistantMessage = (chatId: string, content: string, modelName?: string) => {
+  const updateLastAssistantMessage = useCallback((chatId: string, content: string, modelName?: string) => {
     setConversations((prev) => {
-      return prev.map((c) => {
+      const updated = prev.map((c) => {
         if (c.id === chatId) {
           const msgs = [...c.messages];
           if (msgs.length > 0) {
@@ -686,8 +698,10 @@ export default function Home() {
         }
         return c;
       });
+      conversationsRef.current = updated;
+      return updated;
     });
-  };
+  }, []);
 
   // --- Real-time SSE Stream Consumer (Smooth motion, O(1) streaming) ---
   const streamChatResponse = async (
@@ -805,19 +819,13 @@ export default function Home() {
         } catch {}
       }
 
-      // Final save to storage
-      setConversations((prev) => {
-        safeStorage.setItem("lemur-chats", JSON.stringify(prev), true);
-        return prev;
-      });
+      // Final save to storage directly from conversationsRef
+      safeStorage.setItem("lemur-chats", JSON.stringify(conversationsRef.current), true);
     } catch (err: unknown) {
       const errorObj = err as { name?: string; message?: string };
       if (errorObj?.name === "AbortError") {
         console.log("Response generation cancelled by user.");
-        setConversations((prev) => {
-          safeStorage.setItem("lemur-chats", JSON.stringify(prev), true);
-          return prev;
-        });
+        safeStorage.setItem("lemur-chats", JSON.stringify(conversationsRef.current), true);
         return;
       }
 
@@ -827,10 +835,7 @@ export default function Home() {
         : `⚠️ Error: ${errorObj?.message || "Failed to generate response."}`;
 
       updateLastAssistantMessage(chatId, errorContent, activeModelName);
-      setConversations((prev) => {
-        safeStorage.setItem("lemur-chats", JSON.stringify(prev), true);
-        return prev;
-      });
+      safeStorage.setItem("lemur-chats", JSON.stringify(conversationsRef.current), true);
     } finally {
       setLoading(false);
       abortControllerRef.current = null;
@@ -959,12 +964,17 @@ export default function Home() {
     await streamChatResponse(activeId, poppedMessages, payloadMessages);
   };
 
-  // --- Auto-grow textarea ---
+  // --- Auto-grow textarea (rAF batched to eliminate layout thrash) ---
   const handleTextAreaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(e.target.value);
+    const val = e.target.value;
+    setInput(val);
     const textarea = e.target;
-    textarea.style.height = "auto";
-    textarea.style.height = `${Math.min(textarea.scrollHeight, 140)}px`;
+    requestAnimationFrame(() => {
+      if (textarea) {
+        textarea.style.height = "auto";
+        textarea.style.height = `${Math.min(textarea.scrollHeight, 140)}px`;
+      }
+    });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -973,6 +983,16 @@ export default function Home() {
       handleSubmit(e);
     }
   };
+
+  if (!hydrated) {
+    return (
+      <div className="flex h-dvh-screen max-h-[100dvh] w-full items-center justify-center bg-background">
+        <div className="w-12 h-12 rounded-2xl ios-glass flex items-center justify-center shadow-lg">
+          <LemurLogo className="w-7 h-7 animate-pulse" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-dvh-screen max-h-[100dvh] w-full overflow-hidden relative" onDragOver={handleDragOver} onDrop={handleDrop}>
@@ -1483,6 +1503,9 @@ export default function Home() {
           </div>
         </footer>
       </main>
+
+      {/* Toast Notifications */}
+      <Toast toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }

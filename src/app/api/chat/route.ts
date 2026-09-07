@@ -12,6 +12,13 @@ function checkRateLimit(ip: string): boolean {
   const now = Date.now();
   if (!rateLimitMap.has(ip)) {
     rateLimitMap.set(ip, { tokens: LIMIT_TOKENS - 1, lastRefill: now });
+    // Periodically sweep stale entries (older than 10 minutes) to prevent memory leak
+    if (rateLimitMap.size > 500) {
+      const cutoff = now - 10 * 60 * 1000;
+      for (const [key, val] of rateLimitMap.entries()) {
+        if (val.lastRefill < cutoff) rateLimitMap.delete(key);
+      }
+    }
     return true;
   }
 
@@ -432,11 +439,18 @@ async function streamDirectGemini(
   const contents: GeminiContent[] = [];
 
   for (const msg of messages) {
+    // Gemini API only supports "user" and "model" roles in contents
+    if (msg.role === "system") continue;
     const role = msg.role === "assistant" ? "model" : "user";
     contents.push({
       role,
       parts: [{ text: msg.content }],
     });
+  }
+
+  // Ensure conversation always starts with a user turn (Gemini requirement)
+  if (contents.length > 0 && contents[0].role !== "user") {
+    contents.shift();
   }
 
   // Multimodal file support (vision + documents)
@@ -453,6 +467,8 @@ async function streamDirectGemini(
     }
   }
 
+  const isFlashModel = modelName.includes("flash") || modelName.includes("2.5");
+
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:streamGenerateContent?alt=sse&key=${apiKey}`;
   const payload = {
     contents,
@@ -461,7 +477,8 @@ async function streamDirectGemini(
     },
     generationConfig: {
       temperature: 0.7,
-      maxOutputTokens: 8192, // Generous 8k tokens for long, comprehensive answers
+      maxOutputTokens: 8192,
+      ...(isFlashModel ? { thinkingConfig: { thinkingBudget: 1024 } } : {}),
     },
     safetySettings: [
       { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
@@ -569,7 +586,7 @@ async function streamOpenRouter(
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
-      "HTTP-Referer": "https://lemur-ai.vercel.app",
+      "HTTP-Referer": "https://lemursai.netlify.app",
       "X-Title": "Lemur AI",
     },
     body: JSON.stringify({

@@ -48,6 +48,7 @@ interface ChatMessageProps {
 
 function ChatMessageComponent({
   message,
+  idx,
   onRegenerate,
   onFeedback,
   onEdit,
@@ -435,7 +436,11 @@ function ChatMessageComponent({
                     }
 
                     const lang = match[1] || "code";
-                    const codeBlockId = `code-${lang}-${codeContent.length}`;
+                    let codeHash = 0;
+                    for (let i = 0; i < Math.min(codeContent.length, 32); i++) {
+                      codeHash = ((codeHash << 5) - codeHash + codeContent.charCodeAt(i)) | 0;
+                    }
+                    const codeBlockId = `code-${idx ?? 0}-${lang}-${codeContent.length}-${Math.abs(codeHash)}`;
 
                     return (
                       <div className="my-4 rounded-2xl overflow-hidden border border-white/12 bg-[#0d1017] shadow-xl code-container transform-gpu">

@@ -160,7 +160,6 @@ textarea:focus-visible {
   -webkit-overflow-scrolling: touch;
   transform: translateZ(0);
   backface-visibility: hidden;
-  will-change: scroll-position;
 }
 
 .gpu-accel {
@@ -169,11 +168,10 @@ textarea:focus-visible {
   will-change: transform, opacity;
 }
 
-/* Off-screen message rendering containment - skips layout/paint for off-screen items */
+/* Off-screen message rendering containment - skips paint for off-screen items */
 .message-contain {
   content-visibility: auto;
-  contain-intrinsic-size: auto 120px;
-  contain: layout style paint;
+  contain-intrinsic-block-size: 120px;
 }
 
 /* macOS & iOS Overlay Scrollbar System */

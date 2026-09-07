@@ -5,6 +5,7 @@ import { SquarePen, Trash2, Globe, Sun, Moon, Download, Search, X, MessageSquare
 import { translations } from "../utils/translations";
 import { triggerConfetti } from "../utils/confetti";
 import LemurLogo from "./LemurLogo";
+import ConfirmDialog from "./ConfirmDialog";
 
 interface Conversation {
   id: string;
@@ -81,6 +82,8 @@ export default function Sidebar({
   const [searchQuery, setSearchQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   // --- Custom Language & Export Dropup State ---
   const [languageDropupOpen, setLanguageDropupOpen] = useState(false);
@@ -137,16 +140,12 @@ export default function Sidebar({
   }, [editingId]);
 
   const handleClearAll = () => {
-    if (window.confirm(t.clearConfirm)) {
-      onClearAll();
-    }
+    setShowClearConfirm(true);
   };
 
   const handleDelete = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (window.confirm(t.deleteConfirm)) {
-      onDeleteChat(id);
-    }
+    setPendingDeleteId(id);
   };
 
   // --- Renaming Handlers ---
@@ -503,6 +502,35 @@ export default function Sidebar({
           </div>
         </div>
       </aside>
+
+      {/* Confirmation Modals */}
+      <ConfirmDialog
+        open={!!pendingDeleteId}
+        title={t.deleteChat || "Delete Chat"}
+        message={t.deleteConfirm || "Are you sure you want to delete this chat?"}
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={() => {
+          if (pendingDeleteId) {
+            onDeleteChat(pendingDeleteId);
+            setPendingDeleteId(null);
+          }
+        }}
+        onCancel={() => setPendingDeleteId(null)}
+      />
+
+      <ConfirmDialog
+        open={showClearConfirm}
+        title={t.clearHistory || "Clear All Chats"}
+        message={t.clearConfirm || "Are you sure you want to delete all conversations?"}
+        confirmLabel="Clear All"
+        variant="danger"
+        onConfirm={() => {
+          onClearAll();
+          setShowClearConfirm(false);
+        }}
+        onCancel={() => setShowClearConfirm(false)}
+      />
     </>
   );
 }
