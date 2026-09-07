@@ -1170,13 +1170,13 @@ export default function Home() {
         </div>
 
         {/* Input Text Form Area */}
-        <footer className="px-3 py-2 sm:px-4 sm:py-2.5 border-t border-glass-border/30 select-none bg-background/60 dark:bg-neutral-950/50 backdrop-blur-xl relative safe-bottom safe-left safe-right transition-all duration-300">
+        <footer className="px-3 py-2 sm:px-4 sm:py-2.5 border-0 select-none bg-background/50 dark:bg-neutral-950/40 backdrop-blur-xl relative safe-bottom safe-left safe-right transition-all duration-300">
           
           {/* Scroll to bottom floating action button */}
           {showScrollBtn && (
             <button
               onClick={() => scrollToBottom()}
-              className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/90 dark:bg-neutral-900/90 border border-glass-border/70 text-foreground hover:bg-white dark:hover:bg-neutral-800 transition-all duration-200 shadow-md glow-primary active:scale-95 z-30"
+              className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/95 dark:bg-neutral-900/95 border-0 text-foreground hover:bg-white dark:hover:bg-neutral-800 transition-all duration-200 shadow-lg glow-primary active:scale-95 z-30"
               title="Scroll to bottom"
             >
               <ArrowDown className="w-3.5 h-3.5 animate-bounce text-primary" />
@@ -1187,15 +1187,15 @@ export default function Home() {
             
             {/* File Upload Preview bar */}
             {attachedFile && (
-              <div className="absolute bottom-full left-0 right-0 mb-2 px-3 py-1.5 rounded-xl border border-glass-border/60 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-xl flex items-center justify-between shadow-lg z-20 animate-slide-up">
+              <div className="absolute bottom-full left-0 right-0 mb-2 px-3 py-1.5 rounded-xl border-0 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-2xl flex items-center justify-between shadow-xl z-20 animate-slide-up">
                 <div className="flex items-center gap-2 min-w-0">
                   {imagePreview ? (
-                    <div className="w-7 h-7 rounded-lg overflow-hidden relative flex-shrink-0 border border-glass-border">
+                    <div className="w-7 h-7 rounded-lg overflow-hidden relative flex-shrink-0 border-0 shadow-sm">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={imagePreview} alt="Upload preview" className="object-cover w-full h-full" />
                     </div>
                   ) : (
-                    <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                    <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0 border-0">
                       <FileText className="w-3.5 h-3.5" />
                     </div>
                   )}
@@ -1206,7 +1206,7 @@ export default function Home() {
                 </div>
                 <button
                   onClick={removeAttachment}
-                  className="p-1 rounded-full hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-400 hover:text-foreground transition-colors"
+                  className="p-1 rounded-full hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-400 hover:text-foreground transition-colors border-0"
                   title="Remove attachment"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -1214,10 +1214,10 @@ export default function Home() {
               </div>
             )}
 
-            {/* Premium Compact Chat Box Capsule */}
+            {/* Premium Borderless Chat Box Capsule */}
             <form 
               onSubmit={handleSubmit}
-              className="glass-input relative flex items-end gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-2xl sm:rounded-3xl border border-glass-border/60 bg-white/75 dark:bg-neutral-900/70 backdrop-blur-2xl shadow-[0_4px_24px_-2px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_32px_-4px_rgba(0,0,0,0.45)] focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/15 transition-all duration-300"
+              className="glass-input relative flex items-end gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl sm:rounded-3xl border-0 ring-0 outline-none bg-white/80 dark:bg-neutral-900/80 hover:bg-white/90 dark:hover:bg-neutral-900/90 focus-within:bg-white dark:focus-within:bg-neutral-900 backdrop-blur-3xl shadow-[0_4px_24px_-2px_rgba(0,0,0,0.06),0_10px_35px_-4px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_-4px_rgba(0,0,0,0.6),0_16px_48px_-8px_rgba(0,0,0,0.7)] focus-within:shadow-[0_8px_40px_rgba(99,102,241,0.18),0_2px_12px_rgba(0,0,0,0.06)] dark:focus-within:shadow-[0_12px_44px_rgba(99,102,241,0.24),0_4px_20px_rgba(0,0,0,0.8)] transition-all duration-300"
             >
               {/* Left: Attachment button */}
               <div className="flex items-center pb-0.5">
@@ -1231,14 +1231,14 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={handleFileClick}
-                  className="p-2 sm:p-2.5 rounded-xl text-neutral-400 hover:text-primary hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60 active:scale-95 transition-all duration-200"
+                  className="p-2 sm:p-2.5 rounded-xl text-neutral-400 hover:text-primary hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60 active:scale-95 transition-all duration-200 border-0 outline-none"
                   title={t.uploadFile}
                 >
                   <Paperclip className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
                 </button>
               </div>
 
-              {/* Center: Streamlined Auto-growing Textarea */}
+              {/* Center: Streamlined Auto-growing Borderless Textarea */}
               <div className="flex-1 min-w-0 py-0.5">
                 <textarea
                   ref={chatInputRef}
@@ -1248,7 +1248,7 @@ export default function Home() {
                   onKeyDown={handleKeyPress}
                   placeholder={t.placeholder}
                   maxLength={4000}
-                  className="w-full bg-transparent px-1.5 sm:px-2 text-sm sm:text-base 2xl:text-lg text-foreground placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none resize-none min-h-[36px] max-h-[140px] leading-relaxed font-sans block"
+                  className="w-full bg-transparent px-1 sm:px-2 text-sm sm:text-base 2xl:text-lg text-foreground placeholder-neutral-400 dark:placeholder-neutral-500 border-0 outline-none ring-0 focus:outline-none focus:ring-0 focus:border-0 resize-none min-h-[36px] max-h-[140px] leading-relaxed font-sans block shadow-none"
                 />
               </div>
 
@@ -1265,7 +1265,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={handleVoiceInput}
-                  className={`p-2 sm:p-2.5 rounded-xl transition-all duration-200 ${
+                  className={`p-2 sm:p-2.5 rounded-xl transition-all duration-200 border-0 outline-none ${
                     isListening 
                       ? "text-red-500 bg-red-500/10 shadow-sm" 
                       : "text-neutral-400 hover:text-foreground hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60 active:scale-95"
@@ -1287,7 +1287,7 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={handleCancelResponse}
-                    className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 2xl:w-10 2xl:h-10 rounded-xl sm:rounded-2xl bg-rose-500/15 text-rose-500 hover:bg-rose-500/25 active:scale-90 transition-all duration-200 border border-rose-500/30"
+                    className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 2xl:w-10 2xl:h-10 rounded-xl sm:rounded-2xl bg-rose-500/15 text-rose-500 hover:bg-rose-500/25 active:scale-90 transition-all duration-200 border-0 outline-none shadow-sm"
                     title="Stop generating"
                   >
                     <StopCircle className="w-4 h-4 2xl:w-5 2xl:h-5" />
@@ -1296,7 +1296,7 @@ export default function Home() {
                   <button
                     type="submit"
                     disabled={(!input.trim() && !attachedFile) || loading}
-                    className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 2xl:w-10 2xl:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-r from-primary via-indigo-600 to-violet-600 hover:from-primary/90 hover:via-indigo-600/90 hover:to-violet-600/90 disabled:opacity-30 disabled:cursor-not-allowed text-white shadow-sm hover:shadow-primary/25 active:scale-90 transition-all duration-200 glow-primary"
+                    className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 2xl:w-10 2xl:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-r from-primary via-indigo-600 to-violet-600 hover:from-primary/90 hover:via-indigo-600/90 hover:to-violet-600/90 disabled:opacity-30 disabled:cursor-not-allowed text-white shadow-sm hover:shadow-primary/25 active:scale-90 transition-all duration-200 glow-primary border-0 outline-none"
                   >
                     <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-0.5" />
                   </button>
