@@ -122,22 +122,23 @@ export default function Sidebar({
 
       {/* Main Sidebar Drawer */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col w-72 glass-sidebar transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col w-[85vw] max-w-xs sm:w-80 lg:w-72 2xl:w-80 h-dvh-screen max-h-[100dvh] glass-sidebar transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 safe-top safe-left ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* Brand Header */}
-        <div className="flex items-center justify-between h-16 px-6 border-b border-glass-border">
+        <div className="flex items-center justify-between h-14 sm:h-16 px-4 sm:px-6 border-b border-glass-border">
           <div className="flex items-center gap-2 select-none">
-            <LemurLogo className="w-8 h-8 drop-shadow-[0_0_8px_var(--primary-glow)]" />
-            <span className="text-xl font-extrabold text-foreground tracking-wide font-sans">
+            <LemurLogo className="w-7 h-7 sm:w-8 sm:h-8 drop-shadow-[0_0_10px_var(--primary-glow)]" />
+            <span className="text-lg sm:text-xl font-extrabold text-foreground tracking-tight font-jakarta">
               {t.appName}
             </span>
           </div>
           {/* Close button for mobile */}
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg lg:hidden hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-400 hover:text-foreground transition-all duration-200"
+            className="touch-target p-2 rounded-xl lg:hidden hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-400 hover:text-foreground transition-all duration-200 active:scale-95 flex items-center justify-center"
+            title="Close navigation"
           >
             <X className="w-5 h-5" />
           </button>
@@ -250,7 +251,7 @@ export default function Sidebar({
         </div>
 
         {/* Settings Footer Panel */}
-        <div className="p-4 border-t border-glass-border space-y-3 bg-black/10 dark:bg-black/20">
+        <div className="p-3.5 sm:p-4 border-t border-glass-border space-y-2.5 sm:space-y-3 bg-black/10 dark:bg-black/20 safe-bottom">
           {/* Language Selector */}
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs text-neutral-500 flex items-center gap-1">

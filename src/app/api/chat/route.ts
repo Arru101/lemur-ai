@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Simple in-memory rate limiting map
-// Key: IP address, Value: { tokens: number, lastRefill: number }
+export const maxDuration = 300; // 5-minute timeout for extensive long-answer generation
+export const dynamic = "force-dynamic";
+
+// In-memory rate limiting token bucket
 const rateLimitMap = new Map<string, { tokens: number; lastRefill: number }>();
-const LIMIT_TOKENS = 15; // Max tokens (requests) in bucket
-const REFILL_RATE = 1000 * 30; // Refill 1 token every 30 seconds
+const LIMIT_TOKENS = 30; // 30 requests per bucket
+const REFILL_RATE = 1000 * 15; // Refill 1 token every 15 seconds
 
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
@@ -30,7 +32,6 @@ function checkRateLimit(ip: string): boolean {
   return false;
 }
 
-// Map languages to full names for prompting
 const LANGUAGE_MAP: Record<string, string> = {
   en: "English",
   es: "Spanish",
@@ -44,353 +45,494 @@ const LANGUAGE_MAP: Record<string, string> = {
 
 interface ModelInfo {
   name: string;
-  provider: string;
+  provider: "google" | "openrouter" | "routing";
   id: string;
   openrouterId?: string;
+  description: string;
 }
 
-// Available AI Models configuration
-const MODELS: Record<string, ModelInfo> = {
+export const MODELS: Record<string, ModelInfo> = {
   "smart-router": {
     name: "Smart Router (Auto)",
     provider: "routing",
     id: "smart-router",
+    description: "Auto-routes to the best model for your specific prompt",
   },
   "gemini-flash": {
     name: "Gemini 2.5 Flash",
     provider: "google",
     id: "gemini-2.5-flash",
-    openrouterId: "openrouter/free",
+    description: "Ultra-fast Google SOTA, vision, multimodal & high accuracy",
   },
-  "deepseek-r1": {
-    name: "DeepSeek R1",
-    provider: "openrouter",
-    id: "deepseek/deepseek-r1:free",
-    openrouterId: "deepseek/deepseek-r1:free",
+  "gemini-lite": {
+    name: "Gemini 3.5 Flash Lite",
+    provider: "google",
+    id: "gemini-3.5-flash-lite",
+    description: "Instant sub-second latency for quick questions & summaries",
   },
-  "qwen-coder": {
-    name: "Qwen 3 Coder",
+  "nemotron-lightning": {
+    name: "Nemotron 3.5 Lightning (Free)",
     provider: "openrouter",
-    id: "qwen/qwen3-coder:free",
-    openrouterId: "qwen/qwen3-coder:free",
+    id: "nvidia/nemotron-3.5-lightning:free",
+    openrouterId: "nvidia/nemotron-3.5-lightning:free",
+    description: "1M tokens context, fast reasoning & algorithmic logic",
   },
-  "llama-3": {
-    name: "Llama 3.3 70B",
+  "minimax-m3": {
+    name: "MiniMax M3 (Free)",
     provider: "openrouter",
-    id: "meta-llama/llama-3.3-70b-instruct:free",
-    openrouterId: "meta-llama/llama-3.3-70b-instruct:free",
+    id: "minimax/minimax-m3:free",
+    openrouterId: "minimax/minimax-m3:free",
+    description: "1M tokens context, exceptional multilingual & long essays",
   },
-  "mistral-7b": {
-    name: "Gemma 4 31B",
+  "gemma-26b": {
+    name: "Gemma 4 26B (Free)",
     provider: "openrouter",
-    id: "google/gemma-4-31b-it:free",
-    openrouterId: "google/gemma-4-31b-it:free",
+    id: "google/gemma-4-26b-a4b-it:free",
+    openrouterId: "google/gemma-4-26b-a4b-it:free",
+    description: "Google's latest open instruction-following model",
+  },
+  "nemotron-ultra": {
+    name: "Nemotron 3 Ultra 550B (Free)",
+    provider: "openrouter",
+    id: "nvidia/nemotron-3-ultra-550b-a55b:free",
+    openrouterId: "nvidia/nemotron-3-ultra-550b-a55b:free",
+    description: "Massive 550B parameters for deep synthesis & analysis",
   },
 };
 
-// Smart Router classifier
 function classifyQuery(query: string): keyof typeof MODELS {
   const q = query.toLowerCase();
-  
-  // Coding signals
-  const codingKeywords = [
-    "code", "function", "class", "const", "let", "var", "npm", "pip", "github", 
-    "bug", "error", "compile", "javascript", "typescript", "python", "rust", 
-    "c++", "java", "html", "css", "sql", "api", "json", "regex", "import", "export", 
-    "react", "nextjs", "vue", "angular", "node", "docker", "kubernetes"
-  ];
-  
-  // Analytical / Reasoning signals
+
   const reasoningKeywords = [
-    "solve", "calculate", "prove", "math", "equation", "theorem", "physics", 
-    "algorithm", "complexity", "r1", "reasoning", "explain step-by-step", "logic puzzle",
-    "philosophical", "architectural choice", "performance bottleneck"
+    "solve", "calculate", "prove", "math", "equation", "theorem", "physics",
+    "algorithm", "complexity", "r1", "reasoning", "step-by-step", "logic puzzle",
+    "philosophical", "architectural choice", "performance bottleneck", "derivation",
+    "big o", "dynamic programming", "graph theory"
   ];
 
-  // Count matches
-  const codingMatches = codingKeywords.filter(keyword => q.includes(keyword)).length;
-  const reasoningMatches = reasoningKeywords.filter(keyword => q.includes(keyword)).length;
+  const synthesisKeywords = [
+    "essay", "write a story", "article", "report", "summary", "translate",
+    "comprehensive guide", "exhaustive", "book", "chapters", "narrative",
+    "in-depth analysis", "long guide"
+  ];
 
-  if (codingMatches > 0 && codingMatches >= reasoningMatches) {
-    return "qwen-coder";
+  const reasoningMatches = reasoningKeywords.filter((k) => q.includes(k)).length;
+  const synthesisMatches = synthesisKeywords.filter((k) => q.includes(k)).length;
+
+  if (reasoningMatches > 0 && reasoningMatches >= synthesisMatches) {
+    return "nemotron-lightning";
   }
-  if (reasoningMatches > 0 && reasoningMatches > codingMatches) {
-    return "deepseek-r1";
+  if (synthesisMatches > 0 && synthesisMatches > reasoningMatches) {
+    return "minimax-m3";
   }
-  
-  // Default to Gemini Flash for fast response
+
   return "gemini-flash";
 }
 
+interface ChatMessagePayload {
+  role: "user" | "assistant" | "system";
+  content: string;
+}
+
+interface AttachedFilePayload {
+  name: string;
+  type: string;
+  data: string;
+  content?: string;
+}
+
+interface RequestPayload {
+  messages?: ChatMessagePayload[];
+  model?: string;
+  language?: string;
+  file?: AttachedFilePayload | null;
+}
+
+interface GeminiPart {
+  text?: string;
+  inlineData?: {
+    mimeType: string;
+    data: string;
+  };
+}
+
+interface GeminiContent {
+  role: string;
+  parts: GeminiPart[];
+}
+
+interface StreamEventPayload {
+  type: "meta" | "chunk" | "warning" | "error" | "done" | "ping";
+  model?: string;
+  routedModelKey?: string;
+  isSmartRouted?: boolean;
+  text?: string;
+  warning?: string;
+  error?: string;
+}
+
 export async function POST(req: NextRequest) {
+  // 1. Rate Limiting Check
+  const ip = req.headers.get("x-forwarded-for") || "anonymous_ip";
+  if (!checkRateLimit(ip)) {
+    return NextResponse.json(
+      { error: "Too many requests. Please wait a moment before sending another message." },
+      { status: 429 }
+    );
+  }
+
+  // 2. Parse Request
+  let body: RequestPayload;
   try {
-    // 1. Rate Limiting check
-    const ip = req.headers.get("x-forwarded-for") || "anonymous_ip";
-    if (!checkRateLimit(ip)) {
-      return NextResponse.json(
-        { error: "Too many requests. Please wait a moment before sending another message." },
-        { status: 429 }
-      );
-    }
+    body = (await req.json()) as RequestPayload;
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON request body." }, { status: 400 });
+  }
 
-    // 2. Parse request body
-    const body = await req.json();
-    const { messages, model: selectedModelId, language, file } = body;
+  const { messages, model: selectedModelId, language, file } = body;
+  if (!messages || !Array.isArray(messages) || messages.length === 0) {
+    return NextResponse.json({ error: "Messages array is required." }, { status: 400 });
+  }
 
-    if (!messages || !Array.isArray(messages) || messages.length === 0) {
-      return NextResponse.json(
-        { error: "Invalid request: messages array is required." },
-        { status: 400 }
-      );
-    }
+  const lastMessage = messages[messages.length - 1];
+  const userPrompt = lastMessage?.content || "";
 
-    const lastMessage = messages[messages.length - 1];
-    const userPrompt = lastMessage.content || "";
+  // 3. Routing
+  let activeModelKey: keyof typeof MODELS = "gemini-flash";
+  let isSmartRouted = false;
 
-    // 3. Smart Routing Resolution
-    let activeModelKey: keyof typeof MODELS = "gemini-flash";
-    let isSmartRouted = false;
+  if (selectedModelId === "smart-router") {
+    activeModelKey = classifyQuery(userPrompt);
+    isSmartRouted = true;
+  } else if (selectedModelId && selectedModelId in MODELS) {
+    activeModelKey = selectedModelId as keyof typeof MODELS;
+  }
 
-    if (selectedModelId === "smart-router") {
-      activeModelKey = classifyQuery(userPrompt);
-      isSmartRouted = true;
-    } else if (selectedModelId in MODELS) {
-      activeModelKey = selectedModelId as keyof typeof MODELS;
-    }
+  const activeModel = MODELS[activeModelKey];
+  const targetLanguage = LANGUAGE_MAP[language || "en"] || "English";
 
-    const activeModel = MODELS[activeModelKey];
-    const targetLanguage = LANGUAGE_MAP[language || "en"] || "English";
+  const systemPrompt = `You are Lemur AI, an advanced, highly intelligent AI chat assistant.
+Provide clear, authoritative, highly accurate, and comprehensively structured answers.
+Format your responses using clean GitHub-flavored markdown:
+- Use bolding, bullet points, numbered steps, and tables where helpful.
+- For code snippets, always specify the correct language identifier in code blocks (e.g. \`\`\`typescript, \`\`\`python, \`\`\`rust).
+- Always respond in ${targetLanguage}. Maintain all conversation in ${targetLanguage} unless specifically requested otherwise.
+- Never truncate your thoughts or code prematurely. Provide complete, working, production-grade solutions.
 
-    // Inject system instructions for multilingual response and premium personality
-    const systemPrompt = `You are Lemur AI, a helpful, premium, intelligent chat assistant.
-Provide highly accurate, beautiful, and complete answers.
-Use professional formatting with clear markdown headings, lists, and tables where appropriate.
-If code is requested, write complete, production-ready code with concise inline explanations.
-IMPORTANT: You MUST respond and converse in ${targetLanguage}. Keep all your answers in ${targetLanguage} unless the user explicitly requests otherwise.
-
-At the very end of your response, you MUST generate exactly 3 short, relevant, and helpful follow-up questions that the user might want to ask next. Format them inside a <related_questions> tag, with each question on a new line starting with a dash, like this:
+At the very end of your response, you MUST append exactly 3 relevant follow-up questions for the user inside a <related_questions> block, one per line starting with a dash, like this:
 <related_questions>
 - Question 1?
 - Question 2?
 - Question 3?
 </related_questions>`;
 
-    // 4. Handle Providers and Fallbacks based on configured keys
-    const geminiKey = process.env.GEMINI_API_KEY;
-    const openrouterKey = process.env.OPENROUTER_API_KEY;
+  const geminiKey = process.env.GEMINI_API_KEY;
+  const openrouterKey = process.env.OPENROUTER_API_KEY;
 
-    // If only GEMINI_API_KEY is available, force routing to Direct Gemini.
-    // If only OPENROUTER_API_KEY is available, force routing to OpenRouter.
-    let provider = activeModel.provider;
-    if (geminiKey && !openrouterKey) {
-      provider = "google";
-    } else if (!geminiKey && openrouterKey) {
-      provider = "openrouter";
-    }
-
-    let lastError: any = null;
-
-    // Attempt direct Google Gemini call if applicable
-    if (provider === "google" && geminiKey) {
-      try {
-        const directGeminiResponse = await callDirectGemini(messages, systemPrompt, file, geminiKey);
-        return NextResponse.json({
-          text: directGeminiResponse,
-          model: activeModel.name.includes("Gemini") ? activeModel.name : `Gemini 2.5 Flash (via ${activeModel.name})`,
-          routedModelKey: activeModelKey,
-          isSmartRouted
-        });
-      } catch (err: any) {
-        console.error("Direct Gemini API error:", err);
-        lastError = err;
-        // Fall through to OpenRouter if openrouterKey is also configured
-      }
-    }
-
-    // Attempt OpenRouter call if applicable
-    if (openrouterKey) {
-      // Determine target model and fallback sequence
-      const primaryModelId = activeModel.openrouterId || "openrouter/free";
-      
-      const fallbackModels = [
-        primaryModelId,
-        "openrouter/free",
-        "meta-llama/llama-3.3-70b-instruct:free",
-        "meta-llama/llama-3.2-3b-instruct:free"
-      ];
-      
-      const uniqueModels = Array.from(new Set(fallbackModels));
-      
-      for (let i = 0; i < uniqueModels.length; i++) {
-        const currentModelId = uniqueModels[i];
-        try {
-          console.log(`Attempting OpenRouter call with model: ${currentModelId}`);
-          const openrouterResponse = await callOpenRouter(
-            messages,
-            systemPrompt,
-            currentModelId,
-            file,
-            openrouterKey
-          );
-          
-          let responseModelName = activeModel.name;
-          if (i > 0) {
-            responseModelName = `${activeModel.name} (Fallback: ${currentModelId.split('/').pop()?.replace(':free', '')})`;
-          }
-          
-          return NextResponse.json({
-            text: openrouterResponse,
-            model: responseModelName,
-            routedModelKey: activeModelKey,
-            isSmartRouted,
-            warning: i > 0 ? "Selected model was unavailable. Switched to fallback." : undefined
-          });
-        } catch (err: any) {
-          console.warn(`OpenRouter call failed for model ${currentModelId}:`, err.message || err);
-          lastError = err;
-        }
-      }
-    }
-
-    // Ultimate Direct Gemini Fallback (if OpenRouter fails but Gemini key is available)
-    if (geminiKey && openrouterKey) {
-      try {
-        console.log("All OpenRouter models failed. Attempting ultimate fallback to Direct Gemini...");
-        const directGeminiResponse = await callDirectGemini(messages, systemPrompt, file, geminiKey);
-        return NextResponse.json({
-          text: directGeminiResponse,
-          model: "Gemini 2.5 Flash (Ultimate Fallback)",
-          routedModelKey: "gemini-flash",
-          isSmartRouted: false,
-          warning: "OpenRouter services were unavailable. Switched to direct Gemini backup."
-        });
-      } catch (geminiErr: any) {
-        console.error("Ultimate Direct Gemini fallback also failed:", geminiErr);
-        lastError = geminiErr;
-      }
-    }
-
-    // 6. If no keys are configured
-    if (!geminiKey && !openrouterKey) {
-      return NextResponse.json(
-        {
-          error: "API Keys are not configured on the server. Please add GEMINI_API_KEY or OPENROUTER_API_KEY to your env variables."
-        },
-        { status: 501 }
-      );
-    }
-
+  if (!geminiKey && !openrouterKey) {
     return NextResponse.json(
-      { error: `Failed to generate a response from the AI models. Details: ${lastError?.message || lastError}` },
-      { status: 502 }
-    );
-  } catch (error: any) {
-    console.error("API Error: ", error);
-    return NextResponse.json(
-      { error: error.message || "An unexpected error occurred." },
-      { status: 500 }
+      { error: "API Keys are not configured on the server. Please add GEMINI_API_KEY or OPENROUTER_API_KEY." },
+      { status: 501 }
     );
   }
+
+  // Set up SSE streaming response
+  const encoder = new TextEncoder();
+  const stream = new TransformStream();
+  const writer = stream.writable.getWriter();
+
+  const sendEvent = async (payload: StreamEventPayload) => {
+    try {
+      await writer.write(encoder.encode(`data: ${JSON.stringify(payload)}\n\n`));
+    } catch {
+      // Client disconnected
+    }
+  };
+
+  // Asynchronous streaming worker with 4-Tier Resilience
+  (async () => {
+    let resolvedModelName = activeModel.name;
+    let fallbackWarning: string | undefined;
+
+    try {
+      // Send initial metadata
+      await sendEvent({
+        type: "meta",
+        model: resolvedModelName,
+        routedModelKey: activeModelKey,
+        isSmartRouted,
+      });
+
+      let streamed = false;
+
+      // --- TIER 1: Primary Target Provider ---
+      if (activeModel.provider === "openrouter" && openrouterKey) {
+        try {
+          console.log(`[Lemur AI] Streaming with OpenRouter model: ${activeModel.id}`);
+          streamed = await streamOpenRouter(
+            messages,
+            systemPrompt,
+            activeModel.id,
+            file,
+            openrouterKey,
+            sendEvent
+          );
+        } catch (orErr: unknown) {
+          const errMsg = orErr instanceof Error ? orErr.message : String(orErr);
+          console.warn(`[Lemur AI] OpenRouter model ${activeModel.id} failed: ${errMsg}. Failing over.`);
+          fallbackWarning = `Model ${activeModel.name} was busy or rate-limited. Switched to Gemini 2.5 Flash backup.`;
+        }
+      } else if (activeModel.provider === "google" && geminiKey) {
+        try {
+          console.log(`[Lemur AI] Streaming with Google Gemini: ${activeModel.id}...`);
+          streamed = await streamDirectGemini(
+            messages,
+            systemPrompt,
+            activeModel.id,
+            file,
+            geminiKey,
+            sendEvent
+          );
+        } catch (gemErr: unknown) {
+          const errMsg = gemErr instanceof Error ? gemErr.message : String(gemErr);
+          console.warn(`[Lemur AI] Primary Gemini ${activeModel.id} failed: ${errMsg}. Triggering fallback.`);
+          fallbackWarning = `Primary Google Gemini was busy. Switched to high-capacity backup.`;
+        }
+      }
+
+      // --- TIER 2: Gemini 2.5 Flash Fallback ---
+      if (!streamed && geminiKey) {
+        if (fallbackWarning) {
+          resolvedModelName = "Gemini 2.5 Flash (Backup)";
+          await sendEvent({
+            type: "warning",
+            warning: fallbackWarning,
+            model: resolvedModelName,
+          });
+        }
+
+        try {
+          console.log("[Lemur AI] Streaming with Direct Google Gemini 2.5 Flash fallback...");
+          streamed = await streamDirectGemini(
+            messages,
+            systemPrompt,
+            "gemini-2.5-flash",
+            file,
+            geminiKey,
+            sendEvent
+          );
+        } catch (gemErr: unknown) {
+          const errMsg = gemErr instanceof Error ? gemErr.message : String(gemErr);
+          console.warn(`[Lemur AI] Gemini 2.5 Flash fallback failed: ${errMsg}. Trying Gemini 3.5 Flash Lite.`);
+        }
+      }
+
+      // --- TIER 3: Gemini 3.5 Flash Lite (Ultra-speed secondary) ---
+      if (!streamed && geminiKey) {
+        try {
+          console.log("[Lemur AI] Streaming with Gemini 3.5 Flash Lite fallback...");
+          streamed = await streamDirectGemini(
+            messages,
+            systemPrompt,
+            "gemini-3.5-flash-lite",
+            file,
+            geminiKey,
+            sendEvent
+          );
+        } catch (liteErr: unknown) {
+          console.warn("[Lemur AI] Gemini 3.5 Flash Lite fallback failed:", liteErr);
+        }
+      }
+
+      // --- TIER 4: OpenRouter High-Capacity 1M-Context Free Fallback (MiniMax M3) ---
+      if (!streamed && openrouterKey) {
+        const fallbackId = "minimax/minimax-m3:free";
+        console.log(`[Lemur AI] Attempting ultimate fallback to OpenRouter: ${fallbackId}`);
+        try {
+          streamed = await streamOpenRouter(
+            messages,
+            systemPrompt,
+            fallbackId,
+            file,
+            openrouterKey,
+            sendEvent
+          );
+        } catch (ultimateErr: unknown) {
+          console.error("[Lemur AI] Ultimate fallback failed:", ultimateErr);
+        }
+      }
+
+      if (!streamed) {
+        await sendEvent({
+          type: "error",
+          error: "All AI model providers are temporarily busy or rate-limited. Please retry in a few moments.",
+        });
+      } else {
+        await sendEvent({ type: "done" });
+      }
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : "An unexpected error occurred.";
+      console.error("[Lemur AI] Streaming error:", errMsg);
+      await sendEvent({
+        type: "error",
+        error: errMsg,
+      });
+    } finally {
+      try {
+        await writer.close();
+      } catch {}
+    }
+  })();
+
+  return new Response(stream.readable, {
+    headers: {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      "Connection": "keep-alive",
+      "X-Accel-Buffering": "no",
+    },
+  });
 }
 
-// Call Google Gemini API directly
-async function callDirectGemini(
-  messages: any[],
+// Direct Google Gemini SSE Streaming Handler
+async function streamDirectGemini(
+  messages: ChatMessagePayload[],
   systemPrompt: string,
-  file: any,
-  apiKey: string
-): Promise<string> {
-  const contents = [];
+  modelName: string,
+  file: AttachedFilePayload | null | undefined,
+  apiKey: string,
+  sendEvent: (payload: StreamEventPayload) => Promise<void>
+): Promise<boolean> {
+  const contents: GeminiContent[] = [];
 
-  // Map messages to Gemini structure
   for (const msg of messages) {
     const role = msg.role === "assistant" ? "model" : "user";
     contents.push({
       role,
-      parts: [{ text: msg.content }]
+      parts: [{ text: msg.content }],
     });
   }
 
-  // Handle file attachment if present
+  // Multimodal file support (vision + documents)
   if (file && file.data && file.type) {
-    // Inject the base64 media part into the very last user request
     const lastContent = contents[contents.length - 1];
     if (lastContent && lastContent.role === "user") {
       const base64Data = file.data.split(",")[1] || file.data;
       lastContent.parts.unshift({
         inlineData: {
           mimeType: file.type,
-          data: base64Data
-        }
-      } as any);
+          data: base64Data,
+        },
+      });
     }
   }
 
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:streamGenerateContent?alt=sse&key=${apiKey}`;
   const payload = {
     contents,
     systemInstruction: {
-      parts: [{ text: systemPrompt }]
+      parts: [{ text: systemPrompt }],
     },
     generationConfig: {
       temperature: 0.7,
-      maxOutputTokens: 2048,
-    }
+      maxOutputTokens: 8192, // Generous 8k tokens for long, comprehensive answers
+    },
+    safetySettings: [
+      { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
+      { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+      { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_ONLY_HIGH" },
+      { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" },
+    ],
   };
 
   const res = await fetch(endpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
   });
 
   if (!res.ok) {
     const errText = await res.text();
-    throw new Error(`Direct Gemini API failed with status ${res.status}: ${errText}`);
+    throw new Error(`Direct Gemini API failed (${res.status}): ${errText}`);
   }
 
-  const json = await res.json();
-  const textResponse = json.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!textResponse) {
-    throw new Error("Invalid response format from Direct Gemini API.");
+  if (!res.body) return false;
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let tokensStreamed = 0;
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || !trimmed.startsWith("data: ")) continue;
+
+      const dataStr = trimmed.slice(6).trim();
+      if (!dataStr || dataStr === "[DONE]") continue;
+
+      try {
+        const parsed = JSON.parse(dataStr);
+        const textPart = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (textPart) {
+          await sendEvent({ type: "chunk", text: textPart });
+          tokensStreamed++;
+        }
+      } catch {
+        // Skip unparseable lines
+      }
+    }
   }
 
-  return textResponse;
+  if (buffer.startsWith("data: ")) {
+    try {
+      const parsed = JSON.parse(buffer.slice(6).trim());
+      const textPart = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (textPart) {
+        await sendEvent({ type: "chunk", text: textPart });
+        tokensStreamed++;
+      }
+    } catch {}
+  }
+
+  return tokensStreamed > 0;
 }
 
-// Call OpenRouter API
-async function callOpenRouter(
-  messages: any[],
+// OpenRouter SSE Streaming Handler with delta.reasoning support & Heartbeat Pings
+async function streamOpenRouter(
+  messages: ChatMessagePayload[],
   systemPrompt: string,
   modelId: string,
-  file: any,
-  apiKey: string
-): Promise<string> {
-  const openrouterMessages = [
+  file: AttachedFilePayload | null | undefined,
+  apiKey: string,
+  sendEvent: (payload: StreamEventPayload) => Promise<void>
+): Promise<boolean> {
+  const openrouterMessages: Array<{
+    role: string;
+    content: string | Array<{ type: string; text?: string; image_url?: { url: string } }>;
+  }> = [
     { role: "system", content: systemPrompt },
-    ...messages.map((m) => {
-      // Clean messages if they have extra tags
-      return { role: m.role, content: m.content };
-    })
+    ...messages.map((m) => ({ role: m.role, content: m.content })),
   ];
 
-  // If a file is uploaded (OpenRouter usually takes images via Markdown url or multi-part contents)
-  // For free OpenRouter models, we can format the last message content as multi-part or append a base64 string
   if (file && file.data && file.type) {
     const lastMsg = openrouterMessages[openrouterMessages.length - 1];
     if (file.type.startsWith("image/")) {
-      // Multi-part content formatting for multimodal support on OpenRouter
       lastMsg.content = [
-        { type: "text", text: lastMsg.content },
+        { type: "text", text: typeof lastMsg.content === "string" ? lastMsg.content : "" },
         {
           type: "image_url",
-          image_url: {
-            url: file.data // Base64 data URL
-          }
-        }
-      ] as any;
+          image_url: { url: file.data },
+        },
+      ];
     } else {
-      // Text file
       const rawText = file.content || "";
       lastMsg.content = `[File attached: ${file.name}]\n\`\`\`\n${rawText}\n\`\`\`\n\n${lastMsg.content}`;
     }
@@ -408,19 +550,91 @@ async function callOpenRouter(
       model: modelId,
       messages: openrouterMessages,
       temperature: 0.7,
+      stream: true,
     }),
   });
 
   if (!res.ok) {
     const errText = await res.text();
-    throw new Error(`OpenRouter failed with status ${res.status}: ${errText}`);
+    throw new Error(`OpenRouter failed (${res.status}): ${errText}`);
   }
 
-  const json = await res.json();
-  const textResponse = json.choices?.[0]?.message?.content;
-  if (!textResponse) {
-    throw new Error("Invalid response format from OpenRouter API.");
+  if (!res.body) return false;
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let tokensStreamed = 0;
+  let inReasoning = false;
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+
+      // OpenRouter keeps sending ": OPENROUTER PROCESSING" comments while in queue
+      if (trimmed.startsWith(":")) {
+        await sendEvent({ type: "ping" });
+        continue;
+      }
+
+      if (!trimmed.startsWith("data: ")) continue;
+
+      const dataStr = trimmed.slice(6).trim();
+      if (dataStr === "[DONE]") continue;
+
+      try {
+        const parsed = JSON.parse(dataStr);
+
+        // Detect upstream error payload
+        if (parsed.error) {
+          throw new Error(parsed.error.message || "OpenRouter provider error");
+        }
+
+        const choice = parsed.choices?.[0];
+        const delta = choice?.delta;
+
+        // 1. Capture Reasoning tokens (Nemotron reasoning, DeepSeek, etc.)
+        const reasoningChunk = delta?.reasoning || delta?.thinking;
+        if (reasoningChunk) {
+          if (!inReasoning) {
+            inReasoning = true;
+            await sendEvent({ type: "chunk", text: "<think>\n" });
+          }
+          await sendEvent({ type: "chunk", text: reasoningChunk });
+          tokensStreamed++;
+        }
+
+        // 2. Capture Content tokens
+        const contentChunk = delta?.content;
+        if (contentChunk) {
+          if (inReasoning) {
+            inReasoning = false;
+            await sendEvent({ type: "chunk", text: "\n</think>\n\n" });
+          }
+          await sendEvent({ type: "chunk", text: contentChunk });
+          tokensStreamed++;
+        }
+      } catch (e: unknown) {
+        // If error occurred before any tokens were streamed, rethrow to trigger failover
+        if (tokensStreamed === 0) {
+          throw e;
+        }
+      }
+    }
   }
 
-  return textResponse;
+  // Ensure unclosed reasoning tag is gracefully closed
+  if (inReasoning) {
+    await sendEvent({ type: "chunk", text: "\n</think>\n\n" });
+  }
+
+  return tokensStreamed > 0;
 }

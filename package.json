@@ -5,8 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "node -e \"const fs = require('fs'); fs.cpSync('.next', 'dist', { recursive: true, force: true });\"",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint src"
   },
   "dependencies": {
     "lucide-react": "^1.18.0",
