@@ -3,17 +3,17 @@
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 :root {
-  --background: #090a0f;
+  --background: #0b0d14;
   --foreground: #f8fafc;
   --primary: #6366f1;
-  --primary-glow: rgba(99, 102, 241, 0.25);
-  --secondary: #10b981;
-  --secondary-glow: rgba(16, 185, 129, 0.2);
-  --card-bg: rgba(19, 21, 30, 0.72);
-  --card-border: rgba(255, 255, 255, 0.08);
+  --primary-glow: rgba(99, 102, 241, 0.28);
+  --secondary: #0ea5e9;
+  --secondary-glow: rgba(14, 165, 233, 0.22);
+  --card-bg: rgba(18, 22, 35, 0.78);
+  --card-border: rgba(255, 255, 255, 0.09);
   --accent: #f43f5e;
-  --sidebar-bg: #0b0c13;
-  --glass-blur: 20px;
+  --sidebar-bg: #0d0f19;
+  --glass-blur: 24px;
 }
 
 [data-theme="light"] {
@@ -231,10 +231,10 @@ textarea:focus-visible {
 
 /* Primary Apple Frosted Glass */
 .ios-glass {
-  background-color: rgba(18, 20, 29, 0.65);
+  background-color: rgba(18, 22, 35, 0.72);
   backdrop-filter: blur(40px) saturate(190%) contrast(105%);
   -webkit-backdrop-filter: blur(40px) saturate(190%) contrast(105%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.11);
   box-shadow: 
     inset 0 1px 1px 0 rgba(255, 255, 255, 0.18),
     0 20px 50px -12px rgba(0, 0, 0, 0.5);
@@ -254,10 +254,10 @@ textarea:focus-visible {
 
 /* Apple Frosted Card (Messages, Dashboard Tiles) - 60fps GPU Composited */
 .ios-glass-card {
-  background-color: rgba(20, 22, 32, 0.72);
+  background-color: rgba(19, 23, 37, 0.75);
   backdrop-filter: blur(14px) saturate(160%);
   -webkit-backdrop-filter: blur(14px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.09);
   box-shadow: 
     inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
     0 8px 24px -6px rgba(0, 0, 0, 0.3);
@@ -269,8 +269,8 @@ textarea:focus-visible {
 }
 
 .ios-glass-card:hover {
-  background-color: rgba(26, 29, 42, 0.82);
-  border-color: rgba(255, 255, 255, 0.15);
+  background-color: rgba(25, 31, 49, 0.85);
+  border-color: rgba(255, 255, 255, 0.16);
   box-shadow: 
     inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
     0 12px 28px -6px rgba(0, 0, 0, 0.4);
@@ -301,7 +301,7 @@ textarea:focus-visible {
 
 /* Floating Action Dock (Chat Composer) */
 .ios-glass-dock {
-  background-color: rgba(18, 20, 28, 0.72);
+  background-color: rgba(18, 22, 35, 0.78);
   backdrop-filter: blur(48px) saturate(200%);
   -webkit-backdrop-filter: blur(48px) saturate(200%);
   border: 1px solid rgba(255, 255, 255, 0.13);
@@ -314,8 +314,8 @@ textarea:focus-visible {
 }
 
 .ios-glass-dock:focus-within {
-  background-color: rgba(22, 25, 36, 0.85);
-  border-color: rgba(99, 102, 241, 0.4);
+  background-color: rgba(22, 27, 43, 0.9);
+  border-color: rgba(99, 102, 241, 0.45);
   box-shadow: 
     inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.28),
     0 0 0 1px rgba(99, 102, 241, 0.3),
@@ -344,11 +344,11 @@ textarea:focus-visible {
 
 /* User Message: Apple iMessage Sapphire Liquid Glass Bubble - GPU Accelerated */
 .ios-glass-bubble {
-  background: linear-gradient(135deg, rgba(79, 70, 229, 0.95) 0%, rgba(59, 130, 246, 0.95) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: linear-gradient(135deg, #4338ca 0%, #2563eb 50%, #0284c7 100%);
+  border: 1px solid rgba(255, 255, 255, 0.28);
   box-shadow: 
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.32),
-    0 8px 24px -6px rgba(79, 70, 229, 0.35);
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.35),
+    0 8px 24px -6px rgba(67, 56, 202, 0.4);
   color: #ffffff;
   transform: translateZ(0);
   backface-visibility: hidden;
@@ -364,7 +364,7 @@ textarea:focus-visible {
 
 /* macOS Frosted Glass Sidebar */
 .glass-sidebar {
-  background-color: rgba(12, 13, 18, 0.7);
+  background-color: rgba(13, 15, 25, 0.78);
   backdrop-filter: blur(48px) saturate(190%);
   -webkit-backdrop-filter: blur(48px) saturate(190%);
   border-right: 1px solid rgba(255, 255, 255, 0.08);

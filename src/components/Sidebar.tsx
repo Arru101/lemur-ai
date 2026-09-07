@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { Plus, Trash2, Globe, Sun, Moon, Download, Search, X, MessageSquare, Edit3, PanelLeftClose, Check } from "lucide-react";
+import { SquarePen, Trash2, Globe, Sun, Moon, Download, Search, X, MessageSquare, Edit3, PanelLeftClose, Check } from "lucide-react";
 import { translations } from "../utils/translations";
 import { triggerConfetti } from "../utils/confetti";
 import LemurLogo from "./LemurLogo";
@@ -250,13 +250,15 @@ export default function Sidebar({
               onNewChat();
               onClose();
             }}
-            className="w-full flex items-center justify-between px-3.5 h-10 rounded-2xl bg-gradient-to-r from-primary via-indigo-600 to-indigo-500 hover:opacity-95 text-white shadow-md shadow-primary/25 border-0 active:scale-[0.98] apple-spring text-xs font-semibold"
+            className="group w-full flex items-center justify-between px-3 h-11 rounded-2xl bg-neutral-900 hover:bg-neutral-800 dark:bg-gradient-to-r dark:from-[#1c2033] dark:via-[#161a2c] dark:to-[#111322] dark:hover:from-[#242a44] dark:hover:via-[#1d223a] dark:hover:to-[#16192c] text-white shadow-md shadow-neutral-900/10 dark:shadow-[0_4px_18px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.16)] border border-black/10 dark:border-white/10 dark:hover:border-indigo-400/35 active:scale-[0.98] apple-spring text-xs font-semibold"
           >
-            <div className="flex items-center gap-2">
-              <Plus className="w-4 h-4 stroke-[2.5]" />
-              <span>{t.newChat}</span>
+            <div className="flex items-center gap-2.5">
+              <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-indigo-500 to-blue-500 flex items-center justify-center text-white shadow-sm transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6">
+                <SquarePen className="w-3.5 h-3.5 stroke-[2.2]" />
+              </div>
+              <span className="tracking-tight text-neutral-100 font-sans">{t.newChat}</span>
             </div>
-            <kbd className="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-white/20 select-none shadow-sm">
+            <kbd className="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-white/15 dark:bg-white/[0.07] border border-white/10 text-neutral-300 select-none shadow-inner">
               ⌘N
             </kbd>
           </button>

@@ -13,19 +13,19 @@ import {
   X, 
   Sparkles, 
   Cpu, 
-  ArrowDown,
-  ArrowUp,
-  Square,
-  Plus,
-  Zap,
-  Brain,
-  Code2,
-  Compass,
-  ChevronDown,
-  Calculator,
-  PenTool,
-  BookOpen,
-  PanelLeft
+  ArrowDown, 
+  ArrowUp, 
+  Square, 
+  SquarePen, 
+  BrainCircuit, 
+  Brain, 
+  Code2, 
+  Compass, 
+  ChevronDown, 
+  Calculator, 
+  PenTool, 
+  BookOpen, 
+  PanelLeft 
 } from "lucide-react";
 
 interface Message {
@@ -1027,9 +1027,11 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
-                className="flex items-center gap-2 text-xs sm:text-sm font-semibold bg-black/[0.03] dark:bg-white/[0.06] hover:bg-black/[0.06] dark:hover:bg-white/[0.1] border border-black/[0.08] dark:border-white/12 px-3 py-1.5 rounded-xl cursor-pointer apple-spring text-foreground max-w-[200px] sm:max-w-none shadow-[inset_0_1px_0_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15)] active:scale-[0.98]"
+                className="group flex items-center gap-2 text-xs sm:text-sm font-semibold bg-black/[0.03] dark:bg-[#131625] hover:bg-black/[0.06] dark:hover:bg-[#1a1f33] border border-black/[0.08] dark:border-white/12 hover:dark:border-indigo-400/30 px-3 py-1.5 rounded-xl cursor-pointer apple-spring text-foreground max-w-[200px] sm:max-w-none shadow-[inset_0_1px_0_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15)] active:scale-[0.98]"
               >
-                {model === "smart-router" && <Zap className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />}
+                {model === "smart-router" && (
+                  <BrainCircuit className="w-3.5 h-3.5 text-indigo-500 dark:text-cyan-400 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6 flex-shrink-0" />
+                )}
                 {model === "gemini-flash" && <Sparkles className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0" />}
                 {model === "gemini-lite" && <Cpu className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400 flex-shrink-0" />}
                 {model === "nemotron-lightning" && <Brain className="w-3.5 h-3.5 text-cyan-500 dark:text-cyan-400 flex-shrink-0" />}
@@ -1047,7 +1049,7 @@ export default function Home() {
                   model === "nemotron-ultra" ? "Nemotron 550B" : model
                 }</span>
                 
-                <ChevronDown className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400 flex-shrink-0 ml-0.5" />
+                <ChevronDown className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400 flex-shrink-0 ml-0.5 transition-transform duration-200 group-hover:translate-y-0.5" />
               </button>
 
               {/* Dropdown Options List */}
@@ -1056,12 +1058,25 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => { setModel("smart-router"); setModelDropdownOpen(false); }}
-                    className={`flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${model === "smart-router" ? "bg-primary/20 text-primary font-semibold border border-primary/30" : "hover:bg-black/[0.05] dark:hover:bg-white/10 text-foreground"}`}
+                    className={`group flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${
+                      model === "smart-router" 
+                        ? "bg-primary/20 text-primary font-semibold border border-primary/30 shadow-sm" 
+                        : "hover:bg-black/[0.05] dark:hover:bg-white/10 text-foreground"
+                    }`}
                   >
-                    <Zap className="w-4 h-4 mt-0.5 text-amber-500 flex-shrink-0" />
-                    <div>
-                      <p className="text-xs font-semibold">{t.smartRouter}</p>
-                      <p className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-tight mt-0.5">Auto-routes to the optimal model for your prompt</p>
+                    <div className="p-1.5 rounded-lg bg-gradient-to-tr from-indigo-500/20 via-sky-500/20 to-cyan-400/20 border border-indigo-500/30 text-indigo-500 dark:text-cyan-400 flex-shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6 mt-0.5">
+                      <BrainCircuit className="w-4 h-4 stroke-[2]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-xs font-semibold">{t.smartRouter}</p>
+                        <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold font-mono bg-cyan-500/15 text-cyan-600 dark:text-cyan-300 border border-cyan-500/25 uppercase tracking-wide">
+                          Auto
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-tight mt-0.5">
+                        Auto-routes to the optimal model for your prompt
+                      </p>
                     </div>
                   </button>
 
@@ -1144,10 +1159,10 @@ export default function Home() {
           <div className="flex items-center gap-2.5">
             <button
               onClick={handleNewChat}
-              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-black/[0.04] dark:bg-white/[0.04] hover:bg-black/[0.08] dark:hover:bg-white/[0.08] border border-black/[0.08] dark:border-white/10 text-foreground apple-spring shadow-sm active:scale-95"
+              className="group flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl bg-black/[0.04] dark:bg-[#131625] hover:bg-black/[0.08] dark:hover:bg-[#1a1f33] border border-black/[0.08] dark:border-white/12 hover:dark:border-indigo-400/40 text-foreground apple-spring shadow-sm active:scale-95"
               title={t.newChat}
             >
-              <Plus className="w-3.5 h-3.5" />
+              <SquarePen className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6" />
               <span className="hidden sm:inline">{t.newChat}</span>
             </button>
             <div className="h-4 w-[1px] bg-black/[0.08] dark:bg-white/10 mx-0.5" />
@@ -1388,10 +1403,14 @@ export default function Home() {
                     <Paperclip className="w-4 h-4" />
                   </button>
 
-                  <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-black/[0.03] dark:bg-white/[0.06] border border-black/[0.08] dark:border-white/10 text-[11px] font-semibold text-neutral-600 dark:text-neutral-300 select-none shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
-                    <Sparkles className="w-3 h-3 text-primary flex-shrink-0" />
+                  <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-black/[0.03] dark:bg-[#131625] border border-black/[0.08] dark:border-white/10 text-[11px] font-semibold text-neutral-600 dark:text-neutral-300 select-none shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
+                    {model === "smart-router" ? (
+                      <BrainCircuit className="w-3 h-3 text-indigo-500 dark:text-cyan-400 flex-shrink-0" />
+                    ) : (
+                      <Sparkles className="w-3 h-3 text-primary flex-shrink-0" />
+                    )}
                     <span className="truncate">{
-                      model === "smart-router" ? "Smart Router" :
+                      model === "smart-router" ? "Smart Router (Auto)" :
                       model === "gemini-flash" ? "Gemini 2.5 Flash" :
                       model === "gemini-lite" ? "Gemini Lite" :
                       model === "nemotron-lightning" ? "Nemotron 3.5" :
