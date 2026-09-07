@@ -82,9 +82,8 @@ export default function Sidebar({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
 
-  // --- Custom Language Dropup States ---
+  // --- Custom Language Dropup State ---
   const [languageDropupOpen, setLanguageDropupOpen] = useState(false);
-  const [languageSearch, setLanguageSearch] = useState("");
   const languageRef = useRef<HTMLDivElement>(null);
 
   // Close language dropup when clicking outside
@@ -99,15 +98,6 @@ export default function Sidebar({
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [languageDropupOpen]);
-
-  // Filtered languages for dropup search
-  const filteredLanguages = useMemo(() => {
-    if (!languageSearch.trim()) return LANGUAGE_OPTIONS;
-    const q = languageSearch.toLowerCase();
-    return LANGUAGE_OPTIONS.filter(
-      (l) => l.name.toLowerCase().includes(q) || l.native.toLowerCase().includes(q) || l.code.toLowerCase().includes(q)
-    );
-  }, [languageSearch]);
 
   const currentLanguageObj = useMemo(() => {
     return LANGUAGE_OPTIONS.find((l) => l.code === language) || LANGUAGE_OPTIONS[0];
@@ -392,61 +382,33 @@ export default function Sidebar({
 
             {/* Floating Dropup Menu */}
             {languageDropupOpen && (
-              <div className="absolute bottom-full left-0 right-0 mb-2 p-2 rounded-2xl ios-glass border border-white/15 shadow-2xl z-40 flex flex-col gap-1.5 msg-enter max-h-80">
-                {/* Search in Languages */}
-                <div className="relative flex items-center rounded-xl bg-white/[0.06] border border-white/10 px-2.5 py-1.5">
-                  <Search className="w-3.5 h-3.5 text-neutral-400 pointer-events-none mr-2 flex-shrink-0 stroke-[1.75]" />
-                  <input
-                    type="text"
-                    value={languageSearch}
-                    onChange={(e) => setLanguageSearch(e.target.value)}
-                    placeholder="Search languages..."
-                    autoFocus
-                    className="w-full text-xs bg-transparent border-0 outline-none ring-0 text-foreground placeholder-neutral-400 font-sans"
-                  />
-                  {languageSearch && (
-                    <button
-                      onClick={() => setLanguageSearch("")}
-                      className="p-0.5 rounded-full hover:bg-white/10 text-neutral-400 hover:text-foreground"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  )}
-                </div>
-
+              <div className="absolute bottom-full left-0 right-0 mb-2 p-2 rounded-2xl ios-glass border border-white/15 shadow-2xl z-40 flex flex-col gap-1 msg-enter max-h-72">
                 {/* Language list */}
-                <div className="overflow-y-auto max-h-56 space-y-0.5 pr-0.5 scrollbar-thin">
-                  {filteredLanguages.length === 0 ? (
-                    <div className="py-4 text-center text-xs text-neutral-400 font-sans">
-                      No language found
-                    </div>
-                  ) : (
-                    filteredLanguages.map((opt) => {
-                      const isSelected = opt.code === language;
-                      return (
-                        <button
-                          key={opt.code}
-                          type="button"
-                          onClick={() => {
-                            onLanguageChange(opt.code);
-                            setLanguageDropupOpen(false);
-                            setLanguageSearch("");
-                          }}
-                          className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs apple-spring text-left ${
-                            isSelected
-                              ? "bg-primary/20 text-primary font-semibold border border-primary/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]"
-                              : "hover:bg-white/[0.08] text-neutral-300 hover:text-white"
-                          }`}
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="font-semibold font-sans">{opt.native}</span>
-                            <span className="text-[11px] text-neutral-400 font-normal truncate font-sans">({opt.name})</span>
-                          </div>
-                          {isSelected && <Check className="w-3.5 h-3.5 text-primary flex-shrink-0 stroke-[2.5]" />}
-                        </button>
-                      );
-                    })
-                  )}
+                <div className="overflow-y-auto max-h-64 space-y-0.5 pr-0.5 scrollbar-thin hardware-scroll">
+                  {LANGUAGE_OPTIONS.map((opt) => {
+                    const isSelected = opt.code === language;
+                    return (
+                      <button
+                        key={opt.code}
+                        type="button"
+                        onClick={() => {
+                          onLanguageChange(opt.code);
+                          setLanguageDropupOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs apple-spring text-left ${
+                          isSelected
+                            ? "bg-primary/20 text-primary font-semibold border border-primary/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]"
+                            : "hover:bg-white/[0.08] text-neutral-300 hover:text-white"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="font-semibold font-sans">{opt.native}</span>
+                          <span className="text-[11px] text-neutral-400 font-normal truncate font-sans">({opt.name})</span>
+                        </div>
+                        {isSelected && <Check className="w-3.5 h-3.5 text-primary flex-shrink-0 stroke-[2.5]" />}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
