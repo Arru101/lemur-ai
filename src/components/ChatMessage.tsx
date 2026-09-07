@@ -177,7 +177,9 @@ function ChatMessageComponent({
 
   return (
     <div
-      className={`group flex w-full gap-3 sm:gap-4 py-2.5 sm:py-3.5 px-1 sm:px-2 transition-all duration-200 message-contain msg-enter ${
+      className={`group flex w-full gap-3 sm:gap-4 py-2.5 sm:py-3.5 px-1 sm:px-2 message-contain ${
+        isLast ? "msg-enter" : ""
+      } ${
         isUser ? "justify-end" : "justify-start"
       }`}
     >
@@ -274,7 +276,7 @@ function ChatMessageComponent({
             <>
               {/* Collapsible Thought Process / Reasoning Accordion */}
               {thinkingText && (
-                <div className="mb-4 rounded-2xl border border-white/10 overflow-hidden bg-white/[0.03] backdrop-blur-xl transition-all shadow-sm">
+                <div className="mb-4 rounded-2xl border border-white/10 overflow-hidden bg-white/[0.04] dark:bg-white/[0.03] transition-colors shadow-sm">
                   <button
                     type="button"
                     onClick={() => setThoughtExpanded((prev) => !prev)}
@@ -385,7 +387,7 @@ function ChatMessageComponent({
                     </a>
                   ),
                   table: ({ children }) => (
-                    <div className="overflow-x-auto my-5 rounded-2xl border border-white/10 shadow-md bg-neutral-100/60 dark:bg-neutral-900/40 backdrop-blur-md">
+                    <div className="overflow-x-auto my-5 rounded-2xl border border-white/10 shadow-md bg-neutral-100/90 dark:bg-neutral-900/80">
                       <table className="min-w-full text-xs sm:text-sm font-sans">
                         {children}
                       </table>
@@ -436,7 +438,7 @@ function ChatMessageComponent({
                     const codeBlockId = `code-${lang}-${codeContent.length}`;
 
                     return (
-                      <div className="my-4 rounded-2xl overflow-hidden border border-white/12 bg-[#0d1017]/95 backdrop-blur-xl shadow-2xl code-container">
+                      <div className="my-4 rounded-2xl overflow-hidden border border-white/12 bg-[#0d1017] shadow-xl code-container transform-gpu">
                         {/* macOS-style Frosted Header */}
                         <div className="flex items-center justify-between px-4 py-2.5 bg-white/[0.04] border-b border-white/10 text-xs select-none">
                           <div className="flex items-center gap-2.5">

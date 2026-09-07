@@ -291,7 +291,7 @@ export default function Sidebar({
         </div>
 
         {/* Conversation List */}
-        <div className="flex-1 overflow-y-auto px-2.5 py-3 space-y-1">
+        <div className="flex-1 overflow-y-auto px-2.5 py-3 space-y-1 hardware-scroll scrollbar-thin overscroll-contain">
           <div className="flex items-center justify-between px-2.5 mb-2">
             <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 select-none">
               {t.chatHistory}

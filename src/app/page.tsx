@@ -280,9 +280,10 @@ export default function Home() {
 
 
 
-  // --- Auto-scroll / Scroll Listeners with rAF throttling (O(1) smooth scrolling) ---
+  // --- Auto-scroll / Scroll Listeners with rAF throttling (O(1) 60fps smooth scrolling) ---
   const isUserScrolledUpRef = useRef(false);
   const scrollRafRef = useRef<number | null>(null);
+  const autoScrollRafRef = useRef<number | null>(null);
 
   const scrollToBottom = (behavior: "smooth" | "auto" = "smooth") => {
     isUserScrolledUpRef.current = false;
@@ -291,23 +292,41 @@ export default function Home() {
 
   const autoScrollToBottom = () => {
     if (!isUserScrolledUpRef.current) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+      if (autoScrollRafRef.current) return;
+      autoScrollRafRef.current = requestAnimationFrame(() => {
+        autoScrollRafRef.current = null;
+        messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+      });
     }
   };
 
-  const handleContainerScroll = () => {
-    if (scrollRafRef.current) return;
-    scrollRafRef.current = requestAnimationFrame(() => {
-      scrollRafRef.current = null;
-      const container = chatContainerRef.current;
-      if (!container) return;
+  // Passive event listener for 60fps/120fps compositor-driven scrolling
+  useEffect(() => {
+    const container = chatContainerRef.current;
+    if (!container) return;
 
-      const isScrolledUp =
-        container.scrollHeight - container.scrollTop - container.clientHeight > 200;
-      isUserScrolledUpRef.current = isScrolledUp;
-      setShowScrollBtn((prev) => (prev !== isScrolledUp ? isScrolledUp : prev));
-    });
-  };
+    const onScroll = () => {
+      if (scrollRafRef.current) return;
+      scrollRafRef.current = requestAnimationFrame(() => {
+        scrollRafRef.current = null;
+        if (!container) return;
+
+        const isScrolledUp =
+          container.scrollHeight - container.scrollTop - container.clientHeight > 180;
+        isUserScrolledUpRef.current = isScrolledUp;
+        setShowScrollBtn((prev) => (prev !== isScrolledUp ? isScrolledUp : prev));
+      });
+    };
+
+    container.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      container.removeEventListener("scroll", onScroll);
+      if (scrollRafRef.current) {
+        cancelAnimationFrame(scrollRafRef.current);
+        scrollRafRef.current = null;
+      }
+    };
+  }, [activeId]);
 
   useEffect(() => {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
@@ -978,7 +997,7 @@ export default function Home() {
       />
 
       {/* Main Workspace Frame */}
-      <main className="flex-1 flex flex-col h-full overflow-hidden bg-background/50 backdrop-blur-3xl min-w-0 relative">
+      <main className="flex-1 flex flex-col h-full overflow-hidden bg-background/70 min-w-0 relative">
         
         {/* Application Header Panel */}
         <header className="flex items-center justify-between h-14 sm:h-16 px-4 sm:px-6 border-b border-white/10 select-none bg-background/50 backdrop-blur-2xl z-10 safe-top safe-left safe-right shadow-sm">
@@ -1142,11 +1161,10 @@ export default function Home() {
         {/* Conversation Box */}
         <div 
           ref={chatContainerRef}
-          onScroll={handleContainerScroll}
           className={`flex-1 ${
             messages.length === 0
               ? "overflow-hidden flex flex-col justify-center items-center p-2 sm:p-4 no-scrollbar"
-              : "overflow-y-auto p-2.5 sm:p-4 md:p-6 2xl:p-8 space-y-4 sm:space-y-6 scrollbar-thin smooth-scroll"
+              : "overflow-y-auto p-2.5 sm:p-4 md:p-6 2xl:p-8 space-y-4 sm:space-y-6 scrollbar-thin hardware-scroll"
           } safe-left safe-right`}
         >
           {messages.length === 0 ? (

@@ -152,21 +152,28 @@ textarea:focus-visible {
   }
 }
 
-/* Zero-lag scrolling & containment utilities */
+/* Zero-lag 60fps/120fps hardware-accelerated scrolling & containment system */
+.hardware-scroll,
 .smooth-scroll {
-  scroll-behavior: smooth;
+  scroll-behavior: auto; /* 1:1 hardware scroll with zero input drag lag */
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: scroll-position;
 }
 
 .gpu-accel {
-  transform: translateZ(0);
+  transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
   will-change: transform, opacity;
 }
 
+/* Off-screen message rendering containment - skips layout/paint for off-screen items */
 .message-contain {
-  contain: layout style;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 120px;
+  contain: layout style paint;
 }
 
 /* macOS & iOS Overlay Scrollbar System */
@@ -244,42 +251,51 @@ textarea:focus-visible {
     0 16px 36px -10px rgba(0, 0, 0, 0.08);
 }
 
-/* Apple Frosted Card (Messages, Dashboard Tiles) */
+/* Apple Frosted Card (Messages, Dashboard Tiles) - 60fps GPU Composited */
 .ios-glass-card {
-  background-color: rgba(255, 255, 255, 0.035);
-  backdrop-filter: blur(32px) saturate(180%);
-  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  background-color: rgba(22, 24, 34, 0.72);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 
     inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
-    0 12px 32px -8px rgba(0, 0, 0, 0.3);
-  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    0 8px 24px -6px rgba(0, 0, 0, 0.3);
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  transition-property: transform, opacity, background-color, border-color, box-shadow;
+  transition-duration: 0.2s;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .ios-glass-card:hover {
-  background-color: rgba(255, 255, 255, 0.06);
+  background-color: rgba(26, 29, 42, 0.82);
   border-color: rgba(255, 255, 255, 0.15);
   box-shadow: 
     inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
-    0 16px 40px -8px rgba(0, 0, 0, 0.4);
+    0 12px 28px -6px rgba(0, 0, 0, 0.4);
 }
 
 [data-theme="light"] .ios-glass-card {
-  background-color: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(32px) saturate(180%);
-  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  background-color: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
   border: 1px solid rgba(0, 0, 0, 0.06);
   box-shadow: 
     inset 0 1px 1px 0 rgba(255, 255, 255, 0.8),
-    0 8px 24px -4px rgba(0, 0, 0, 0.04);
+    0 6px 18px -4px rgba(0, 0, 0, 0.04);
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  transition-property: transform, opacity, background-color, border-color, box-shadow;
+  transition-duration: 0.2s;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 [data-theme="light"] .ios-glass-card:hover {
-  background-color: rgba(255, 255, 255, 0.85);
+  background-color: rgba(255, 255, 255, 0.95);
   border-color: rgba(0, 0, 0, 0.1);
   box-shadow: 
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.9),
-    0 12px 28px -4px rgba(0, 0, 0, 0.07);
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.95),
+    0 10px 24px -4px rgba(0, 0, 0, 0.06);
 }
 
 /* Floating Action Dock (Chat Composer) */
@@ -291,7 +307,9 @@ textarea:focus-visible {
   box-shadow: 
     inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.22),
     0 24px 60px -15px rgba(0, 0, 0, 0.6);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-property: transform, opacity, background-color, border-color, box-shadow;
+  transition-duration: 0.2s;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .ios-glass-dock:focus-within {
@@ -322,16 +340,16 @@ textarea:focus-visible {
     0 20px 48px -10px rgba(79, 70, 229, 0.1);
 }
 
-/* User Message: Apple iMessage Sapphire Liquid Glass Bubble */
+/* User Message: Apple iMessage Sapphire Liquid Glass Bubble - GPU Accelerated */
 .ios-glass-bubble {
-  background: linear-gradient(135deg, rgba(79, 70, 229, 0.92) 0%, rgba(59, 130, 246, 0.92) 100%);
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.95) 0%, rgba(59, 130, 246, 0.95) 100%);
   border: 1px solid rgba(255, 255, 255, 0.24);
   box-shadow: 
     inset 0 1px 1px 0 rgba(255, 255, 255, 0.32),
     0 8px 24px -6px rgba(79, 70, 229, 0.35);
   color: #ffffff;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 /* macOS Frosted Glass Sidebar */
@@ -341,7 +359,9 @@ textarea:focus-visible {
   -webkit-backdrop-filter: blur(48px) saturate(190%);
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: inset -1px 0 0 0 rgba(255, 255, 255, 0.04), 10px 0 30px -10px rgba(0, 0, 0, 0.5);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-property: transform, opacity, width;
+  transition-duration: 0.3s;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 [data-theme="light"] .glass-sidebar {
@@ -350,7 +370,7 @@ textarea:focus-visible {
   box-shadow: 8px 0 24px -8px rgba(0, 0, 0, 0.04);
 }
 
-/* Apple Fluid Ambient Mesh Depth Background */
+/* Apple Fluid Ambient Mesh Depth Background - GPU Isolated Layer */
 .animated-bg,
 .ios-mesh-bg {
   position: fixed;
@@ -359,6 +379,9 @@ textarea:focus-visible {
   overflow: hidden;
   background-color: var(--background);
   pointer-events: none;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  will-change: transform;
 }
 
 .animated-bg::before,
@@ -373,6 +396,7 @@ textarea:focus-visible {
   background: radial-gradient(circle, rgba(99, 102, 241, 0.16) 0%, rgba(99, 102, 241, 0.04) 50%, transparent 70%);
   filter: blur(95px);
   pointer-events: none;
+  transform: translate3d(0, 0, 0);
 }
 
 .animated-bg::after,
@@ -387,6 +411,7 @@ textarea:focus-visible {
   background: radial-gradient(circle, rgba(14, 165, 233, 0.13) 0%, rgba(168, 85, 247, 0.05) 50%, transparent 70%);
   filter: blur(105px);
   pointer-events: none;
+  transform: translate3d(0, 0, 0);
 }
 
 [data-theme="light"] .animated-bg::before,
@@ -401,13 +426,17 @@ textarea:focus-visible {
   filter: blur(100px);
 }
 
-/* Apple Spring Motion Helpers */
+/* Apple Spring Motion Helpers - Targeted Properties Only */
 .apple-spring {
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-property: transform, opacity, background-color, border-color, box-shadow;
+  transition-duration: 0.22s;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .apple-spring-fast {
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-property: transform, opacity, background-color, border-color, box-shadow;
+  transition-duration: 0.14s;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Real-time Streaming pulse cursor */
