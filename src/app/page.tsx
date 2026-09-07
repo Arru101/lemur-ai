@@ -7,7 +7,6 @@ import LemurLogo from "../components/LemurLogo";
 import { translations } from "../utils/translations";
 import { 
   Menu, 
-  Send, 
   Mic, 
   Paperclip, 
   FileText, 
@@ -15,7 +14,9 @@ import {
   Sparkles, 
   Cpu, 
   ArrowDown,
-  StopCircle,
+  ArrowUp,
+  Square,
+  Plus,
   Zap,
   Brain,
   Code2,
@@ -928,33 +929,34 @@ export default function Home() {
       <main className="flex-1 flex flex-col h-full overflow-hidden bg-background min-w-0">
         
         {/* Application Header Panel */}
-        <header className="flex items-center justify-between h-14 sm:h-16 px-3 sm:px-6 border-b border-glass-border select-none bg-background/50 backdrop-blur-md z-10 safe-top safe-left safe-right">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        {/* Application Header Panel */}
+        <header className="flex items-center justify-between h-14 sm:h-15 px-3 sm:px-5 border-b border-black/[0.05] dark:border-white/[0.06] select-none bg-background/80 backdrop-blur-md z-10 safe-top safe-left safe-right">
+          <div className="flex items-center gap-2 min-w-0">
             {/* Sidebar toggle for mobile & tablet */}
             <button
               onClick={() => setSidebarOpen(true)}
-              className="touch-target flex items-center justify-center p-2 rounded-xl lg:hidden hover:bg-neutral-200 dark:hover:bg-neutral-800 text-foreground transition-all duration-200 active:scale-95 flex-shrink-0"
+              className="touch-target flex items-center justify-center p-2 rounded-xl lg:hidden hover:bg-black/[0.04] dark:hover:bg-white/[0.06] text-foreground transition-all duration-150 active:scale-95 flex-shrink-0"
               title="Open Navigation"
             >
               <Menu className="w-5 h-5" />
             </button>
 
-            {/* Custom Premium Model Selector Dropdown */}
+            {/* Custom Modern Model Selector Dropdown */}
             <div className="relative min-w-0" ref={dropdownRef}>
               <button
                 type="button"
                 onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
-                className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-semibold bg-neutral-100 dark:bg-neutral-900 border border-glass-border px-2.5 sm:px-3 py-1.5 rounded-xl cursor-pointer hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-all duration-200 text-foreground glow-primary max-w-[200px] sm:max-w-none"
+                className="flex items-center gap-2 text-xs sm:text-sm font-medium bg-black/[0.03] dark:bg-white/[0.05] hover:bg-black/[0.06] dark:hover:bg-white/[0.08] border border-black/[0.06] dark:border-white/[0.07] px-3 py-1.5 rounded-xl cursor-pointer transition-all duration-150 text-foreground max-w-[200px] sm:max-w-none shadow-sm"
               >
-                {model === "smart-router" && <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 flex-shrink-0" />}
-                {model === "gemini-flash" && <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-400 flex-shrink-0" />}
-                {model === "gemini-lite" && <Cpu className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-400 flex-shrink-0" />}
-                {model === "nemotron-lightning" && <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400 flex-shrink-0" />}
-                {model === "minimax-m3" && <Compass className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 flex-shrink-0" />}
-                {model === "gemma-26b" && <PenTool className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-400 flex-shrink-0" />}
-                {model === "nemotron-ultra" && <Calculator className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 flex-shrink-0" />}
+                {model === "smart-router" && <Zap className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />}
+                {model === "gemini-flash" && <Sparkles className="w-3.5 h-3.5 text-primary flex-shrink-0" />}
+                {model === "gemini-lite" && <Cpu className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />}
+                {model === "nemotron-lightning" && <Brain className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />}
+                {model === "minimax-m3" && <Compass className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />}
+                {model === "gemma-26b" && <PenTool className="w-3.5 h-3.5 text-rose-400 flex-shrink-0" />}
+                {model === "nemotron-ultra" && <Calculator className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />}
                 
-                <span className="font-jakarta truncate">{
+                <span className="font-sans font-medium truncate">{
                   model === "smart-router" ? t.smartRouter :
                   model === "gemini-flash" ? "Gemini 2.5 Flash" :
                   model === "gemini-lite" ? "Gemini 3.5 Lite" :
@@ -964,93 +966,93 @@ export default function Home() {
                   model === "nemotron-ultra" ? "Nemotron 550B" : model
                 }</span>
                 
-                <ChevronDown className="w-3.5 h-3.5 text-neutral-500 flex-shrink-0" />
+                <ChevronDown className="w-3.5 h-3.5 text-neutral-400 flex-shrink-0 ml-0.5" />
               </button>
 
               {/* Dropdown Options List */}
               {modelDropdownOpen && (
-                <div className="absolute left-0 mt-2 w-[calc(100vw-2rem)] max-w-xs sm:w-80 rounded-2xl bg-neutral-100 dark:bg-neutral-950 border border-glass-border shadow-2xl z-30 p-2 flex flex-col gap-1 msg-enter max-h-96 overflow-y-auto scrollbar-thin">
+                <div className="absolute left-0 mt-2 w-[calc(100vw-2rem)] max-w-xs sm:w-80 rounded-2xl bg-white dark:bg-[#12141a] border border-black/[0.08] dark:border-white/[0.09] shadow-2xl z-30 p-1.5 flex flex-col gap-1 msg-enter max-h-96 overflow-y-auto scrollbar-thin">
                   <button
                     type="button"
                     onClick={() => { setModel("smart-router"); setModelDropdownOpen(false); }}
-                    className={`flex items-start gap-3 w-full p-2.5 rounded-xl text-left transition-colors hover:bg-white/5 ${model === "smart-router" ? "bg-primary/15 text-primary" : "text-foreground"}`}
+                    className={`flex items-start gap-2.5 w-full p-2 rounded-xl text-left transition-colors ${model === "smart-router" ? "bg-primary/10 text-primary font-medium" : "hover:bg-black/[0.04] dark:hover:bg-white/[0.05] text-foreground"}`}
                   >
                     <Zap className="w-4 h-4 mt-0.5 text-amber-500 flex-shrink-0" />
                     <div>
-                      <p className="text-xs font-bold font-jakarta">{t.smartRouter}</p>
-                      <p className="text-[10px] text-neutral-500 leading-tight mt-0.5">Auto-routes to the optimal model for your prompt</p>
+                      <p className="text-xs font-semibold">{t.smartRouter}</p>
+                      <p className="text-[10px] text-neutral-400 leading-tight mt-0.5">Auto-routes to the optimal model for your prompt</p>
                     </div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => { setModel("gemini-flash"); setModelDropdownOpen(false); }}
-                    className={`flex items-start gap-3 w-full p-2.5 rounded-xl text-left transition-colors hover:bg-white/5 ${model === "gemini-flash" ? "bg-primary/15 text-primary" : "text-foreground"}`}
+                    className={`flex items-start gap-2.5 w-full p-2 rounded-xl text-left transition-colors ${model === "gemini-flash" ? "bg-primary/10 text-primary font-medium" : "hover:bg-black/[0.04] dark:hover:bg-white/[0.05] text-foreground"}`}
                   >
-                    <Sparkles className="w-4 h-4 mt-0.5 text-purple-400 flex-shrink-0" />
+                    <Sparkles className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
                     <div>
-                      <p className="text-xs font-bold font-jakarta">Gemini 2.5 Flash</p>
-                      <p className="text-[10px] text-neutral-500 leading-tight mt-0.5">Ultra-fast Google SOTA, vision & multimodal</p>
+                      <p className="text-xs font-semibold">Gemini 2.5 Flash</p>
+                      <p className="text-[10px] text-neutral-400 leading-tight mt-0.5">Ultra-fast Google SOTA, vision & multimodal</p>
                     </div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => { setModel("gemini-lite"); setModelDropdownOpen(false); }}
-                    className={`flex items-start gap-3 w-full p-2.5 rounded-xl text-left transition-colors hover:bg-white/5 ${model === "gemini-lite" ? "bg-primary/15 text-primary" : "text-foreground"}`}
+                    className={`flex items-start gap-2.5 w-full p-2 rounded-xl text-left transition-colors ${model === "gemini-lite" ? "bg-primary/10 text-primary font-medium" : "hover:bg-black/[0.04] dark:hover:bg-white/[0.05] text-foreground"}`}
                   >
                     <Cpu className="w-4 h-4 mt-0.5 text-blue-400 flex-shrink-0" />
                     <div>
-                      <p className="text-xs font-bold font-jakarta">Gemini 3.5 Flash Lite</p>
-                      <p className="text-[10px] text-neutral-500 leading-tight mt-0.5">Sub-second instant latency for fast summaries</p>
+                      <p className="text-xs font-semibold">Gemini 3.5 Flash Lite</p>
+                      <p className="text-[10px] text-neutral-400 leading-tight mt-0.5">Sub-second instant latency for fast summaries</p>
                     </div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => { setModel("nemotron-lightning"); setModelDropdownOpen(false); }}
-                    className={`flex items-start gap-3 w-full p-2.5 rounded-xl text-left transition-colors hover:bg-white/5 ${model === "nemotron-lightning" ? "bg-primary/15 text-primary" : "text-foreground"}`}
+                    className={`flex items-start gap-2.5 w-full p-2 rounded-xl text-left transition-colors ${model === "nemotron-lightning" ? "bg-primary/10 text-primary font-medium" : "hover:bg-black/[0.04] dark:hover:bg-white/[0.05] text-foreground"}`}
                   >
                     <Brain className="w-4 h-4 mt-0.5 text-cyan-400 flex-shrink-0" />
                     <div>
-                      <p className="text-xs font-bold font-jakarta">Nemotron 3.5 Lightning (Free)</p>
-                      <p className="text-[10px] text-neutral-500 leading-tight mt-0.5">1M context, rapid reasoning & math logic</p>
+                      <p className="text-xs font-semibold">Nemotron 3.5 Lightning</p>
+                      <p className="text-[10px] text-neutral-400 leading-tight mt-0.5">1M context, rapid reasoning & math logic</p>
                     </div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => { setModel("minimax-m3"); setModelDropdownOpen(false); }}
-                    className={`flex items-start gap-3 w-full p-2.5 rounded-xl text-left transition-colors hover:bg-white/5 ${model === "minimax-m3" ? "bg-primary/15 text-primary" : "text-foreground"}`}
+                    className={`flex items-start gap-2.5 w-full p-2 rounded-xl text-left transition-colors ${model === "minimax-m3" ? "bg-primary/10 text-primary font-medium" : "hover:bg-black/[0.04] dark:hover:bg-white/[0.05] text-foreground"}`}
                   >
                     <Compass className="w-4 h-4 mt-0.5 text-emerald-400 flex-shrink-0" />
                     <div>
-                      <p className="text-xs font-bold font-jakarta">MiniMax M3 (Free)</p>
-                      <p className="text-[10px] text-neutral-500 leading-tight mt-0.5">1M context, multilingual & long essays</p>
+                      <p className="text-xs font-semibold">MiniMax M3</p>
+                      <p className="text-[10px] text-neutral-400 leading-tight mt-0.5">1M context, multilingual & long essays</p>
                     </div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => { setModel("gemma-26b"); setModelDropdownOpen(false); }}
-                    className={`flex items-start gap-3 w-full p-2.5 rounded-xl text-left transition-colors hover:bg-white/5 ${model === "gemma-26b" ? "bg-primary/15 text-primary" : "text-foreground"}`}
+                    className={`flex items-start gap-2.5 w-full p-2 rounded-xl text-left transition-colors ${model === "gemma-26b" ? "bg-primary/10 text-primary font-medium" : "hover:bg-black/[0.04] dark:hover:bg-white/[0.05] text-foreground"}`}
                   >
                     <PenTool className="w-4 h-4 mt-0.5 text-rose-400 flex-shrink-0" />
                     <div>
-                      <p className="text-xs font-bold font-jakarta">Gemma 4 26B (Free)</p>
-                      <p className="text-[10px] text-neutral-500 leading-tight mt-0.5">Google latest open instruction-following model</p>
+                      <p className="text-xs font-semibold">Gemma 4 26B</p>
+                      <p className="text-[10px] text-neutral-400 leading-tight mt-0.5">Google latest open instruction-following model</p>
                     </div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => { setModel("nemotron-ultra"); setModelDropdownOpen(false); }}
-                    className={`flex items-start gap-3 w-full p-2.5 rounded-xl text-left transition-colors hover:bg-white/5 ${model === "nemotron-ultra" ? "bg-primary/15 text-primary" : "text-foreground"}`}
+                    className={`flex items-start gap-2.5 w-full p-2 rounded-xl text-left transition-colors ${model === "nemotron-ultra" ? "bg-primary/10 text-primary font-medium" : "hover:bg-black/[0.04] dark:hover:bg-white/[0.05] text-foreground"}`}
                   >
                     <Calculator className="w-4 h-4 mt-0.5 text-amber-400 flex-shrink-0" />
                     <div>
-                      <p className="text-xs font-bold font-jakarta">Nemotron 3 Ultra 550B (Free)</p>
-                      <p className="text-[10px] text-neutral-500 leading-tight mt-0.5">Massive 550B parameters for deep analysis</p>
+                      <p className="text-xs font-semibold">Nemotron 3 Ultra 550B</p>
+                      <p className="text-[10px] text-neutral-400 leading-tight mt-0.5">Massive 550B parameters for deep analysis</p>
                     </div>
                   </button>
                 </div>
@@ -1058,10 +1060,19 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-emerald-500 font-semibold flex items-center gap-1.5 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="hidden sm:inline font-jakarta">Free Ultra Access</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleNewChat}
+              className="flex items-center gap-1.5 text-xs font-medium px-2.5 sm:px-3 py-1.5 rounded-xl text-neutral-600 dark:text-neutral-400 hover:text-foreground hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-all duration-150"
+              title={t.newChat}
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{t.newChat}</span>
+            </button>
+            <div className="h-3.5 w-[1px] bg-black/[0.08] dark:bg-white/[0.08] mx-0.5" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 select-none">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Online
             </span>
           </div>
         </header>
@@ -1073,72 +1084,87 @@ export default function Home() {
           className="flex-1 overflow-y-auto p-2.5 sm:p-4 md:p-6 2xl:p-8 space-y-4 sm:space-y-6 scrollbar-thin smooth-scroll safe-left safe-right"
         >
           {messages.length === 0 ? (
-            /* Empty Chat State - Suggestive Cards dashboard */
-            <div className="max-w-3xl 2xl:max-w-5xl mx-auto py-8 sm:py-16 md:py-24 flex flex-col items-center text-center space-y-6 sm:space-y-8 select-none msg-enter px-2">
-              
-              <div className="w-14 h-14 sm:w-16 sm:h-16 2xl:w-20 2xl:h-20 rounded-2xl bg-white/5 dark:bg-neutral-900/40 border border-glass-border flex items-center justify-center shadow-xl glow-primary transform hover:scale-105 transition-transform duration-300">
-                <LemurLogo className="w-9 h-9 sm:w-11 sm:h-11 2xl:w-14 2xl:h-14" />
+            /* Empty Chat State - Modern Minimalist Hero */
+            <div className="max-w-3xl 2xl:max-w-4xl mx-auto py-10 sm:py-16 md:py-24 flex flex-col items-center text-center space-y-6 select-none msg-enter px-2">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-black/[0.03] dark:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.08] flex items-center justify-center shadow-sm">
+                <LemurLogo className="w-9 h-9 sm:w-10 sm:h-10" />
               </div>
 
-              <div className="space-y-2.5 sm:space-y-3">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl 2xl:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-foreground via-foreground to-neutral-400 bg-clip-text text-transparent font-jakarta">
+              <div className="space-y-2">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-neutral-900 dark:text-white font-jakarta">
                   {t.suggestHeading}
                 </h1>
-                <p className="text-xs sm:text-sm md:text-base 2xl:text-lg text-neutral-500 max-w-lg 2xl:max-w-2xl mx-auto font-medium">
+                <p className="text-xs sm:text-sm md:text-base text-neutral-500 dark:text-neutral-400 max-w-lg mx-auto font-normal">
                   {t.suggestSub}
                 </p>
               </div>
 
-              {/* Grid Suggestions cards with Lucide Icons */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full max-w-2xl 2xl:max-w-3xl mt-4">
+              {/* Grid Suggestions cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl mt-3">
                 <div 
                   onClick={(e) => handleSubmit(e, t.suggestDescCoding)}
-                  className="glass-effect bg-white/5 dark:bg-neutral-900/20 border-glass-border hover:border-primary/40 hover:-translate-y-1 hover:scale-[1.01] p-3.5 sm:p-4 2xl:p-5 rounded-2xl cursor-pointer text-left transition-all duration-300 ease-out group hover:glow-primary active:scale-[0.98]"
+                  className="bg-black/[0.02] dark:bg-white/[0.03] hover:bg-black/[0.04] dark:hover:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.07] hover:border-black/[0.12] dark:hover:border-white/[0.12] p-4 rounded-2xl cursor-pointer text-left transition-all duration-200 group active:scale-[0.99]"
                 >
-                  <h3 className="text-xs sm:text-sm 2xl:text-base font-bold text-foreground group-hover:text-primary transition-colors flex items-center gap-2 font-jakarta">
-                    <Code2 className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-primary flex-shrink-0" />
-                    {t.suggestTitleCoding}
-                  </h3>
-                  <p className="text-[11px] sm:text-xs 2xl:text-sm text-neutral-500 mt-1 leading-relaxed">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                      <Code2 className="w-4 h-4" />
+                    </div>
+                    <h3 className="text-xs sm:text-sm font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-primary transition-colors font-jakarta">
+                      {t.suggestTitleCoding}
+                    </h3>
+                  </div>
+                  <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-2 line-clamp-2 leading-relaxed">
                     {t.suggestDescCoding}
                   </p>
                 </div>
 
                 <div 
                   onClick={(e) => handleSubmit(e, t.suggestDescMath)}
-                  className="glass-effect bg-white/5 dark:bg-neutral-900/20 border-glass-border hover:border-secondary/40 hover:-translate-y-1 hover:scale-[1.01] p-3.5 sm:p-4 2xl:p-5 rounded-2xl cursor-pointer text-left transition-all duration-300 ease-out group hover:glow-secondary active:scale-[0.98]"
+                  className="bg-black/[0.02] dark:bg-white/[0.03] hover:bg-black/[0.04] dark:hover:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.07] hover:border-black/[0.12] dark:hover:border-white/[0.12] p-4 rounded-2xl cursor-pointer text-left transition-all duration-200 group active:scale-[0.99]"
                 >
-                  <h3 className="text-xs sm:text-sm 2xl:text-base font-bold text-foreground group-hover:text-secondary transition-colors flex items-center gap-2 font-jakarta">
-                    <Calculator className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-secondary flex-shrink-0" />
-                    {t.suggestTitleMath}
-                  </h3>
-                  <p className="text-[11px] sm:text-xs 2xl:text-sm text-neutral-500 mt-1 leading-relaxed">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500">
+                      <Calculator className="w-4 h-4" />
+                    </div>
+                    <h3 className="text-xs sm:text-sm font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-emerald-500 transition-colors font-jakarta">
+                      {t.suggestTitleMath}
+                    </h3>
+                  </div>
+                  <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-2 line-clamp-2 leading-relaxed">
                     {t.suggestDescMath}
                   </p>
                 </div>
 
                 <div 
                   onClick={(e) => handleSubmit(e, t.suggestDescCreative)}
-                  className="glass-effect bg-white/5 dark:bg-neutral-900/20 border-glass-border hover:border-accent/40 hover:-translate-y-1 hover:scale-[1.01] p-3.5 sm:p-4 2xl:p-5 rounded-2xl cursor-pointer text-left transition-all duration-300 ease-out group hover:shadow-[0_0_40px_-5px_rgba(244,63,94,0.3)] active:scale-[0.98]"
+                  className="bg-black/[0.02] dark:bg-white/[0.03] hover:bg-black/[0.04] dark:hover:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.07] hover:border-black/[0.12] dark:hover:border-white/[0.12] p-4 rounded-2xl cursor-pointer text-left transition-all duration-200 group active:scale-[0.99]"
                 >
-                  <h3 className="text-xs sm:text-sm 2xl:text-base font-bold text-foreground group-hover:text-pink-500 transition-colors flex items-center gap-2 font-jakarta">
-                    <PenTool className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-accent flex-shrink-0" />
-                    {t.suggestTitleCreative}
-                  </h3>
-                  <p className="text-[11px] sm:text-xs 2xl:text-sm text-neutral-500 mt-1 leading-relaxed">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-rose-500/10 text-rose-500">
+                      <PenTool className="w-4 h-4" />
+                    </div>
+                    <h3 className="text-xs sm:text-sm font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-rose-500 transition-colors font-jakarta">
+                      {t.suggestTitleCreative}
+                    </h3>
+                  </div>
+                  <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-2 line-clamp-2 leading-relaxed">
                     {t.suggestDescCreative}
                   </p>
                 </div>
 
                 <div 
                   onClick={(e) => handleSubmit(e, t.suggestDescExplain)}
-                  className="glass-effect bg-white/5 dark:bg-neutral-900/20 border-glass-border hover:border-indigo-400/40 hover:-translate-y-1 hover:scale-[1.01] p-3.5 sm:p-4 2xl:p-5 rounded-2xl cursor-pointer text-left transition-all duration-300 ease-out group hover:shadow-[0_0_40px_-5px_rgba(99,102,241,0.3)] active:scale-[0.98]"
+                  className="bg-black/[0.02] dark:bg-white/[0.03] hover:bg-black/[0.04] dark:hover:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.07] hover:border-black/[0.12] dark:hover:border-white/[0.12] p-4 rounded-2xl cursor-pointer text-left transition-all duration-200 group active:scale-[0.99]"
                 >
-                  <h3 className="text-xs sm:text-sm 2xl:text-base font-bold text-foreground group-hover:text-indigo-400 transition-colors flex items-center gap-2 font-jakarta">
-                    <BookOpen className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-indigo-400 flex-shrink-0" />
-                    {t.suggestTitleExplain}
-                  </h3>
-                  <p className="text-[11px] sm:text-xs 2xl:text-sm text-neutral-500 mt-1 leading-relaxed">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-500">
+                      <BookOpen className="w-4 h-4" />
+                    </div>
+                    <h3 className="text-xs sm:text-sm font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-indigo-500 transition-colors font-jakarta">
+                      {t.suggestTitleExplain}
+                    </h3>
+                  </div>
+                  <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-2 line-clamp-2 leading-relaxed">
                     {t.suggestDescExplain}
                   </p>
                 </div>
@@ -1195,33 +1221,33 @@ export default function Home() {
         </div>
 
         {/* Input Text Form Area */}
-        <footer className="px-3 py-2 sm:px-4 sm:py-2.5 border-0 select-none bg-background/50 dark:bg-neutral-950/40 backdrop-blur-xl relative safe-bottom safe-left safe-right transition-all duration-300">
+        <footer className="px-3 py-2 sm:px-4 sm:py-3 bg-transparent relative safe-bottom safe-left safe-right transition-all duration-200">
           
           {/* Scroll to bottom floating action button */}
           {showScrollBtn && (
             <button
               onClick={() => scrollToBottom()}
-              className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/95 dark:bg-neutral-900/95 border-0 text-foreground hover:bg-white dark:hover:bg-neutral-800 transition-all duration-200 shadow-lg glow-primary active:scale-95 z-30"
+              className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white dark:bg-neutral-800 border border-black/[0.08] dark:border-white/[0.08] text-foreground hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-all duration-150 shadow-md active:scale-95 z-30"
               title="Scroll to bottom"
             >
-              <ArrowDown className="w-3.5 h-3.5 animate-bounce text-primary" />
+              <ArrowDown className="w-3.5 h-3.5 text-primary" />
             </button>
           )}
 
-          <div className="max-w-3xl 2xl:max-w-5xl mx-auto relative w-full">
+          <div className="max-w-3xl 2xl:max-w-4xl mx-auto relative w-full">
             
             {/* File Upload Preview bar */}
             {attachedFile && (
-              <div className="absolute bottom-full left-0 right-0 mb-2 px-3 py-1.5 rounded-xl border-0 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-2xl flex items-center justify-between shadow-xl z-20 animate-slide-up">
-                <div className="flex items-center gap-2 min-w-0">
+              <div className="mb-2 px-3 py-2 rounded-xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#181920] flex items-center justify-between shadow-md z-20 animate-slide-up">
+                <div className="flex items-center gap-2.5 min-w-0">
                   {imagePreview ? (
-                    <div className="w-7 h-7 rounded-lg overflow-hidden relative flex-shrink-0 border-0 shadow-sm">
+                    <div className="w-8 h-8 rounded-lg overflow-hidden relative flex-shrink-0 border border-black/[0.05] dark:border-white/[0.05]">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={imagePreview} alt="Upload preview" className="object-cover w-full h-full" />
                     </div>
                   ) : (
-                    <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0 border-0">
-                      <FileText className="w-3.5 h-3.5" />
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                      <FileText className="w-4 h-4" />
                     </div>
                   )}
                   <div className="min-w-0">
@@ -1231,7 +1257,7 @@ export default function Home() {
                 </div>
                 <button
                   onClick={removeAttachment}
-                  className="p-1 rounded-full hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-400 hover:text-foreground transition-colors border-0"
+                  className="p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-neutral-400 hover:text-foreground transition-colors"
                   title="Remove attachment"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -1239,32 +1265,13 @@ export default function Home() {
               </div>
             )}
 
-            {/* Premium Borderless Chat Box Capsule */}
+            {/* Modern Ergonomic Chat Box Capsule */}
             <form 
               onSubmit={handleSubmit}
-              className="glass-input relative flex items-end gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl sm:rounded-3xl border-0 ring-0 outline-none bg-white/80 dark:bg-neutral-900/80 hover:bg-white/90 dark:hover:bg-neutral-900/90 focus-within:bg-white dark:focus-within:bg-neutral-900 backdrop-blur-3xl shadow-[0_4px_24px_-2px_rgba(0,0,0,0.06),0_10px_35px_-4px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_-4px_rgba(0,0,0,0.6),0_16px_48px_-8px_rgba(0,0,0,0.7)] focus-within:shadow-[0_8px_40px_rgba(99,102,241,0.18),0_2px_12px_rgba(0,0,0,0.06)] dark:focus-within:shadow-[0_12px_44px_rgba(99,102,241,0.24),0_4px_20px_rgba(0,0,0,0.8)] transition-all duration-300"
+              className="glass-input relative flex flex-col rounded-2xl sm:rounded-3xl p-2 sm:p-2.5 transition-all duration-200"
             >
-              {/* Left: Attachment button */}
-              <div className="flex items-center pb-0.5">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  accept="image/*,text/*,.md,.json,.js,.ts,.py,.html,.css,.csv"
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  onClick={handleFileClick}
-                  className="p-2 sm:p-2.5 rounded-xl text-neutral-400 hover:text-primary hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60 active:scale-95 transition-all duration-200 border-0 outline-none"
-                  title={t.uploadFile}
-                >
-                  <Paperclip className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
-                </button>
-              </div>
-
-              {/* Center: Streamlined Auto-growing Borderless Textarea */}
-              <div className="flex-1 min-w-0 py-0.5">
+              {/* Top: Auto-growing Textarea */}
+              <div className="w-full px-2 pt-1 pb-1">
                 <textarea
                   ref={chatInputRef}
                   rows={1}
@@ -1273,61 +1280,103 @@ export default function Home() {
                   onKeyDown={handleKeyPress}
                   placeholder={t.placeholder}
                   maxLength={4000}
-                  className="w-full bg-transparent px-1 sm:px-2 text-sm sm:text-base 2xl:text-lg text-foreground placeholder-neutral-400 dark:placeholder-neutral-500 border-0 outline-none ring-0 focus:outline-none focus:ring-0 focus:border-0 resize-none min-h-[36px] max-h-[140px] leading-relaxed font-sans block shadow-none"
+                  className="w-full bg-transparent text-sm sm:text-base text-foreground placeholder:text-neutral-400 dark:placeholder:text-neutral-500 border-0 outline-none ring-0 resize-none min-h-[40px] max-h-[160px] leading-relaxed font-sans block shadow-none"
                 />
               </div>
 
-              {/* Right: Actions Cluster (Character Count, Voice Input, Send Button) */}
-              <div className="flex items-center gap-1 sm:gap-1.5 pb-0.5 flex-shrink-0">
-                {/* Character gauge tracker (shows subtly when typing) */}
-                {input.length > 150 && (
-                  <span className="hidden sm:inline-block text-[10px] text-neutral-400 font-mono select-none px-1">
-                    {input.length}/4000
-                  </span>
-                )}
-
-                {/* Voice Dictation */}
-                <button
-                  type="button"
-                  onClick={handleVoiceInput}
-                  className={`p-2 sm:p-2.5 rounded-xl transition-all duration-200 border-0 outline-none ${
-                    isListening 
-                      ? "text-red-500 bg-red-500/10 shadow-sm" 
-                      : "text-neutral-400 hover:text-foreground hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60 active:scale-95"
-                  }`}
-                  title={t.voiceInput}
-                >
-                  {isListening ? (
-                    <div className="flex items-center gap-1">
-                      <Mic className="w-4 h-4 sm:w-[18px] sm:h-[18px] animate-pulse text-red-500" />
-                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
-                    </div>
-                  ) : (
-                    <Mic className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
-                  )}
-                </button>
-
-                {/* Submit / Cancel response togglers */}
-                {loading ? (
+              {/* Bottom Toolbar: Attachment, Model Badge, Voice Dictation, Character Gauge, Send Button */}
+              <div className="flex items-center justify-between pt-1 px-1">
+                {/* Left: Attachment & Model Badge */}
+                <div className="flex items-center gap-1">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    accept="image/*,text/*,.md,.json,.js,.ts,.py,.html,.css,.csv"
+                    className="hidden"
+                  />
                   <button
                     type="button"
-                    onClick={handleCancelResponse}
-                    className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 2xl:w-10 2xl:h-10 rounded-xl sm:rounded-2xl bg-rose-500/15 text-rose-500 hover:bg-rose-500/25 active:scale-90 transition-all duration-200 border-0 outline-none shadow-sm"
-                    title="Stop generating"
+                    onClick={handleFileClick}
+                    className="p-2 rounded-xl text-neutral-400 hover:text-foreground hover:bg-black/[0.04] dark:hover:bg-white/[0.06] active:scale-95 transition-all duration-150 border-0 outline-none"
+                    title={t.uploadFile}
                   >
-                    <StopCircle className="w-4 h-4 2xl:w-5 2xl:h-5" />
+                    <Paperclip className="w-4 h-4" />
                   </button>
-                ) : (
+
+                  <div className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-medium text-neutral-400 dark:text-neutral-500 select-none">
+                    <Sparkles className="w-3 h-3 text-primary" />
+                    <span>{
+                      model === "smart-router" ? "Smart Router" :
+                      model === "gemini-flash" ? "Gemini 2.5 Flash" :
+                      model === "gemini-lite" ? "Gemini Lite" :
+                      model === "nemotron-lightning" ? "Nemotron 3.5" :
+                      model === "minimax-m3" ? "MiniMax M3" :
+                      model === "gemma-26b" ? "Gemma 4" :
+                      model === "nemotron-ultra" ? "Nemotron 550B" : model
+                    }</span>
+                  </div>
+                </div>
+
+                {/* Right: Char count, Voice, Send/Cancel */}
+                <div className="flex items-center gap-1 sm:gap-1.5">
+                  {input.length > 150 && (
+                    <span className="hidden sm:inline-block text-[10px] text-neutral-400 font-mono select-none px-1">
+                      {input.length}/4000
+                    </span>
+                  )}
+
+                  {/* Voice Dictation */}
                   <button
-                    type="submit"
-                    disabled={(!input.trim() && !attachedFile) || loading}
-                    className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 2xl:w-10 2xl:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-r from-primary via-indigo-600 to-violet-600 hover:from-primary/90 hover:via-indigo-600/90 hover:to-violet-600/90 disabled:opacity-30 disabled:cursor-not-allowed text-white shadow-sm hover:shadow-primary/25 active:scale-90 transition-all duration-200 glow-primary border-0 outline-none"
+                    type="button"
+                    onClick={handleVoiceInput}
+                    className={`p-2 rounded-xl transition-all duration-150 border-0 outline-none ${
+                      isListening 
+                        ? "text-red-500 bg-red-500/10 shadow-sm" 
+                        : "text-neutral-400 hover:text-foreground hover:bg-black/[0.04] dark:hover:bg-white/[0.06] active:scale-95"
+                    }`}
+                    title={t.voiceInput}
                   >
-                    <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-0.5" />
+                    {isListening ? (
+                      <div className="flex items-center gap-1">
+                        <Mic className="w-4 h-4 animate-pulse text-red-500" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+                      </div>
+                    ) : (
+                      <Mic className="w-4 h-4" />
+                    )}
                   </button>
-                )}
+
+                  {/* Submit / Cancel toggler */}
+                  {loading ? (
+                    <button
+                      type="button"
+                      onClick={handleCancelResponse}
+                      className="flex items-center justify-center w-8 h-8 rounded-full bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:opacity-90 active:scale-95 transition-all duration-150 border-0 outline-none shadow-sm"
+                      title="Stop generating"
+                    >
+                      <Square className="w-3.5 h-3.5 fill-current" />
+                    </button>
+                  ) : (
+                    <button
+                      type="submit"
+                      disabled={(!input.trim() && !attachedFile) || loading}
+                      className={`flex items-center justify-center w-8 h-8 rounded-full transition-all duration-150 border-0 outline-none ${
+                        input.trim() || attachedFile
+                          ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:opacity-90 active:scale-95 shadow-sm"
+                          : "bg-black/[0.06] dark:bg-white/[0.08] text-neutral-400 dark:text-neutral-600 cursor-not-allowed"
+                      }`}
+                    >
+                      <ArrowUp className="w-4 h-4 stroke-[2.5]" />
+                    </button>
+                  )}
+                </div>
               </div>
             </form>
+
+            <p className="text-[11px] text-center text-neutral-400 dark:text-neutral-500 mt-2 select-none">
+              Lemur AI can make mistakes. Verify critical information.
+            </p>
           </div>
         </footer>
       </main>

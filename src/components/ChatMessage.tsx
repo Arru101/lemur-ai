@@ -11,8 +11,6 @@ import {
   RotateCcw,
   Volume2,
   VolumeX,
-  Terminal,
-  Cpu,
   Edit,
   CheckSquare,
   XSquare,
@@ -25,6 +23,7 @@ import {
 } from "lucide-react";
 import { highlightCode } from "../utils/highlighter";
 import { triggerConfetti } from "../utils/confetti";
+import LemurLogo from "./LemurLogo";
 
 interface Message {
   role: "user" | "assistant" | "system";
@@ -178,50 +177,45 @@ function ChatMessageComponent({
 
   return (
     <div
-      className={`group flex w-full gap-2.5 sm:gap-4 py-3.5 px-2.5 sm:py-5 sm:px-5 rounded-2xl sm:rounded-3xl transition-all duration-300 message-contain msg-enter ${
-        isUser
-          ? "justify-end"
-          : `relative bg-white/40 dark:bg-white/[0.025] hover:bg-white/65 dark:hover:bg-white/[0.04] backdrop-blur-2xl border-0 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_32px_-6px_rgba(0,0,0,0.4)] ${
-              isGenerating ? "shadow-[0_0_35px_-5px_rgba(99,102,241,0.18)]" : ""
-            }`
+      className={`group flex w-full gap-3 sm:gap-4 py-2.5 sm:py-3.5 px-1 sm:px-2 transition-all duration-200 message-contain msg-enter ${
+        isUser ? "justify-end" : "justify-start"
       }`}
     >
       {/* Assistant Avatar */}
       {!isUser && (
-        <div className="flex-shrink-0 flex items-center justify-center w-7 h-7 sm:w-9 sm:h-9 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-primary via-indigo-500 to-violet-500 text-white shadow-md shadow-primary/25 border-0 select-none mt-0.5">
+        <div className="flex-shrink-0 flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-black/[0.03] dark:bg-white/[0.06] border border-black/[0.06] dark:border-white/[0.08] text-foreground select-none mt-0.5 shadow-sm">
           {isGenerating ? (
-            <Sparkles className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 animate-pulse text-white" />
+            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary animate-pulse" />
           ) : (
-            <Cpu className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 text-white" />
+            <LemurLogo className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
           )}
         </div>
       )}
 
       {/* Message Content Area */}
       <div
-        className={`flex flex-col max-w-[calc(100%-2.25rem)] sm:max-w-[85%] md:max-w-[78%] 2xl:max-w-[82%] gap-1.5 w-full min-w-0 ${
+        className={`flex flex-col max-w-[calc(100%-2.25rem)] sm:max-w-[85%] md:max-w-[78%] 2xl:max-w-[82%] gap-1 w-full min-w-0 ${
           isUser ? "items-end" : "items-start"
         }`}
       >
         {/* Model metadata & Status Header */}
         {!isUser && (
-          <div className="flex items-center justify-between w-full mb-1 select-none flex-wrap gap-1.5">
-            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap min-w-0">
-              <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold font-jakarta bg-primary/10 dark:bg-primary/15 text-primary border-0 truncate max-w-[170px] sm:max-w-none">
-                <Terminal className="w-2.5 h-2.5 sm:w-3 sm:h-3 opacity-90 flex-shrink-0" />
-                <span className="truncate">{message.model || "Lemur AI"}</span>
+          <div className="flex items-center justify-between w-full mb-1 select-none flex-wrap gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 font-jakarta">
+                {message.model || "Lemur AI"}
               </span>
 
               {isGenerating ? (
-                <span className="flex items-center gap-1 sm:gap-1.5 text-[9px] sm:text-[10px] font-semibold text-emerald-500 bg-emerald-500/10 px-1.5 sm:px-2 py-0.5 rounded-full border-0 animate-pulse">
+                <span className="flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 animate-pulse">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  Streaming Live
+                  Streaming
                 </span>
               ) : null}
             </div>
 
             {formattedTime && (
-              <span className="text-[9px] sm:text-[10px] text-neutral-400 dark:text-neutral-500 font-mono tracking-tight ml-auto">
+              <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-mono tracking-tight ml-auto">
                 {formattedTime}
               </span>
             )}
@@ -242,7 +236,7 @@ function ChatMessageComponent({
             isUser
               ? isEditing
                 ? "w-full"
-                : "px-4 sm:px-6 py-3.5 sm:py-4 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-primary via-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/15 border-0 rounded-tr-md sm:rounded-tr-md text-left font-sans"
+                : "px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl sm:rounded-3xl bg-neutral-100 dark:bg-[#1a1c24] text-neutral-900 dark:text-neutral-100 border border-black/[0.06] dark:border-white/[0.08] shadow-sm text-left font-sans"
               : "chat-prose max-w-none"
           }`}
         >
@@ -508,14 +502,14 @@ function ChatMessageComponent({
           )}
         </div>
 
-        {/* Floating Glass Action Bar (shown when not actively streaming) */}
+        {/* Modern Minimal Action Bar */}
         {!isGenerating && (
-          <div className="flex items-center gap-1 mt-2.5 select-none text-neutral-500 dark:text-neutral-400 opacity-90 md:opacity-0 md:group-hover:opacity-100 touch-visible transition-all duration-200 p-1 rounded-xl bg-neutral-200/70 dark:bg-neutral-800/80 backdrop-blur-md shadow-md border-0 w-fit">
+          <div className="flex items-center gap-0.5 mt-2 select-none text-neutral-400 dark:text-neutral-500 opacity-90 md:opacity-0 md:group-hover:opacity-100 touch-visible transition-all duration-150 w-fit">
             {/* User Edit */}
             {isUser && !isEditing && onEdit && (
               <button
                 onClick={() => setIsEditing(true)}
-                className="touch-target p-2 sm:p-1.5 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-800 hover:text-foreground transition-all duration-150 active:scale-95"
+                className="p-1.5 rounded-lg hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-foreground transition-colors"
                 title="Edit Prompt"
               >
                 <Edit className="w-3.5 h-3.5" />
@@ -526,7 +520,7 @@ function ChatMessageComponent({
             {!isEditing && (
               <button
                 onClick={(e) => copyToClipboard(e, displayContent)}
-                className="touch-target p-2 sm:p-1.5 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-800 hover:text-foreground transition-all duration-150 active:scale-95"
+                className="p-1.5 rounded-lg hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-foreground transition-colors"
                 title="Copy Message"
               >
                 {copiedText ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
@@ -537,7 +531,7 @@ function ChatMessageComponent({
             {!isUser && !isEditing && (
               <button
                 onClick={onToggleSpeech}
-                className={`touch-target flex items-center gap-1.5 p-2 sm:p-1.5 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-800 hover:text-foreground transition-all duration-150 active:scale-95 ${
+                className={`flex items-center gap-1.5 p-1.5 rounded-lg hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-foreground transition-colors ${
                   isSpeaking ? "text-primary bg-primary/10" : ""
                 }`}
                 title={isSpeaking ? "Stop Reading" : "Read Aloud"}
@@ -562,7 +556,7 @@ function ChatMessageComponent({
               <>
                 <button
                   onClick={() => onFeedback("up")}
-                  className={`touch-target p-2 sm:p-1.5 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-800 hover:text-foreground transition-all duration-150 active:scale-95 ${
+                  className={`p-1.5 rounded-lg hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-foreground transition-colors ${
                     message.feedback === "up" ? "text-emerald-500 bg-emerald-500/10" : ""
                   }`}
                   title="Helpful response"
@@ -571,7 +565,7 @@ function ChatMessageComponent({
                 </button>
                 <button
                   onClick={() => onFeedback("down")}
-                  className={`touch-target p-2 sm:p-1.5 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-800 hover:text-foreground transition-all duration-150 active:scale-95 ${
+                  className={`p-1.5 rounded-lg hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-foreground transition-colors ${
                     message.feedback === "down" ? "text-rose-500 bg-rose-500/10" : ""
                   }`}
                   title="Not helpful"
@@ -585,7 +579,7 @@ function ChatMessageComponent({
             {!isUser && !isEditing && isLast && onRegenerate && (
               <button
                 onClick={onRegenerate}
-                className="touch-target p-2 sm:p-1.5 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-800 hover:text-foreground transition-all duration-150 active:scale-95"
+                className="p-1.5 rounded-lg hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-foreground transition-colors"
                 title="Regenerate Response"
               >
                 <RotateCcw className="w-3.5 h-3.5" />

@@ -151,14 +151,14 @@ export default function Sidebar({
         }`}
       >
         {/* Brand Header */}
-        <div className="flex items-center justify-between h-14 sm:h-16 px-4 sm:px-5 border-b border-black/[0.04] dark:border-white/[0.04]">
+        <div className="flex items-center justify-between h-14 sm:h-15 px-4 border-b border-black/[0.05] dark:border-white/[0.06]">
           <div className="flex items-center gap-2.5">
-            <LemurLogo className="w-7 h-7 sm:w-8 sm:h-8 drop-shadow-[0_0_12px_var(--primary-glow)]" />
+            <LemurLogo className="w-7 h-7" />
             <div className="flex items-center gap-1.5">
-              <span className="text-base sm:text-lg font-extrabold tracking-tight bg-gradient-to-r from-foreground via-foreground to-neutral-400 bg-clip-text text-transparent font-jakarta">
+              <span className="text-base font-bold tracking-tight text-neutral-900 dark:text-white font-jakarta">
                 {t.appName}
               </span>
-              <span className="px-1.5 py-0.5 rounded-md text-[9px] font-bold font-mono bg-primary/10 text-primary uppercase tracking-wide">
+              <span className="px-1.5 py-0.5 rounded-md text-[9px] font-semibold font-mono bg-black/[0.05] dark:bg-white/[0.08] text-neutral-600 dark:text-neutral-300 uppercase tracking-wide">
                 PRO
               </span>
             </div>
@@ -166,7 +166,7 @@ export default function Sidebar({
           {/* Close button for mobile */}
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl lg:hidden hover:bg-black/5 dark:hover:bg-white/5 text-neutral-400 hover:text-foreground transition-all duration-200 active:scale-95 flex items-center justify-center border-0 outline-none"
+            className="p-1.5 rounded-xl lg:hidden hover:bg-black/5 dark:hover:bg-white/5 text-neutral-400 hover:text-foreground transition-all duration-150 active:scale-95 flex items-center justify-center border-0 outline-none"
             title="Close navigation"
           >
             <X className="w-5 h-5" />
@@ -174,32 +174,32 @@ export default function Sidebar({
         </div>
 
         {/* Action Button: New Chat & Search */}
-        <div className="px-3.5 py-3 space-y-2.5 border-b border-black/[0.04] dark:border-white/[0.04]">
+        <div className="px-3 py-3 space-y-2 border-b border-black/[0.05] dark:border-white/[0.06]">
           <button
             onClick={() => {
               onNewChat();
               onClose();
             }}
-            className="w-full flex items-center justify-between px-3.5 h-10 rounded-xl bg-gradient-to-r from-primary via-indigo-600 to-violet-600 hover:from-primary/95 hover:via-indigo-600/95 hover:to-violet-600/95 text-white font-medium text-xs sm:text-sm shadow-sm hover:shadow-md hover:shadow-primary/25 active:scale-[0.98] transition-all duration-200 border-0 outline-none glow-primary"
+            className="w-full flex items-center justify-between px-3 h-9 rounded-xl bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:opacity-90 active:scale-[0.98] transition-all duration-150 border-0 outline-none shadow-sm text-xs font-medium"
           >
             <div className="flex items-center gap-2">
               <Plus className="w-4 h-4" />
               <span>{t.newChat}</span>
             </div>
-            <kbd className="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/20 text-white/90 select-none">
+            <kbd className="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/20 dark:bg-black/10 select-none">
               ⌘N
             </kbd>
           </button>
 
           {/* Search bar for Filtering conversations */}
-          <div className="relative flex items-center rounded-xl bg-black/[0.03] dark:bg-white/[0.04] hover:bg-black/[0.05] dark:hover:bg-white/[0.06] focus-within:bg-white dark:focus-within:bg-white/[0.08] focus-within:shadow-sm transition-all duration-200">
-            <Search className="absolute left-3 w-3.5 h-3.5 text-neutral-400 pointer-events-none" />
+          <div className="relative flex items-center rounded-xl bg-black/[0.03] dark:bg-white/[0.04] hover:bg-black/[0.05] dark:hover:bg-white/[0.06] border border-black/[0.04] dark:border-white/[0.06] focus-within:border-black/[0.12] dark:focus-within:border-white/[0.12] transition-all duration-150">
+            <Search className="absolute left-2.5 w-3.5 h-3.5 text-neutral-400 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search conversations..."
-              className="w-full pl-8 pr-7 py-2 text-xs bg-transparent border-0 outline-none ring-0 text-foreground placeholder-neutral-400 font-sans"
+              className="w-full pl-8 pr-7 py-1.5 text-xs bg-transparent border-0 outline-none ring-0 text-foreground placeholder-neutral-400 font-sans"
             />
             {searchQuery && (
               <button
@@ -237,16 +237,16 @@ export default function Sidebar({
                   key={chat.id}
                   onClick={() => !isEditing && onSelect(chat.id)}
                   onDoubleClick={() => startRename(chat.id, chat.title)}
-                  className={`group relative flex items-center gap-2.5 px-3 py-2 rounded-xl cursor-pointer select-none transition-all duration-200 border-0 ${
+                  className={`group relative flex items-center gap-2.5 px-3 py-2 rounded-xl cursor-pointer select-none transition-all duration-150 border-0 ${
                     isActive
-                      ? "bg-primary/10 dark:bg-primary/[0.14] text-primary dark:text-violet-300 font-medium shadow-sm"
+                      ? "bg-black/[0.06] dark:bg-white/[0.08] text-foreground font-medium shadow-sm"
                       : "hover:bg-black/[0.03] dark:hover:bg-white/[0.04] text-neutral-600 dark:text-neutral-400 hover:text-foreground"
                   }`}
                 >
                   {isActive ? (
-                    <span className="w-1 h-3.5 rounded-full bg-gradient-to-b from-primary to-indigo-500 flex-shrink-0" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
                   ) : (
-                    <MessageSquare className="w-3.5 h-3.5 flex-shrink-0 opacity-60 group-hover:opacity-100" />
+                    <MessageSquare className="w-3.5 h-3.5 flex-shrink-0 opacity-40 group-hover:opacity-80" />
                   )}
                   
                   {isEditing ? (
