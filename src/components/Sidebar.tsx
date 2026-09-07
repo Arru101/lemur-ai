@@ -221,6 +221,19 @@ export default function Sidebar({
           </div>
           
           <div className="flex items-center gap-1">
+            {/* Quick New Chat Button (Icon Only) */}
+            <button
+              onClick={() => {
+                onNewChat();
+                onClose();
+              }}
+              className="flex items-center justify-center p-2 rounded-xl hover:bg-black/[0.05] dark:hover:bg-white/10 text-neutral-700 dark:text-neutral-300 hover:text-foreground apple-spring active:scale-95 border-0 outline-none group"
+              title="New Chat (⌘N)"
+              aria-label="New Chat"
+            >
+              <SquarePen className="w-4 h-4 stroke-[1.9] group-hover:scale-110 group-hover:text-primary transition-all duration-200" />
+            </button>
+
             {/* Desktop Collapse Button */}
             {onToggleCollapse && (
               <button
@@ -243,44 +256,41 @@ export default function Sidebar({
           </div>
         </div>
 
-        {/* Action Button: New Chat & Search */}
-        <div className="px-3.5 py-3 space-y-2.5 border-b border-black/[0.06] dark:border-white/[0.08]">
-          <button
-            onClick={() => {
-              onNewChat();
-              onClose();
-            }}
-            className="group w-full flex items-center justify-between px-3 h-11 rounded-2xl bg-neutral-900 hover:bg-neutral-800 dark:bg-gradient-to-r dark:from-[#1c2033] dark:via-[#161a2c] dark:to-[#111322] dark:hover:from-[#242a44] dark:hover:via-[#1d223a] dark:hover:to-[#16192c] text-white shadow-md shadow-neutral-900/10 dark:shadow-[0_4px_18px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.16)] border border-black/10 dark:border-white/10 dark:hover:border-indigo-400/35 active:scale-[0.98] apple-spring text-xs font-semibold"
-          >
-            <div className="flex items-center gap-2.5">
-              <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-indigo-500 to-blue-500 flex items-center justify-center text-white shadow-sm transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6">
-                <SquarePen className="w-3.5 h-3.5 stroke-[2.2]" />
-              </div>
-              <span className="tracking-tight text-neutral-100 font-sans">{t.newChat}</span>
+        {/* Action Bar: Unified Search + New Chat (Icon Only) */}
+        <div className="px-3.5 py-2.5 border-b border-black/[0.06] dark:border-white/[0.08]">
+          <div className="flex items-center gap-2">
+            {/* Search bar for Filtering conversations */}
+            <div className="relative flex-1 flex items-center h-9 rounded-xl bg-white/75 dark:bg-white/[0.05] hover:bg-white/90 dark:hover:bg-white/[0.08] focus-within:bg-white dark:focus-within:bg-white/[0.08] border border-black/[0.08] dark:border-white/[0.08] focus-within:border-primary/50 dark:focus-within:border-primary/50 transition-all duration-150 shadow-xs">
+              <Search className="absolute left-2.5 w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search conversations..."
+                className="w-full pl-8 pr-7 py-1.5 text-xs bg-transparent border-0 outline-none ring-0 text-foreground placeholder-neutral-500 dark:placeholder-neutral-400 font-sans"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2 p-0.5 rounded-full hover:bg-black/[0.06] dark:hover:bg-white/10 text-neutral-500 dark:text-neutral-400 hover:text-foreground"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
             </div>
-            <kbd className="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-white/15 dark:bg-white/[0.07] border border-white/10 text-neutral-300 select-none shadow-inner">
-              ⌘N
-            </kbd>
-          </button>
 
-          {/* Search bar for Filtering conversations */}
-          <div className="relative flex items-center rounded-xl bg-black/[0.03] dark:bg-white/[0.05] hover:bg-black/[0.05] dark:hover:bg-white/[0.08] focus-within:bg-black/[0.05] dark:focus-within:bg-white/[0.08] focus-within:ring-1 focus-within:ring-primary/40 transition-all duration-150 shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]">
-            <Search className="absolute left-2.5 w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search conversations..."
-              className="w-full pl-8 pr-7 py-2 text-xs bg-transparent border-0 outline-none ring-0 text-foreground placeholder-neutral-500 dark:placeholder-neutral-400 font-sans"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-2 p-0.5 rounded-full hover:bg-black/[0.06] dark:hover:bg-white/10 text-neutral-500 dark:text-neutral-400 hover:text-foreground"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            )}
+            {/* Icon-Only New Chat Button */}
+            <button
+              onClick={() => {
+                onNewChat();
+                onClose();
+              }}
+              title="New Chat (⌘N)"
+              aria-label="New Chat"
+              className="group w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-xl bg-neutral-900 hover:bg-neutral-800 dark:bg-gradient-to-tr dark:from-[#1e2338] dark:to-[#161a2c] dark:hover:from-[#282f4c] dark:hover:to-[#1e2338] text-white shadow-xs dark:shadow-[0_4px_16px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.18)] border border-black/10 dark:border-white/12 active:scale-95 apple-spring transition-all"
+            >
+              <SquarePen className="w-4 h-4 stroke-[2.2] text-white dark:text-indigo-300 group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300" />
+            </button>
           </div>
         </div>
 
@@ -309,10 +319,10 @@ export default function Sidebar({
                   key={chat.id}
                   onClick={() => !isEditing && onSelect(chat.id)}
                   onDoubleClick={() => startRename(chat.id, chat.title)}
-                  className={`group relative flex items-center gap-2.5 px-3 py-2 rounded-xl cursor-pointer select-none apple-spring border-0 ${
+                  className={`group relative flex items-center gap-2.5 px-3 py-2 rounded-xl cursor-pointer select-none apple-spring transition-all duration-150 ${
                     isActive
-                      ? "bg-black/[0.06] dark:bg-white/[0.08] text-foreground font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]"
-                      : "hover:bg-black/[0.04] dark:hover:bg-white/[0.04] text-neutral-600 dark:text-neutral-400 hover:text-foreground"
+                      ? "bg-white dark:bg-white/[0.08] text-foreground font-semibold shadow-[0_1px_4px_rgba(15,23,42,0.08),0_0_0_1px_rgba(15,23,42,0.05)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.15)] border border-black/[0.06] dark:border-transparent"
+                      : "hover:bg-black/[0.04] dark:hover:bg-white/[0.04] text-neutral-600 dark:text-neutral-400 hover:text-foreground border border-transparent"
                   }`}
                 >
                   {isActive ? (

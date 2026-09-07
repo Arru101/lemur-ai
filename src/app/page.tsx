@@ -1000,7 +1000,7 @@ export default function Home() {
       <main className="flex-1 flex flex-col h-full overflow-hidden bg-background/70 min-w-0 relative">
         
         {/* Application Header Panel */}
-        <header className="flex items-center justify-between h-14 sm:h-16 px-4 sm:px-6 border-b border-black/[0.06] dark:border-white/10 select-none bg-background/80 dark:bg-background/50 backdrop-blur-2xl z-10 safe-top safe-left safe-right shadow-sm">
+        <header className="flex items-center justify-between h-14 sm:h-16 px-4 sm:px-6 border-b border-black/[0.07] dark:border-white/10 select-none bg-[#eaedf5]/85 dark:bg-background/50 backdrop-blur-2xl z-10 safe-top safe-left safe-right shadow-sm">
           <div className="flex items-center gap-2.5 min-w-0">
             {/* Sidebar toggle for mobile & tablet */}
             <button
@@ -1159,11 +1159,11 @@ export default function Home() {
           <div className="flex items-center gap-2.5">
             <button
               onClick={handleNewChat}
-              className="group flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl bg-black/[0.04] dark:bg-[#131625] hover:bg-black/[0.08] dark:hover:bg-[#1a1f33] border border-black/[0.08] dark:border-white/12 hover:dark:border-indigo-400/40 text-foreground apple-spring shadow-sm active:scale-95"
-              title={t.newChat}
+              className="group w-9 h-9 flex items-center justify-center rounded-xl bg-black/[0.04] dark:bg-[#131625] hover:bg-black/[0.08] dark:hover:bg-[#1a1f33] border border-black/[0.08] dark:border-white/12 hover:dark:border-indigo-400/40 text-foreground apple-spring shadow-sm active:scale-95"
+              title={`${t.newChat} (⌘N)`}
+              aria-label={t.newChat}
             >
-              <SquarePen className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6" />
-              <span className="hidden sm:inline">{t.newChat}</span>
+              <SquarePen className="w-4 h-4 text-indigo-500 dark:text-indigo-400 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6 stroke-[2]" />
             </button>
             <div className="h-4 w-[1px] bg-black/[0.08] dark:bg-white/10 mx-0.5" />
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 select-none shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
