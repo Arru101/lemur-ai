@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { Plus, Trash2, Globe, Sun, Moon, Download, Search, X, MessageSquare, Edit3, PanelLeftClose, Check, ChevronUp } from "lucide-react";
+import { Plus, Trash2, Globe, Sun, Moon, Download, Search, X, MessageSquare, Edit3, PanelLeftClose, Check } from "lucide-react";
 import { translations } from "../utils/translations";
 import { triggerConfetti } from "../utils/confetti";
 import LemurLogo from "./LemurLogo";
@@ -82,22 +82,24 @@ export default function Sidebar({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
 
-  // --- Custom Language Dropup State ---
+  // --- Custom Language & Export Dropup State ---
   const [languageDropupOpen, setLanguageDropupOpen] = useState(false);
   const languageRef = useRef<HTMLDivElement>(null);
+  const exportRef = useRef<HTMLDivElement>(null);
 
-  // Close language dropup when clicking outside
+  // Close language and export dropups when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (languageRef.current && !languageRef.current.contains(e.target as Node)) {
         setLanguageDropupOpen(false);
       }
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) {
+        setShowExportMenu(false);
+      }
     };
-    if (languageDropupOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
+    document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [languageDropupOpen]);
+  }, []);
 
   const currentLanguageObj = useMemo(() => {
     return LANGUAGE_OPTIONS.find((l) => l.code === language) || LANGUAGE_OPTIONS[0];
@@ -242,13 +244,13 @@ export default function Sidebar({
         </div>
 
         {/* Action Button: New Chat & Search */}
-        <div className="px-3.5 py-3 space-y-2.5 border-b border-white/10">
+        <div className="px-3.5 py-3 space-y-2.5 border-b border-white/[0.08]">
           <button
             onClick={() => {
               onNewChat();
               onClose();
             }}
-            className="w-full flex items-center justify-between px-3.5 h-10 rounded-2xl bg-primary hover:bg-primary/90 text-white shadow-[0_4px_16px_rgba(99,102,241,0.35),inset_0_1px_1px_rgba(255,255,255,0.35)] border border-primary/40 active:scale-[0.98] apple-spring text-xs font-semibold"
+            className="w-full flex items-center justify-between px-3.5 h-10 rounded-2xl bg-gradient-to-r from-primary via-indigo-600 to-indigo-500 hover:opacity-95 text-white shadow-md shadow-primary/25 border-0 active:scale-[0.98] apple-spring text-xs font-semibold"
           >
             <div className="flex items-center gap-2">
               <Plus className="w-4 h-4 stroke-[2.5]" />
@@ -260,7 +262,7 @@ export default function Sidebar({
           </button>
 
           {/* Search bar for Filtering conversations */}
-          <div className="relative flex items-center rounded-xl bg-white/[0.04] dark:bg-white/[0.06] hover:bg-white/[0.08] border border-white/10 focus-within:border-primary/40 focus-within:bg-white/[0.08] transition-all duration-150 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]">
+          <div className="relative flex items-center rounded-xl bg-white/[0.04] dark:bg-white/[0.05] hover:bg-white/[0.08] focus-within:bg-white/[0.08] focus-within:ring-1 focus-within:ring-primary/40 transition-all duration-150 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]">
             <Search className="absolute left-2.5 w-3.5 h-3.5 text-neutral-400 pointer-events-none" />
             <input
               type="text"
@@ -305,10 +307,10 @@ export default function Sidebar({
                   key={chat.id}
                   onClick={() => !isEditing && onSelect(chat.id)}
                   onDoubleClick={() => startRename(chat.id, chat.title)}
-                  className={`group relative flex items-center gap-2.5 px-3 py-2 rounded-xl cursor-pointer select-none apple-spring border ${
+                  className={`group relative flex items-center gap-2.5 px-3 py-2 rounded-xl cursor-pointer select-none apple-spring border-0 ${
                     isActive
-                      ? "bg-white/[0.1] text-foreground font-semibold border-white/20 shadow-[0_4px_16px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.2)]"
-                      : "border-transparent hover:bg-white/[0.05] text-neutral-400 hover:text-foreground"
+                      ? "bg-white/[0.09] dark:bg-white/[0.08] text-foreground font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]"
+                      : "hover:bg-white/[0.04] text-neutral-400 hover:text-foreground"
                   }`}
                 >
                   {isActive ? (
@@ -361,125 +363,145 @@ export default function Sidebar({
           )}
         </div>
 
-        {/* Settings Footer Panel */}
-        <div className="p-3 sm:p-3.5 border-t border-white/10 space-y-2 bg-black/20 backdrop-blur-xl safe-bottom">
-          {/* Custom Apple Liquid Glass Language Dropup */}
-          <div className="relative" ref={languageRef}>
+        {/* Sleek Minimalist Footer Action Dock */}
+        <div className="p-3 sm:p-3.5 border-t border-white/[0.08] space-y-2 bg-black/10 backdrop-blur-xl safe-bottom">
+          {/* Unified Glass Utility Action Bar */}
+          <div className="flex items-center justify-around p-1.5 rounded-2xl bg-white/[0.04] dark:bg-white/[0.05] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+            
+            {/* Language Icon Trigger */}
+            <div className="relative" ref={languageRef}>
+              <button
+                type="button"
+                onClick={() => setLanguageDropupOpen((prev) => !prev)}
+                className={`relative flex items-center justify-center w-10 h-10 rounded-xl apple-spring ${
+                  languageDropupOpen
+                    ? "bg-primary/25 text-primary"
+                    : "hover:bg-white/10 text-neutral-400 hover:text-foreground"
+                } active:scale-95 border-0 outline-none`}
+                title={`${t.language}: ${currentLanguageObj.native}`}
+              >
+                <Globe className="w-4 h-4 stroke-[1.75]" />
+                <span className="absolute bottom-1 right-1 text-[8px] font-mono font-bold uppercase text-primary tracking-tighter leading-none">
+                  {currentLanguageObj.code}
+                </span>
+              </button>
+
+              {/* Floating Language Dropup Menu */}
+              {languageDropupOpen && (
+                <div className="absolute bottom-full left-0 mb-3 w-56 p-1.5 rounded-2xl ios-glass border border-white/15 shadow-2xl z-50 flex flex-col gap-0.5 msg-enter max-h-72">
+                  <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-neutral-400 select-none border-b border-white/10">
+                    {t.language}
+                  </div>
+                  <div className="overflow-y-auto max-h-56 space-y-0.5 pr-0.5 scrollbar-thin hardware-scroll mt-1">
+                    {LANGUAGE_OPTIONS.map((opt) => {
+                      const isSelected = opt.code === language;
+                      return (
+                        <button
+                          key={opt.code}
+                          type="button"
+                          onClick={() => {
+                            onLanguageChange(opt.code);
+                            setLanguageDropupOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs apple-spring text-left border-0 ${
+                            isSelected
+                              ? "bg-primary/20 text-primary font-semibold"
+                              : "hover:bg-white/[0.08] text-neutral-300 hover:text-white"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="font-semibold font-sans">{opt.native}</span>
+                            <span className="text-[11px] text-neutral-400 font-normal truncate font-sans">({opt.name})</span>
+                          </div>
+                          {isSelected && <Check className="w-3.5 h-3.5 text-primary flex-shrink-0 stroke-[2.5]" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Theme Toggle Icon Trigger */}
             <button
               type="button"
-              onClick={() => setLanguageDropupOpen((prev) => !prev)}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-foreground transition-all duration-150 apple-spring cursor-pointer shadow-sm active:scale-[0.99]"
+              onClick={onThemeToggle}
+              className="group flex items-center justify-center w-10 h-10 rounded-xl hover:bg-white/10 text-neutral-400 hover:text-foreground apple-spring active:scale-95 border-0 outline-none"
+              title={`${t.theme}: ${theme === "dark" ? t.dark : t.light}`}
             >
-              <div className="flex items-center gap-2 min-w-0">
-                <Globe className="w-3.5 h-3.5 text-primary flex-shrink-0 stroke-[1.75]" />
-                <span className="text-xs font-medium text-neutral-400 truncate">{t.language}</span>
-              </div>
-              <div className="flex items-center gap-1.5 flex-shrink-0">
-                <span className="text-xs font-semibold text-foreground font-sans">{currentLanguageObj.native}</span>
-                <ChevronUp className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${languageDropupOpen ? "rotate-180 text-primary" : ""}`} />
-              </div>
+              {theme === "dark" ? (
+                <Moon className="w-4 h-4 text-indigo-400 stroke-[1.75] transition-transform duration-300 group-hover:-rotate-12" />
+              ) : (
+                <Sun className="w-4 h-4 text-amber-400 stroke-[1.75] transition-transform duration-300 group-hover:rotate-45" />
+              )}
             </button>
 
-            {/* Floating Dropup Menu */}
-            {languageDropupOpen && (
-              <div className="absolute bottom-full left-0 right-0 mb-2 p-2 rounded-2xl ios-glass border border-white/15 shadow-2xl z-40 flex flex-col gap-1 msg-enter max-h-72">
-                {/* Language list */}
-                <div className="overflow-y-auto max-h-64 space-y-0.5 pr-0.5 scrollbar-thin hardware-scroll">
-                  {LANGUAGE_OPTIONS.map((opt) => {
-                    const isSelected = opt.code === language;
-                    return (
-                      <button
-                        key={opt.code}
-                        type="button"
-                        onClick={() => {
-                          onLanguageChange(opt.code);
-                          setLanguageDropupOpen(false);
-                        }}
-                        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs apple-spring text-left ${
-                          isSelected
-                            ? "bg-primary/20 text-primary font-semibold border border-primary/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]"
-                            : "hover:bg-white/[0.08] text-neutral-300 hover:text-white"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="font-semibold font-sans">{opt.native}</span>
-                          <span className="text-[11px] text-neutral-400 font-normal truncate font-sans">({opt.name})</span>
-                        </div>
-                        {isSelected && <Check className="w-3.5 h-3.5 text-primary flex-shrink-0 stroke-[2.5]" />}
-                      </button>
-                    );
-                  })}
+            {/* Export Menu Icon Trigger */}
+            <div className="relative" ref={exportRef}>
+              <button
+                type="button"
+                onClick={() => setShowExportMenu((prev) => !prev)}
+                disabled={conversations.length === 0}
+                className={`flex items-center justify-center w-10 h-10 rounded-xl apple-spring ${
+                  showExportMenu
+                    ? "bg-primary/25 text-primary"
+                    : "hover:bg-white/10 text-neutral-400 hover:text-foreground disabled:opacity-25 disabled:pointer-events-none"
+                } active:scale-95 border-0 outline-none`}
+                title={t.exportChat}
+              >
+                <Download className="w-4 h-4 stroke-[1.75]" />
+              </button>
+
+              {showExportMenu && (
+                <div className="absolute bottom-full right-0 mb-3 w-44 p-1.5 rounded-2xl ios-glass border border-white/15 shadow-2xl z-50 flex flex-col gap-0.5 msg-enter">
+                  <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-neutral-400 select-none border-b border-white/10">
+                    {t.exportChat}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => handleExportClick(e, "md")}
+                    className="w-full text-left text-xs px-2.5 py-2 rounded-xl hover:bg-white/10 hover:text-primary transition-colors border-0 font-sans mt-0.5"
+                  >
+                    {t.exportMarkdown}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => handleExportClick(e, "txt")}
+                    className="w-full text-left text-xs px-2.5 py-2 rounded-xl hover:bg-white/10 hover:text-primary transition-colors border-0 font-sans"
+                  >
+                    {t.exportText}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => handleExportClick(e, "pdf")}
+                    className="w-full text-left text-xs px-2.5 py-2 rounded-xl hover:bg-white/10 hover:text-primary transition-colors border-0 font-sans"
+                  >
+                    {t.exportPDF}
+                  </button>
                 </div>
-              </div>
-            )}
-          </div>
-
-          {/* Theme Toggler Capsule */}
-          <div 
-            onClick={onThemeToggle}
-            className="flex items-center justify-between px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 transition-all duration-150 cursor-pointer apple-spring active:scale-[0.99] group shadow-sm"
-          >
-            <span className="text-xs font-medium text-neutral-400 flex items-center gap-2">
-              <div className="p-1 rounded-lg bg-white/[0.06] group-hover:bg-white/[0.1] transition-colors">
-                {theme === "dark" ? (
-                  <Moon className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0 stroke-[1.75] transition-transform duration-300 group-hover:-rotate-12" />
-                ) : (
-                  <Sun className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 stroke-[1.75] transition-transform duration-300 group-hover:rotate-45" />
-                )}
-              </div>
-              <span>{t.theme}</span>
-            </span>
-            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-foreground px-2 py-0.5 rounded-lg bg-white/[0.04] border border-white/5">
-              <span className={`w-1.5 h-1.5 rounded-full ${theme === "dark" ? "bg-indigo-400" : "bg-amber-400"}`} />
-              <span>{theme === "dark" ? t.dark : t.light}</span>
+              )}
             </div>
-          </div>
 
-          {/* Export Menu */}
-          <div className="relative">
+            {/* Clear History Icon Trigger */}
             <button
-              onClick={() => setShowExportMenu(!showExportMenu)}
-              disabled={conversations.length === 0}
-              className="w-full flex items-center justify-center gap-2 h-9 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.07] disabled:opacity-30 disabled:cursor-not-allowed text-xs font-medium text-foreground transition-all duration-200"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>{t.exportChat}</span>
-            </button>
-
-            {showExportMenu && (
-              <div className="absolute bottom-full left-0 right-0 mb-2 p-1.5 rounded-2xl ios-glass border border-white/15 shadow-2xl z-30 flex flex-col gap-0.5">
-                <button
-                  onClick={(e) => handleExportClick(e, "md")}
-                  className="w-full text-left text-xs px-2.5 py-2 rounded-xl hover:bg-white/10 hover:text-primary transition-colors border-0 font-sans"
-                >
-                  {t.exportMarkdown}
-                </button>
-                <button
-                  onClick={(e) => handleExportClick(e, "txt")}
-                  className="w-full text-left text-xs px-2.5 py-2 rounded-xl hover:bg-white/10 hover:text-primary transition-colors border-0 font-sans"
-                >
-                  {t.exportText}
-                </button>
-                <button
-                  onClick={(e) => handleExportClick(e, "pdf")}
-                  className="w-full text-left text-xs px-2.5 py-2 rounded-xl hover:bg-white/10 hover:text-primary transition-colors border-0 font-sans"
-                >
-                  {t.exportPDF}
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Clear History Button */}
-          {conversations.length > 0 && (
-            <button
+              type="button"
               onClick={handleClearAll}
-              className="w-full flex items-center justify-center gap-1.5 py-2 text-[11px] font-semibold text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/15 border border-rose-500/20 rounded-xl active:scale-95 transition-all duration-200"
+              disabled={conversations.length === 0}
+              className="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-rose-500/15 text-neutral-400 hover:text-rose-400 disabled:opacity-25 disabled:pointer-events-none apple-spring active:scale-95 border-0 outline-none"
+              title={t.clearHistory}
             >
-              <Trash2 className="w-3 h-3" />
-              <span>{t.clearHistory}</span>
+              <Trash2 className="w-4 h-4 stroke-[1.75]" />
             </button>
-          )}
+          </div>
+
+          {/* Subdued Executive Status Signature */}
+          <div className="flex items-center justify-between px-1.5 pt-0.5 select-none text-[11px] text-neutral-400 dark:text-neutral-500">
+            <span className="font-sans font-medium flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Lemurs AI Pro
+            </span>
+            <span className="font-mono text-[10px] opacity-75">v2.5</span>
+          </div>
         </div>
       </aside>
     </>
