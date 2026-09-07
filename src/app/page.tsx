@@ -1000,12 +1000,12 @@ export default function Home() {
       <main className="flex-1 flex flex-col h-full overflow-hidden bg-background/70 min-w-0 relative">
         
         {/* Application Header Panel */}
-        <header className="flex items-center justify-between h-14 sm:h-16 px-4 sm:px-6 border-b border-white/10 select-none bg-background/50 backdrop-blur-2xl z-10 safe-top safe-left safe-right shadow-sm">
+        <header className="flex items-center justify-between h-14 sm:h-16 px-4 sm:px-6 border-b border-black/[0.06] dark:border-white/10 select-none bg-background/80 dark:bg-background/50 backdrop-blur-2xl z-10 safe-top safe-left safe-right shadow-sm">
           <div className="flex items-center gap-2.5 min-w-0">
             {/* Sidebar toggle for mobile & tablet */}
             <button
               onClick={() => setSidebarOpen(true)}
-              className="touch-target flex items-center justify-center p-2 rounded-xl lg:hidden hover:bg-white/10 text-foreground transition-all duration-150 active:scale-95 flex-shrink-0"
+              className="touch-target flex items-center justify-center p-2 rounded-xl lg:hidden hover:bg-black/[0.06] dark:hover:bg-white/10 text-foreground transition-all duration-150 active:scale-95 flex-shrink-0"
               title="Open Navigation"
             >
               <Menu className="w-5 h-5 stroke-[1.75]" />
@@ -1015,7 +1015,7 @@ export default function Home() {
             {sidebarCollapsed && (
               <button
                 onClick={() => setSidebarCollapsed(false)}
-                className="hidden lg:flex items-center justify-center p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-foreground apple-spring active:scale-95 flex-shrink-0 shadow-sm"
+                className="hidden lg:flex items-center justify-center p-2 rounded-xl bg-black/[0.04] dark:bg-white/[0.04] hover:bg-black/[0.08] dark:hover:bg-white/[0.08] border border-black/[0.08] dark:border-white/10 text-foreground apple-spring active:scale-95 flex-shrink-0 shadow-sm"
                 title="Expand Sidebar (⌘\)"
               >
                 <PanelLeft className="w-4 h-4 stroke-[1.75]" />
@@ -1027,15 +1027,15 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
-                className="flex items-center gap-2 text-xs sm:text-sm font-semibold bg-white/[0.04] dark:bg-white/[0.06] hover:bg-white/[0.08] dark:hover:bg-white/[0.1] border border-white/12 px-3 py-1.5 rounded-xl cursor-pointer apple-spring text-foreground max-w-[200px] sm:max-w-none shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15)] active:scale-[0.98]"
+                className="flex items-center gap-2 text-xs sm:text-sm font-semibold bg-black/[0.03] dark:bg-white/[0.06] hover:bg-black/[0.06] dark:hover:bg-white/[0.1] border border-black/[0.08] dark:border-white/12 px-3 py-1.5 rounded-xl cursor-pointer apple-spring text-foreground max-w-[200px] sm:max-w-none shadow-[inset_0_1px_0_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15)] active:scale-[0.98]"
               >
-                {model === "smart-router" && <Zap className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />}
-                {model === "gemini-flash" && <Sparkles className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />}
-                {model === "gemini-lite" && <Cpu className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />}
-                {model === "nemotron-lightning" && <Brain className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />}
-                {model === "minimax-m3" && <Compass className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />}
-                {model === "gemma-26b" && <PenTool className="w-3.5 h-3.5 text-rose-400 flex-shrink-0" />}
-                {model === "nemotron-ultra" && <Calculator className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />}
+                {model === "smart-router" && <Zap className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />}
+                {model === "gemini-flash" && <Sparkles className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0" />}
+                {model === "gemini-lite" && <Cpu className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400 flex-shrink-0" />}
+                {model === "nemotron-lightning" && <Brain className="w-3.5 h-3.5 text-cyan-500 dark:text-cyan-400 flex-shrink-0" />}
+                {model === "minimax-m3" && <Compass className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 flex-shrink-0" />}
+                {model === "gemma-26b" && <PenTool className="w-3.5 h-3.5 text-rose-500 dark:text-rose-400 flex-shrink-0" />}
+                {model === "nemotron-ultra" && <Calculator className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400 flex-shrink-0" />}
                 
                 <span className="font-sans font-semibold tracking-tight truncate">{
                   model === "smart-router" ? t.smartRouter :
@@ -1047,93 +1047,93 @@ export default function Home() {
                   model === "nemotron-ultra" ? "Nemotron 550B" : model
                 }</span>
                 
-                <ChevronDown className="w-3.5 h-3.5 text-neutral-400 flex-shrink-0 ml-0.5" />
+                <ChevronDown className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400 flex-shrink-0 ml-0.5" />
               </button>
 
               {/* Dropdown Options List */}
               {modelDropdownOpen && (
-                <div className="absolute left-0 mt-2 w-[calc(100vw-2rem)] max-w-xs sm:w-80 rounded-2xl ios-glass border border-white/15 p-2 flex flex-col gap-1 msg-enter max-h-96 overflow-y-auto scrollbar-thin z-40 shadow-2xl">
+                <div className="absolute left-0 mt-2 w-[calc(100vw-2rem)] max-w-xs sm:w-80 rounded-2xl ios-glass border border-black/[0.08] dark:border-white/15 p-2 flex flex-col gap-1 msg-enter max-h-96 overflow-y-auto scrollbar-thin z-40 shadow-2xl">
                   <button
                     type="button"
                     onClick={() => { setModel("smart-router"); setModelDropdownOpen(false); }}
-                    className={`flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${model === "smart-router" ? "bg-primary/20 text-primary font-semibold border border-primary/30" : "hover:bg-white/10 text-foreground"}`}
+                    className={`flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${model === "smart-router" ? "bg-primary/20 text-primary font-semibold border border-primary/30" : "hover:bg-black/[0.05] dark:hover:bg-white/10 text-foreground"}`}
                   >
-                    <Zap className="w-4 h-4 mt-0.5 text-amber-400 flex-shrink-0" />
+                    <Zap className="w-4 h-4 mt-0.5 text-amber-500 flex-shrink-0" />
                     <div>
                       <p className="text-xs font-semibold">{t.smartRouter}</p>
-                      <p className="text-[10px] text-neutral-400 leading-tight mt-0.5">Auto-routes to the optimal model for your prompt</p>
+                      <p className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-tight mt-0.5">Auto-routes to the optimal model for your prompt</p>
                     </div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => { setModel("gemini-flash"); setModelDropdownOpen(false); }}
-                    className={`flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${model === "gemini-flash" ? "bg-primary/20 text-primary font-semibold border border-primary/30" : "hover:bg-white/10 text-foreground"}`}
+                    className={`flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${model === "gemini-flash" ? "bg-primary/20 text-primary font-semibold border border-primary/30" : "hover:bg-black/[0.05] dark:hover:bg-white/10 text-foreground"}`}
                   >
-                    <Sparkles className="w-4 h-4 mt-0.5 text-indigo-400 flex-shrink-0" />
+                    <Sparkles className="w-4 h-4 mt-0.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0" />
                     <div>
                       <p className="text-xs font-semibold">Gemini 2.5 Flash</p>
-                      <p className="text-[10px] text-neutral-400 leading-tight mt-0.5">Ultra-fast Google SOTA, vision & multimodal</p>
+                      <p className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-tight mt-0.5">Ultra-fast Google SOTA, vision & multimodal</p>
                     </div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => { setModel("gemini-lite"); setModelDropdownOpen(false); }}
-                    className={`flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${model === "gemini-lite" ? "bg-primary/20 text-primary font-semibold border border-primary/30" : "hover:bg-white/10 text-foreground"}`}
+                    className={`flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${model === "gemini-lite" ? "bg-primary/20 text-primary font-semibold border border-primary/30" : "hover:bg-black/[0.05] dark:hover:bg-white/10 text-foreground"}`}
                   >
-                    <Cpu className="w-4 h-4 mt-0.5 text-sky-400 flex-shrink-0" />
+                    <Cpu className="w-4 h-4 mt-0.5 text-sky-500 dark:text-sky-400 flex-shrink-0" />
                     <div>
                       <p className="text-xs font-semibold">Gemini 3.5 Flash Lite</p>
-                      <p className="text-[10px] text-neutral-400 leading-tight mt-0.5">Sub-second instant latency for fast summaries</p>
+                      <p className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-tight mt-0.5">Sub-second instant latency for fast summaries</p>
                     </div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => { setModel("nemotron-lightning"); setModelDropdownOpen(false); }}
-                    className={`flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${model === "nemotron-lightning" ? "bg-primary/20 text-primary font-semibold border border-primary/30" : "hover:bg-white/10 text-foreground"}`}
+                    className={`flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${model === "nemotron-lightning" ? "bg-primary/20 text-primary font-semibold border border-primary/30" : "hover:bg-black/[0.05] dark:hover:bg-white/10 text-foreground"}`}
                   >
-                    <Brain className="w-4 h-4 mt-0.5 text-cyan-400 flex-shrink-0" />
+                    <Brain className="w-4 h-4 mt-0.5 text-cyan-500 dark:text-cyan-400 flex-shrink-0" />
                     <div>
                       <p className="text-xs font-semibold">Nemotron 3.5 Lightning</p>
-                      <p className="text-[10px] text-neutral-400 leading-tight mt-0.5">1M context, rapid reasoning & math logic</p>
+                      <p className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-tight mt-0.5">1M context, rapid reasoning & math logic</p>
                     </div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => { setModel("minimax-m3"); setModelDropdownOpen(false); }}
-                    className={`flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${model === "minimax-m3" ? "bg-primary/20 text-primary font-semibold border border-primary/30" : "hover:bg-white/10 text-foreground"}`}
+                    className={`flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${model === "minimax-m3" ? "bg-primary/20 text-primary font-semibold border border-primary/30" : "hover:bg-black/[0.05] dark:hover:bg-white/10 text-foreground"}`}
                   >
-                    <Compass className="w-4 h-4 mt-0.5 text-emerald-400 flex-shrink-0" />
+                    <Compass className="w-4 h-4 mt-0.5 text-emerald-500 dark:text-emerald-400 flex-shrink-0" />
                     <div>
                       <p className="text-xs font-semibold">MiniMax M3</p>
-                      <p className="text-[10px] text-neutral-400 leading-tight mt-0.5">1M context, multilingual & long essays</p>
+                      <p className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-tight mt-0.5">1M context, multilingual & long essays</p>
                     </div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => { setModel("gemma-26b"); setModelDropdownOpen(false); }}
-                    className={`flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${model === "gemma-26b" ? "bg-primary/20 text-primary font-semibold border border-primary/30" : "hover:bg-white/10 text-foreground"}`}
+                    className={`flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${model === "gemma-26b" ? "bg-primary/20 text-primary font-semibold border border-primary/30" : "hover:bg-black/[0.05] dark:hover:bg-white/10 text-foreground"}`}
                   >
-                    <PenTool className="w-4 h-4 mt-0.5 text-rose-400 flex-shrink-0" />
+                    <PenTool className="w-4 h-4 mt-0.5 text-rose-500 dark:text-rose-400 flex-shrink-0" />
                     <div>
                       <p className="text-xs font-semibold">Gemma 4 26B</p>
-                      <p className="text-[10px] text-neutral-400 leading-tight mt-0.5">Google latest open instruction-following model</p>
+                      <p className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-tight mt-0.5">Google latest open instruction-following model</p>
                     </div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => { setModel("nemotron-ultra"); setModelDropdownOpen(false); }}
-                    className={`flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${model === "nemotron-ultra" ? "bg-primary/20 text-primary font-semibold border border-primary/30" : "hover:bg-white/10 text-foreground"}`}
+                    className={`flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${model === "nemotron-ultra" ? "bg-primary/20 text-primary font-semibold border border-primary/30" : "hover:bg-black/[0.05] dark:hover:bg-white/10 text-foreground"}`}
                   >
-                    <Calculator className="w-4 h-4 mt-0.5 text-amber-400 flex-shrink-0" />
+                    <Calculator className="w-4 h-4 mt-0.5 text-amber-500 dark:text-amber-400 flex-shrink-0" />
                     <div>
                       <p className="text-xs font-semibold">Nemotron 3 Ultra 550B</p>
-                      <p className="text-[10px] text-neutral-400 leading-tight mt-0.5">Massive 550B parameters for deep analysis</p>
+                      <p className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-tight mt-0.5">Massive 550B parameters for deep analysis</p>
                     </div>
                   </button>
                 </div>
@@ -1144,15 +1144,15 @@ export default function Home() {
           <div className="flex items-center gap-2.5">
             <button
               onClick={handleNewChat}
-              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-foreground apple-spring shadow-sm active:scale-95"
+              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-black/[0.04] dark:bg-white/[0.04] hover:bg-black/[0.08] dark:hover:bg-white/[0.08] border border-black/[0.08] dark:border-white/10 text-foreground apple-spring shadow-sm active:scale-95"
               title={t.newChat}
             >
               <Plus className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">{t.newChat}</span>
             </button>
-            <div className="h-4 w-[1px] bg-white/10 mx-0.5" />
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 select-none shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <div className="h-4 w-[1px] bg-black/[0.08] dark:bg-white/10 mx-0.5" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 select-none shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
               Live
             </span>
           </div>
@@ -1311,7 +1311,7 @@ export default function Home() {
           {showScrollBtn && (
             <button
               onClick={() => scrollToBottom()}
-              className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center justify-center w-8 h-8 rounded-full ios-glass text-foreground hover:bg-white/10 transition-all duration-150 shadow-lg active:scale-95 z-30"
+              className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center justify-center w-8 h-8 rounded-full ios-glass text-foreground hover:bg-black/[0.06] dark:hover:bg-white/10 transition-all duration-150 shadow-lg active:scale-95 z-30"
               title="Scroll to bottom"
             >
               <ArrowDown className="w-3.5 h-3.5 text-primary" />
@@ -1322,10 +1322,10 @@ export default function Home() {
             
             {/* File Upload Preview bar */}
             {attachedFile && (
-              <div className="mb-2.5 px-3 py-2 rounded-2xl ios-glass border border-white/15 flex items-center justify-between shadow-lg z-20 animate-slide-up">
+              <div className="mb-2.5 px-3 py-2 rounded-2xl ios-glass border border-black/[0.08] dark:border-white/15 flex items-center justify-between shadow-lg z-20 animate-slide-up">
                 <div className="flex items-center gap-2.5 min-w-0">
                   {imagePreview ? (
-                    <div className="w-8 h-8 rounded-lg overflow-hidden relative flex-shrink-0 border border-white/10">
+                    <div className="w-8 h-8 rounded-lg overflow-hidden relative flex-shrink-0 border border-black/[0.08] dark:border-white/10">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={imagePreview} alt="Upload preview" className="object-cover w-full h-full" />
                     </div>
@@ -1341,7 +1341,7 @@ export default function Home() {
                 </div>
                 <button
                   onClick={removeAttachment}
-                  className="p-1 rounded-full hover:bg-white/10 text-neutral-400 hover:text-foreground transition-colors"
+                  className="p-1 rounded-full hover:bg-black/[0.06] dark:hover:bg-white/10 text-neutral-500 dark:text-neutral-400 hover:text-foreground transition-colors"
                   title="Remove attachment"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -1364,7 +1364,7 @@ export default function Home() {
                   onKeyDown={handleKeyPress}
                   placeholder={t.placeholder}
                   maxLength={4000}
-                  className="w-full bg-transparent text-sm sm:text-base text-foreground placeholder:text-neutral-400 dark:placeholder:text-neutral-500 border-0 outline-none ring-0 resize-none min-h-[40px] max-h-[160px] leading-relaxed font-sans block shadow-none focus:outline-none focus:ring-0"
+                  className="w-full bg-transparent text-sm sm:text-base text-foreground placeholder:text-neutral-500 dark:placeholder:text-neutral-400 border-0 outline-none ring-0 resize-none min-h-[40px] max-h-[160px] leading-relaxed font-sans block shadow-none focus:outline-none focus:ring-0"
                 />
               </div>
 
@@ -1382,13 +1382,13 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={handleFileClick}
-                    className="p-2 rounded-xl text-neutral-400 hover:text-foreground hover:bg-white/[0.08] active:scale-95 transition-all duration-150 border-0 outline-none"
+                    className="p-2 rounded-xl text-neutral-500 dark:text-neutral-400 hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] active:scale-95 transition-all duration-150 border-0 outline-none"
                     title={t.uploadFile}
                   >
                     <Paperclip className="w-4 h-4" />
                   </button>
 
-                  <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/[0.04] dark:bg-white/[0.06] border border-white/10 text-[11px] font-semibold text-neutral-400 dark:text-neutral-300 select-none shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
+                  <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-black/[0.03] dark:bg-white/[0.06] border border-black/[0.08] dark:border-white/10 text-[11px] font-semibold text-neutral-600 dark:text-neutral-300 select-none shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
                     <Sparkles className="w-3 h-3 text-primary flex-shrink-0" />
                     <span className="truncate">{
                       model === "smart-router" ? "Smart Router" :
@@ -1405,7 +1405,7 @@ export default function Home() {
                 {/* Right: Char count, Voice, Send/Cancel */}
                 <div className="flex items-center gap-1 sm:gap-1.5">
                   {input.length > 150 && (
-                    <span className="hidden sm:inline-block text-[10px] text-neutral-400 font-mono select-none px-1">
+                    <span className="hidden sm:inline-block text-[10px] text-neutral-500 dark:text-neutral-400 font-mono select-none px-1">
                       {input.length}/4000
                     </span>
                   )}
@@ -1417,7 +1417,7 @@ export default function Home() {
                     className={`p-2 rounded-xl transition-all duration-150 border-0 outline-none ${
                       isListening 
                         ? "text-red-500 bg-red-500/15 shadow-sm" 
-                        : "text-neutral-400 hover:text-foreground hover:bg-white/[0.08] active:scale-95"
+                        : "text-neutral-500 dark:text-neutral-400 hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] active:scale-95"
                     }`}
                     title={t.voiceInput}
                   >
@@ -1448,7 +1448,7 @@ export default function Home() {
                       className={`flex items-center justify-center w-8 h-8 rounded-full transition-all duration-150 border-0 outline-none ${
                         input.trim() || attachedFile
                           ? "bg-primary hover:bg-primary/90 text-white shadow-[0_2px_12px_rgba(99,102,241,0.45),inset_0_1px_0_rgba(255,255,255,0.3)] active:scale-95"
-                          : "bg-black/[0.06] dark:bg-white/[0.08] text-neutral-400 dark:text-neutral-600 cursor-not-allowed"
+                          : "bg-black/[0.06] dark:bg-white/[0.08] text-neutral-400 dark:text-neutral-500 cursor-not-allowed"
                       }`}
                     >
                       <ArrowUp className="w-4 h-4 stroke-[2.5]" />
@@ -1458,7 +1458,7 @@ export default function Home() {
               </div>
             </form>
 
-            <p className="text-[11px] text-center text-neutral-400 dark:text-neutral-500 mt-2.5 select-none font-sans">
+            <p className="text-[11px] text-center text-neutral-500 dark:text-neutral-400 mt-2.5 select-none font-sans">
               Lemur AI can make mistakes. Verify critical information.
             </p>
           </div>

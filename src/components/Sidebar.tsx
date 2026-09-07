@@ -205,7 +205,7 @@ export default function Sidebar({
         }`}
       >
         {/* Brand Header */}
-        <div className="flex items-center justify-between h-14 sm:h-16 px-4 sm:px-5 border-b border-white/10">
+        <div className="flex items-center justify-between h-14 sm:h-16 px-4 sm:px-5 border-b border-black/[0.06] dark:border-white/10">
           <div className="flex items-center gap-3 select-none">
             <div className="w-8 h-8 rounded-xl ios-glass flex items-center justify-center shadow-sm">
               <LemurLogo className="w-5 h-5" />
@@ -225,7 +225,7 @@ export default function Sidebar({
             {onToggleCollapse && (
               <button
                 onClick={onToggleCollapse}
-                className="hidden lg:flex items-center justify-center p-2 rounded-xl hover:bg-white/10 text-neutral-400 hover:text-foreground apple-spring active:scale-95 border-0 outline-none"
+                className="hidden lg:flex items-center justify-center p-2 rounded-xl hover:bg-black/[0.05] dark:hover:bg-white/10 text-neutral-600 dark:text-neutral-400 hover:text-foreground apple-spring active:scale-95 border-0 outline-none"
                 title="Minimize Sidebar (⌘\)"
               >
                 <PanelLeftClose className="w-4 h-4 stroke-[1.75]" />
@@ -235,7 +235,7 @@ export default function Sidebar({
             {/* Close button for mobile */}
             <button
               onClick={onClose}
-              className="p-2 rounded-xl lg:hidden hover:bg-white/10 text-neutral-400 hover:text-foreground apple-spring active:scale-95 flex items-center justify-center border-0 outline-none"
+              className="p-2 rounded-xl lg:hidden hover:bg-black/[0.05] dark:hover:bg-white/10 text-neutral-600 dark:text-neutral-400 hover:text-foreground apple-spring active:scale-95 flex items-center justify-center border-0 outline-none"
               title="Close navigation"
             >
               <X className="w-4 h-4 stroke-[1.75]" />
@@ -244,7 +244,7 @@ export default function Sidebar({
         </div>
 
         {/* Action Button: New Chat & Search */}
-        <div className="px-3.5 py-3 space-y-2.5 border-b border-white/[0.08]">
+        <div className="px-3.5 py-3 space-y-2.5 border-b border-black/[0.06] dark:border-white/[0.08]">
           <button
             onClick={() => {
               onNewChat();
@@ -262,19 +262,19 @@ export default function Sidebar({
           </button>
 
           {/* Search bar for Filtering conversations */}
-          <div className="relative flex items-center rounded-xl bg-white/[0.04] dark:bg-white/[0.05] hover:bg-white/[0.08] focus-within:bg-white/[0.08] focus-within:ring-1 focus-within:ring-primary/40 transition-all duration-150 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]">
-            <Search className="absolute left-2.5 w-3.5 h-3.5 text-neutral-400 pointer-events-none" />
+          <div className="relative flex items-center rounded-xl bg-black/[0.03] dark:bg-white/[0.05] hover:bg-black/[0.05] dark:hover:bg-white/[0.08] focus-within:bg-black/[0.05] dark:focus-within:bg-white/[0.08] focus-within:ring-1 focus-within:ring-primary/40 transition-all duration-150 shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]">
+            <Search className="absolute left-2.5 w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search conversations..."
-              className="w-full pl-8 pr-7 py-2 text-xs bg-transparent border-0 outline-none ring-0 text-foreground placeholder-neutral-400 font-sans"
+              className="w-full pl-8 pr-7 py-2 text-xs bg-transparent border-0 outline-none ring-0 text-foreground placeholder-neutral-500 dark:placeholder-neutral-400 font-sans"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-2 p-0.5 rounded-full hover:bg-white/10 text-neutral-400 hover:text-foreground"
+                className="absolute right-2 p-0.5 rounded-full hover:bg-black/[0.06] dark:hover:bg-white/10 text-neutral-500 dark:text-neutral-400 hover:text-foreground"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -285,16 +285,16 @@ export default function Sidebar({
         {/* Conversation List */}
         <div className="flex-1 overflow-y-auto px-2.5 py-3 space-y-1 hardware-scroll scrollbar-thin overscroll-contain">
           <div className="flex items-center justify-between px-2.5 mb-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 select-none">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 select-none">
               {t.chatHistory}
             </span>
-            <span className="text-[10px] font-mono text-neutral-400 select-none">
+            <span className="text-[10px] font-mono text-neutral-500 dark:text-neutral-400 select-none">
               {filteredConversations.length}
             </span>
           </div>
           
           {filteredConversations.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 text-neutral-400 dark:text-neutral-600 text-center select-none space-y-2">
+            <div className="flex flex-col items-center justify-center py-10 text-neutral-500 dark:text-neutral-500 text-center select-none space-y-2">
               <MessageSquare className="w-7 h-7 opacity-30" />
               <span className="text-xs font-medium">{t.noHistory}</span>
             </div>
@@ -309,8 +309,8 @@ export default function Sidebar({
                   onDoubleClick={() => startRename(chat.id, chat.title)}
                   className={`group relative flex items-center gap-2.5 px-3 py-2 rounded-xl cursor-pointer select-none apple-spring border-0 ${
                     isActive
-                      ? "bg-white/[0.09] dark:bg-white/[0.08] text-foreground font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]"
-                      : "hover:bg-white/[0.04] text-neutral-400 hover:text-foreground"
+                      ? "bg-black/[0.06] dark:bg-white/[0.08] text-foreground font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]"
+                      : "hover:bg-black/[0.04] dark:hover:bg-white/[0.04] text-neutral-600 dark:text-neutral-400 hover:text-foreground"
                   }`}
                 >
                   {isActive ? (
@@ -343,14 +343,14 @@ export default function Sidebar({
                           e.stopPropagation();
                           startRename(chat.id, chat.title);
                         }}
-                        className="hover:text-primary p-1 rounded-lg hover:bg-white/10 text-neutral-400 transition-colors border-0 outline-none"
+                        className="hover:text-primary p-1 rounded-lg hover:bg-black/[0.06] dark:hover:bg-white/10 text-neutral-500 dark:text-neutral-400 transition-colors border-0 outline-none"
                         title="Rename Chat"
                       >
                         <Edit3 className="w-3 h-3" />
                       </button>
                       <button
                         onClick={(e) => handleDelete(e, chat.id)}
-                        className="hover:text-rose-400 p-1 rounded-lg hover:bg-rose-500/15 text-neutral-400 transition-colors border-0 outline-none"
+                        className="hover:text-rose-500 dark:hover:text-rose-400 p-1 rounded-lg hover:bg-rose-500/15 text-neutral-500 dark:text-neutral-400 transition-colors border-0 outline-none"
                         title="Delete Conversation"
                       >
                         <Trash2 className="w-3 h-3" />
@@ -364,9 +364,9 @@ export default function Sidebar({
         </div>
 
         {/* Sleek Minimalist Footer Action Dock */}
-        <div className="p-3 sm:p-3.5 border-t border-white/[0.08] space-y-2 bg-black/10 backdrop-blur-xl safe-bottom">
+        <div className="p-3 sm:p-3.5 border-t border-black/[0.06] dark:border-white/[0.08] space-y-2 bg-black/[0.02] dark:bg-black/20 backdrop-blur-xl safe-bottom">
           {/* Unified Glass Utility Action Bar */}
-          <div className="flex items-center justify-around p-1.5 rounded-2xl bg-white/[0.04] dark:bg-white/[0.05] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+          <div className="flex items-center justify-around p-1.5 rounded-2xl bg-black/[0.03] dark:bg-white/[0.05] border border-black/[0.05] dark:border-white/[0.06] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
             
             {/* Language Icon Trigger */}
             <div className="relative" ref={languageRef}>
@@ -375,8 +375,8 @@ export default function Sidebar({
                 onClick={() => setLanguageDropupOpen((prev) => !prev)}
                 className={`relative flex items-center justify-center w-10 h-10 rounded-xl apple-spring ${
                   languageDropupOpen
-                    ? "bg-primary/25 text-primary"
-                    : "hover:bg-white/10 text-neutral-400 hover:text-foreground"
+                    ? "bg-primary/20 text-primary"
+                    : "hover:bg-black/[0.06] dark:hover:bg-white/10 text-neutral-600 dark:text-neutral-400 hover:text-foreground"
                 } active:scale-95 border-0 outline-none`}
                 title={`${t.language}: ${currentLanguageObj.native}`}
               >
@@ -388,8 +388,8 @@ export default function Sidebar({
 
               {/* Floating Language Dropup Menu */}
               {languageDropupOpen && (
-                <div className="absolute bottom-full left-0 mb-3 w-56 p-1.5 rounded-2xl ios-glass border border-white/15 shadow-2xl z-50 flex flex-col gap-0.5 msg-enter max-h-72">
-                  <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-neutral-400 select-none border-b border-white/10">
+                <div className="absolute bottom-full left-0 mb-3 w-56 p-1.5 rounded-2xl ios-glass border border-black/[0.08] dark:border-white/15 shadow-2xl z-50 flex flex-col gap-0.5 msg-enter max-h-72">
+                  <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 select-none border-b border-black/[0.06] dark:border-white/10">
                     {t.language}
                   </div>
                   <div className="overflow-y-auto max-h-56 space-y-0.5 pr-0.5 scrollbar-thin hardware-scroll mt-1">
@@ -406,12 +406,12 @@ export default function Sidebar({
                           className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs apple-spring text-left border-0 ${
                             isSelected
                               ? "bg-primary/20 text-primary font-semibold"
-                              : "hover:bg-white/[0.08] text-neutral-300 hover:text-white"
+                              : "hover:bg-black/[0.05] dark:hover:bg-white/[0.08] text-neutral-700 dark:text-neutral-300 hover:text-foreground dark:hover:text-white"
                           }`}
                         >
                           <div className="flex items-center gap-2 min-w-0">
                             <span className="font-semibold font-sans">{opt.native}</span>
-                            <span className="text-[11px] text-neutral-400 font-normal truncate font-sans">({opt.name})</span>
+                            <span className="text-[11px] text-neutral-500 dark:text-neutral-400 font-normal truncate font-sans">({opt.name})</span>
                           </div>
                           {isSelected && <Check className="w-3.5 h-3.5 text-primary flex-shrink-0 stroke-[2.5]" />}
                         </button>
@@ -426,13 +426,13 @@ export default function Sidebar({
             <button
               type="button"
               onClick={onThemeToggle}
-              className="group flex items-center justify-center w-10 h-10 rounded-xl hover:bg-white/10 text-neutral-400 hover:text-foreground apple-spring active:scale-95 border-0 outline-none"
+              className="group flex items-center justify-center w-10 h-10 rounded-xl hover:bg-black/[0.06] dark:hover:bg-white/10 text-neutral-600 dark:text-neutral-400 hover:text-foreground apple-spring active:scale-95 border-0 outline-none"
               title={`${t.theme}: ${theme === "dark" ? t.dark : t.light}`}
             >
               {theme === "dark" ? (
                 <Moon className="w-4 h-4 text-indigo-400 stroke-[1.75] transition-transform duration-300 group-hover:-rotate-12" />
               ) : (
-                <Sun className="w-4 h-4 text-amber-400 stroke-[1.75] transition-transform duration-300 group-hover:rotate-45" />
+                <Sun className="w-4 h-4 text-amber-500 stroke-[1.75] transition-transform duration-300 group-hover:rotate-45" />
               )}
             </button>
 
@@ -444,8 +444,8 @@ export default function Sidebar({
                 disabled={conversations.length === 0}
                 className={`flex items-center justify-center w-10 h-10 rounded-xl apple-spring ${
                   showExportMenu
-                    ? "bg-primary/25 text-primary"
-                    : "hover:bg-white/10 text-neutral-400 hover:text-foreground disabled:opacity-25 disabled:pointer-events-none"
+                    ? "bg-primary/20 text-primary"
+                    : "hover:bg-black/[0.06] dark:hover:bg-white/10 text-neutral-600 dark:text-neutral-400 hover:text-foreground disabled:opacity-25 disabled:pointer-events-none"
                 } active:scale-95 border-0 outline-none`}
                 title={t.exportChat}
               >
@@ -453,28 +453,28 @@ export default function Sidebar({
               </button>
 
               {showExportMenu && (
-                <div className="absolute bottom-full right-0 mb-3 w-44 p-1.5 rounded-2xl ios-glass border border-white/15 shadow-2xl z-50 flex flex-col gap-0.5 msg-enter">
-                  <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-neutral-400 select-none border-b border-white/10">
+                <div className="absolute bottom-full right-0 mb-3 w-44 p-1.5 rounded-2xl ios-glass border border-black/[0.08] dark:border-white/15 shadow-2xl z-50 flex flex-col gap-0.5 msg-enter">
+                  <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 select-none border-b border-black/[0.06] dark:border-white/10">
                     {t.exportChat}
                   </div>
                   <button
                     type="button"
                     onClick={(e) => handleExportClick(e, "md")}
-                    className="w-full text-left text-xs px-2.5 py-2 rounded-xl hover:bg-white/10 hover:text-primary transition-colors border-0 font-sans mt-0.5"
+                    className="w-full text-left text-xs px-2.5 py-2 rounded-xl hover:bg-black/[0.05] dark:hover:bg-white/10 text-neutral-700 dark:text-neutral-300 hover:text-primary transition-colors border-0 font-sans mt-0.5"
                   >
                     {t.exportMarkdown}
                   </button>
                   <button
                     type="button"
                     onClick={(e) => handleExportClick(e, "txt")}
-                    className="w-full text-left text-xs px-2.5 py-2 rounded-xl hover:bg-white/10 hover:text-primary transition-colors border-0 font-sans"
+                    className="w-full text-left text-xs px-2.5 py-2 rounded-xl hover:bg-black/[0.05] dark:hover:bg-white/10 text-neutral-700 dark:text-neutral-300 hover:text-primary transition-colors border-0 font-sans"
                   >
                     {t.exportText}
                   </button>
                   <button
                     type="button"
                     onClick={(e) => handleExportClick(e, "pdf")}
-                    className="w-full text-left text-xs px-2.5 py-2 rounded-xl hover:bg-white/10 hover:text-primary transition-colors border-0 font-sans"
+                    className="w-full text-left text-xs px-2.5 py-2 rounded-xl hover:bg-black/[0.05] dark:hover:bg-white/10 text-neutral-700 dark:text-neutral-300 hover:text-primary transition-colors border-0 font-sans"
                   >
                     {t.exportPDF}
                   </button>
@@ -487,7 +487,7 @@ export default function Sidebar({
               type="button"
               onClick={handleClearAll}
               disabled={conversations.length === 0}
-              className="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-rose-500/15 text-neutral-400 hover:text-rose-400 disabled:opacity-25 disabled:pointer-events-none apple-spring active:scale-95 border-0 outline-none"
+              className="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-rose-500/15 text-neutral-600 dark:text-neutral-400 hover:text-rose-500 dark:hover:text-rose-400 disabled:opacity-25 disabled:pointer-events-none apple-spring active:scale-95 border-0 outline-none"
               title={t.clearHistory}
             >
               <Trash2 className="w-4 h-4 stroke-[1.75]" />
@@ -495,9 +495,9 @@ export default function Sidebar({
           </div>
 
           {/* Subdued Executive Status Signature */}
-          <div className="flex items-center justify-between px-1.5 pt-0.5 select-none text-[11px] text-neutral-400 dark:text-neutral-500">
+          <div className="flex items-center justify-between px-1.5 pt-0.5 select-none text-[11px] text-neutral-500 dark:text-neutral-400">
             <span className="font-sans font-medium flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               Lemurs AI Pro
             </span>
             <span className="font-mono text-[10px] opacity-75">v2.5</span>

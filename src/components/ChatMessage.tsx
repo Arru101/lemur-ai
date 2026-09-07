@@ -185,7 +185,7 @@ function ChatMessageComponent({
     >
       {/* Assistant Avatar */}
       {!isUser && (
-        <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-2xl ios-glass border border-white/15 text-foreground select-none mt-1 shadow-md">
+        <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-2xl ios-glass border border-black/[0.08] dark:border-white/15 text-foreground select-none mt-1 shadow-md">
           {isGenerating ? (
             <Sparkles className="w-4 h-4 text-primary animate-pulse" />
           ) : (
@@ -209,15 +209,15 @@ function ChatMessageComponent({
               </span>
 
               {isGenerating ? (
-                <span className="flex items-center gap-1.5 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/25 animate-pulse shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                <span className="flex items-center gap-1.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/25 animate-pulse shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
                   Streaming
                 </span>
               ) : null}
             </div>
 
             {formattedTime && (
-              <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-mono tracking-tight ml-auto">
+              <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono tracking-tight ml-auto">
                 {formattedTime}
               </span>
             )}
@@ -227,7 +227,7 @@ function ChatMessageComponent({
         {/* User time */}
         {isUser && formattedTime && (
           <div className="flex items-center justify-end w-full mb-0.5 select-none pr-1">
-            <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-mono tracking-tight">
+            <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono tracking-tight">
               {formattedTime}
             </span>
           </div>
@@ -276,37 +276,37 @@ function ChatMessageComponent({
             <>
               {/* Collapsible Thought Process / Reasoning Accordion */}
               {thinkingText && (
-                <div className="mb-4 rounded-2xl border border-white/10 overflow-hidden bg-white/[0.04] dark:bg-white/[0.03] transition-colors shadow-sm">
+                <div className="mb-4 rounded-2xl border border-black/[0.08] dark:border-white/10 overflow-hidden bg-black/[0.02] dark:bg-white/[0.03] transition-colors shadow-sm">
                   <button
                     type="button"
                     onClick={() => setThoughtExpanded((prev) => !prev)}
-                    className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-white/[0.05] transition-colors cursor-pointer select-none text-xs text-neutral-400"
+                    className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-black/[0.04] dark:hover:bg-white/[0.05] transition-colors cursor-pointer select-none text-xs text-neutral-500 dark:text-neutral-400"
                   >
                     <div className="flex items-center gap-2">
-                      <Brain className={`w-3.5 h-3.5 ${isThinkingActive ? "text-cyan-400 animate-pulse" : "text-neutral-400"}`} />
+                      <Brain className={`w-3.5 h-3.5 ${isThinkingActive ? "text-cyan-500 dark:text-cyan-400 animate-pulse" : "text-neutral-500 dark:text-neutral-400"}`} />
                       <span className="font-semibold font-sans text-foreground/90">
                         {isThinkingActive ? "Thinking in real-time..." : "Thought process"}
                       </span>
                       {!isThinkingActive && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/[0.06] text-neutral-300 font-mono border border-white/10">
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/[0.04] dark:bg-white/[0.06] text-neutral-600 dark:text-neutral-300 font-mono border border-black/[0.08] dark:border-white/10">
                           {thinkingText.split(/\s+/).filter(Boolean).length} words
                         </span>
                       )}
                     </div>
                     <div className="flex items-center gap-1.5">
                       {isThinkingActive && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping mr-1" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 dark:bg-cyan-400 animate-ping mr-1" />
                       )}
                       {(isThinkingActive || thoughtExpanded) ? (
-                        <ChevronUp className="w-3.5 h-3.5 text-neutral-400" />
+                        <ChevronUp className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
                       ) : (
-                        <ChevronDown className="w-3.5 h-3.5 text-neutral-400" />
+                        <ChevronDown className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
                       )}
                     </div>
                   </button>
 
                   {(isThinkingActive || thoughtExpanded) && (
-                    <div className="px-4 py-3.5 text-[12px] sm:text-[12.5px] text-neutral-300 font-mono whitespace-pre-wrap leading-[1.7] max-h-72 overflow-y-auto scrollbar-thin bg-black/40 border-t border-white/10 selection:bg-cyan-500/20">
+                    <div className="px-4 py-3.5 text-[12px] sm:text-[12.5px] text-neutral-200 dark:text-neutral-300 font-mono whitespace-pre-wrap leading-[1.7] max-h-72 overflow-y-auto scrollbar-thin bg-neutral-900/95 dark:bg-black/40 border-t border-black/[0.08] dark:border-white/10 selection:bg-cyan-500/20">
                       {thinkingText}
                       {isThinkingActive && <span className="streaming-cursor ml-1" />}
                     </div>
@@ -387,14 +387,14 @@ function ChatMessageComponent({
                     </a>
                   ),
                   table: ({ children }) => (
-                    <div className="overflow-x-auto my-5 rounded-2xl border border-white/10 shadow-md bg-neutral-100/90 dark:bg-neutral-900/80">
+                    <div className="overflow-x-auto my-5 rounded-2xl border border-black/[0.08] dark:border-white/10 shadow-md bg-neutral-100/90 dark:bg-neutral-900/80">
                       <table className="min-w-full text-xs sm:text-sm font-sans">
                         {children}
                       </table>
                     </div>
                   ),
                   thead: ({ children }) => (
-                    <thead className="bg-white/10 dark:bg-white/[0.06] text-[11px] font-bold uppercase tracking-wider text-neutral-600 dark:text-neutral-300 select-none border-b border-white/10">
+                    <thead className="bg-black/[0.04] dark:bg-white/[0.06] text-[11px] font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 select-none border-b border-black/[0.08] dark:border-white/10">
                       {children}
                     </thead>
                   ),
@@ -506,12 +506,12 @@ function ChatMessageComponent({
 
         {/* Modern Minimal Action Bar */}
         {!isGenerating && (
-          <div className="flex items-center gap-1 mt-1.5 select-none text-neutral-400 dark:text-neutral-500 opacity-90 md:opacity-0 md:group-hover:opacity-100 touch-visible transition-all duration-150 w-fit">
+          <div className="flex items-center gap-1 mt-1.5 select-none text-neutral-500 dark:text-neutral-400 opacity-90 md:opacity-0 md:group-hover:opacity-100 touch-visible transition-all duration-150 w-fit">
             {/* User Edit */}
             {isUser && !isEditing && onEdit && (
               <button
                 onClick={() => setIsEditing(true)}
-                className="p-1.5 rounded-xl hover:bg-white/10 hover:text-foreground text-neutral-400 apple-spring active:scale-95"
+                className="p-1.5 rounded-xl hover:bg-black/[0.06] dark:hover:bg-white/10 hover:text-foreground text-neutral-500 dark:text-neutral-400 apple-spring active:scale-95"
                 title="Edit Prompt"
               >
                 <Edit className="w-3.5 h-3.5" />
@@ -522,7 +522,7 @@ function ChatMessageComponent({
             {!isEditing && (
               <button
                 onClick={(e) => copyToClipboard(e, displayContent)}
-                className="p-1.5 rounded-xl hover:bg-white/10 hover:text-foreground text-neutral-400 apple-spring active:scale-95"
+                className="p-1.5 rounded-xl hover:bg-black/[0.06] dark:hover:bg-white/10 hover:text-foreground text-neutral-500 dark:text-neutral-400 apple-spring active:scale-95"
                 title="Copy Message"
               >
                 {copiedText ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -533,7 +533,7 @@ function ChatMessageComponent({
             {!isUser && !isEditing && (
               <button
                 onClick={onToggleSpeech}
-                className={`flex items-center gap-1.5 p-1.5 rounded-xl hover:bg-white/10 hover:text-foreground text-neutral-400 apple-spring active:scale-95 ${
+                className={`flex items-center gap-1.5 p-1.5 rounded-xl hover:bg-black/[0.06] dark:hover:bg-white/10 hover:text-foreground text-neutral-500 dark:text-neutral-400 apple-spring active:scale-95 ${
                   isSpeaking ? "text-primary bg-primary/15 border border-primary/20" : ""
                 }`}
                 title={isSpeaking ? "Stop Reading" : "Read Aloud"}
@@ -558,8 +558,8 @@ function ChatMessageComponent({
               <>
                 <button
                   onClick={() => onFeedback("up")}
-                  className={`p-1.5 rounded-xl hover:bg-white/10 hover:text-foreground text-neutral-400 apple-spring active:scale-95 ${
-                    message.feedback === "up" ? "text-emerald-400 bg-emerald-500/15 border border-emerald-500/20" : ""
+                  className={`p-1.5 rounded-xl hover:bg-black/[0.06] dark:hover:bg-white/10 hover:text-foreground text-neutral-500 dark:text-neutral-400 apple-spring active:scale-95 ${
+                    message.feedback === "up" ? "text-emerald-500 dark:text-emerald-400 bg-emerald-500/15 border border-emerald-500/20" : ""
                   }`}
                   title="Helpful response"
                 >
@@ -567,8 +567,8 @@ function ChatMessageComponent({
                 </button>
                 <button
                   onClick={() => onFeedback("down")}
-                  className={`p-1.5 rounded-xl hover:bg-white/10 hover:text-foreground text-neutral-400 apple-spring active:scale-95 ${
-                    message.feedback === "down" ? "text-rose-400 bg-rose-500/15 border border-rose-500/20" : ""
+                  className={`p-1.5 rounded-xl hover:bg-black/[0.06] dark:hover:bg-white/10 hover:text-foreground text-neutral-500 dark:text-neutral-400 apple-spring active:scale-95 ${
+                    message.feedback === "down" ? "text-rose-500 dark:text-rose-400 bg-rose-500/15 border border-rose-500/20" : ""
                   }`}
                   title="Not helpful"
                 >
@@ -581,7 +581,7 @@ function ChatMessageComponent({
             {!isUser && !isEditing && isLast && onRegenerate && (
               <button
                 onClick={onRegenerate}
-                className="p-1.5 rounded-xl hover:bg-white/10 hover:text-foreground text-neutral-400 apple-spring active:scale-95"
+                className="p-1.5 rounded-xl hover:bg-black/[0.06] dark:hover:bg-white/10 hover:text-foreground text-neutral-500 dark:text-neutral-400 apple-spring active:scale-95"
                 title="Regenerate Response"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
@@ -593,8 +593,8 @@ function ChatMessageComponent({
         {/* Related Questions block */}
         {!isUser && !isGenerating && questions.length > 0 && onSelectQuestion && (
           <div className="flex flex-col gap-2.5 mt-4 pt-3 w-full select-none msg-enter">
-            <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-white/10 to-transparent mb-1" />
-            <span className="text-[11px] font-semibold text-neutral-400 font-sans flex items-center gap-1.5 tracking-wide">
+            <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-black/[0.08] dark:via-white/10 to-transparent mb-1" />
+            <span className="text-[11px] font-semibold text-neutral-600 dark:text-neutral-400 font-sans flex items-center gap-1.5 tracking-wide">
               <Sparkles className="w-3 h-3 text-primary" />
               Suggested Follow-ups
             </span>
