@@ -100,32 +100,58 @@ export const MODELS: Record<string, ModelInfo> = {
   },
 };
 
-function classifyQuery(query: string): keyof typeof MODELS {
-  const q = query.toLowerCase();
+function classifyQuery(query: string, file?: AttachedFilePayload | null): keyof typeof MODELS {
+  // 1. Multimodal Vision Routing
+  // If an image or document is attached, Gemini 2.5 Flash has native multimodal vision & document processing
+  if (file && (file.type?.startsWith("image/") || file.data)) {
+    return "gemini-flash";
+  }
 
-  const reasoningKeywords = [
-    "solve", "calculate", "prove", "math", "equation", "theorem", "physics",
-    "algorithm", "complexity", "r1", "reasoning", "step-by-step", "logic puzzle",
-    "philosophical", "architectural choice", "performance bottleneck", "derivation",
-    "big o", "dynamic programming", "graph theory"
-  ];
+  const clean = query.trim();
+  const q = clean.toLowerCase();
 
-  const synthesisKeywords = [
-    "essay", "write a story", "article", "report", "summary", "translate",
-    "comprehensive guide", "exhaustive", "book", "chapters", "narrative",
-    "in-depth analysis", "long guide"
-  ];
+  // 2. Ultra-Deep 550B Architectural & Complex Research Analysis
+  const ultraDeepRegex = /\b(550b|ultra deep|deep analysis|exhaustive analysis|comprehensive breakdown|systematic review|deep literature review|multi-system benchmark|doctoral level|architectural trade-offs|distributed systems consensus)\b/i;
+  if (ultraDeepRegex.test(q)) {
+    return "nemotron-ultra";
+  }
 
-  const reasoningMatches = reasoningKeywords.filter((k) => q.includes(k)).length;
-  const synthesisMatches = synthesisKeywords.filter((k) => q.includes(k)).length;
+  // 3. Coding, Debugging & Software Engineering
+  // Google's Gemma 4 26B instruction-tuned model has exceptional coding & software logic accuracy
+  const codeRegex = /\b(javascript|typescript|python|rust|golang|c\+\+|java|c#|swift|kotlin|php|ruby|sql|nosql|mongodb|postgres|mysql|html|css|tailwind|react|nextjs|vue|angular|svelte|nodejs|express|fastapi|django|flask|spring boot|docker|kubernetes|aws|git|github|ci\/cd|regex|api|graphql|rest api|json|yaml|xml|sdk|npm|pip|cargo|webpack|vite|algorithm|data structure|refactor|debug|compiler|syntax error|stack trace|runtime error|nullpointer|async|await|promise|middleware|orm|prisma|mongoose)\b/i;
+  const hasCodeFences = /```|\b(def|class|const|let|var|function|import|export|interface|enum|public|private)\s+[a-zA-Z_$]/.test(clean);
+  
+  if (codeRegex.test(q) || hasCodeFences) {
+    return "gemma-26b";
+  }
 
-  if (reasoningMatches > 0 && reasoningMatches >= synthesisMatches) {
+  // 4. Mathematical Reasoning, Algorithmic Logic & Physics Proofs
+  // Nvidia Nemotron 3.5 Lightning is tuned specifically for deep chain-of-thought mathematical reasoning
+  const mathReasoningRegex = /\b(solve|calculate|differential equation|integral|derivative|calculus|linear algebra|eigenvalue|eigenvector|matrix multiplication|fourier transform|laplace|probability distribution|bayes theorem|hypothesis test|p-value|combinatorics|permutation|discrete math|formal proof|prove that|theorem|lemma|corollary|qed|physics|quantum|thermodynamics|relativity|newtonian|boolean algebra|logic gate|turing machine|np-complete|dynamic programming|dijkstra|bellman-ford|a\* algorithm|simplex method)\b/i;
+  const hasMathSymbols = /(\b(d\/dx|\\[a-zA-Z]+|\b\d+\s*[\^*/+-]\s*\d+\b|\b\d+!\b)|\b(x\^2|y\^2)\b)/.test(clean);
+
+  if (mathReasoningRegex.test(q) || hasMathSymbols) {
     return "nemotron-lightning";
   }
-  if (synthesisMatches > 0 && synthesisMatches > reasoningMatches) {
+
+  // 5. Long Creative Writing, Essays, Literary Synthesis & Multilingual Depth
+  // MiniMax M3 is renowned for its 1M context window and mastery of multilingual literature, creative prose, and long-form writing
+  const creativeSynthesisRegex = /\b(essay|story|poem|poetry|novel|screenplay|script|narrative|creative writing|fiction|biography|memoir|speech|editorial|blog post|copywriting|paraphrase|metaphor|rhyme|dialogue|playwright|lyrics|chapter|prose|critique|literary analysis)\b/i;
+  const hasNonLatinScript = /[\u0600-\u06FF\u0900-\u097F\u0980-\u09FF\u0B80-\u0BFF\u0C00-\u0C7F\u4E00-\u9FFF\u3040-\u30FF]/.test(clean);
+
+  if (creativeSynthesisRegex.test(q) || (hasNonLatinScript && clean.length > 70)) {
     return "minimax-m3";
   }
 
+  // 6. Rapid Factoid Lookups & Short Inquiries (< 40 characters)
+  // Gemini 3.5 Flash Lite provides sub-second 200ms responses for quick definitions and greetings
+  const isGreetingOrSimple = /^(hi|hello|hey|yo|greetings|thanks|thank you|good (morning|afternoon|evening)|who is [a-z0-9 ]{2,30}\??|what is (the )?[a-z0-9 ]{2,30}\??|define [a-z0-9 ]{2,30}\??)\.?$/i.test(clean);
+  if (isGreetingOrSimple || (clean.length < 40 && !/[{}<>=/*+\\[\\]_]/.test(clean))) {
+    return "gemini-lite";
+  }
+
+  // 7. General High-Capacity Intelligence (Default)
+  // Gemini 2.5 Flash is Google's flagship SOTA model for general, multimodal, and comprehensive inquiries
   return "gemini-flash";
 }
 
@@ -202,7 +228,7 @@ export async function POST(req: NextRequest) {
   let isSmartRouted = false;
 
   if (selectedModelId === "smart-router") {
-    activeModelKey = classifyQuery(userPrompt);
+    activeModelKey = classifyQuery(userPrompt, file);
     isSmartRouted = true;
   } else if (selectedModelId && selectedModelId in MODELS) {
     activeModelKey = selectedModelId as keyof typeof MODELS;
@@ -251,7 +277,7 @@ At the very end of your response, you MUST append exactly 3 relevant follow-up q
 
   // Asynchronous streaming worker with 4-Tier Resilience
   (async () => {
-    let resolvedModelName = activeModel.name;
+    let resolvedModelName = isSmartRouted ? `${activeModel.name} (Auto-Routed)` : activeModel.name;
     let fallbackWarning: string | undefined;
 
     try {

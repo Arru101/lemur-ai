@@ -63,6 +63,18 @@ code, kbd, samp, pre {
   font-family: var(--font-mono), monospace !important;
 }
 
+/* UI Chrome Selection Prevention & Native App Lock */
+button, nav, header, aside, .touch-target {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.chat-prose, textarea, input, code, pre {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
 /* Dynamic Viewport (dvh) for Phone/Tablet address bar stability */
 .h-dvh-screen {
   height: 100vh;

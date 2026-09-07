@@ -171,9 +171,47 @@ export default function Home() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // --- Productive Global Keyboard Shortcuts (0 overhead) ---
+  // --- Productive Global Keyboard Shortcuts & DevTools Security Locks ---
   useEffect(() => {
+    // Lock Right-Click Context Menu (Inspect Element)
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      return false;
+    };
+
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Lock F12 DevTools
+      if (e.key === "F12" || e.keyCode === 123) {
+        e.preventDefault();
+        return false;
+      }
+
+      // Lock Ctrl+Shift+I / Cmd+Option+I (Inspect DevTools)
+      // Lock Ctrl+Shift+J / Cmd+Option+J (Console)
+      // Lock Ctrl+Shift+C / Cmd+Option+C (Element Inspector)
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        (e.shiftKey || e.altKey) &&
+        (e.key.toLowerCase() === "i" ||
+         e.key.toLowerCase() === "j" ||
+         e.key.toLowerCase() === "c")
+      ) {
+        e.preventDefault();
+        return false;
+      }
+
+      // Lock Ctrl+U / Cmd+Option+U (View Source)
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "u") {
+        e.preventDefault();
+        return false;
+      }
+
+      // Lock Ctrl+S / Cmd+S (Save Page)
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        return false;
+      }
+
       // Ctrl+K or Cmd+K: Focus chat input or create new chat
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
@@ -191,8 +229,13 @@ export default function Home() {
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown, { passive: true });
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener("contextmenu", handleContextMenu);
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("contextmenu", handleContextMenu);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
   // --- Load localStorage on Mount ---
