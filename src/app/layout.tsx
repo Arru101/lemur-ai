@@ -28,6 +28,15 @@ export const metadata: Metadata = {
   description: "Chat with the world's most powerful AI models (Gemini, Llama, DeepSeek, Qwen) instantly. No registration, no login, completely free.",
   keywords: ["AI Chat", "Gemini Free", "DeepSeek", "Llama 3", "Qwen Coder", "Free AI", "No Login AI", "Lemur AI"],
   authors: [{ name: "Lemur AI Team" }],
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    apple: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+  },
   openGraph: {
     title: "Lemur AI - Instant Advanced Chat Assistants",
     description: "Chat with the world's most powerful AI models instantly, completely registration-free.",

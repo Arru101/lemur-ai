@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <defs>
+    <linearGradient id="a" x1="15%" y1="0%" x2="85%" y2="100%">
+      <stop offset="0%" stop-color="#818cf8"/>
+      <stop offset="45%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#4338ca"/>
+    </linearGradient>
+    <linearGradient id="b" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f472b6" stop-opacity=".95"/>
+      <stop offset="100%" stop-color="#818cf8" stop-opacity=".7"/>
+    </linearGradient>
+    <radialGradient id="c" cx="40%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#7dd3fc"/>
+      <stop offset="100%" stop-color="#0ea5e9"/>
+    </radialGradient>
+    <linearGradient id="d" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fff" stop-opacity=".55"/>
+      <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="s">
+      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#4338ca" flood-opacity=".35"/>
+    </filter>
+    <filter id="g">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Squircle body -->
+  <rect x="4" y="4" width="92" height="92" rx="28" fill="url(#a)" filter="url(#s)"/>
+  <!-- Glass bevel top half -->
+  <rect x="4" y="4" width="92" height="46" rx="28" fill="url(#d)"/>
+  <!-- Border ring -->
+  <rect x="4" y="4" width="92" height="92" rx="28" stroke="rgba(255,255,255,.22)" stroke-width="1.5"/>
+
+  <!-- Left ear outer -->
+  <path d="M27 42 C20 24,30 10,42 22" stroke="rgba(255,255,255,.9)" stroke-width="4" stroke-linecap="round"/>
+  <!-- Left ear inner -->
+  <path d="M29 38 C24 25,32 17,40 25" fill="url(#b)" opacity=".85"/>
+
+  <!-- Right ear outer -->
+  <path d="M73 42 C80 24,70 10,58 22" stroke="rgba(255,255,255,.9)" stroke-width="4" stroke-linecap="round"/>
+  <!-- Right ear inner -->
+  <path d="M71 38 C76 25,68 17,60 25" fill="url(#b)" opacity=".85"/>
+
+  <!-- Face dome -->
+  <path d="M24 50 C24 34,76 34,76 50 C76 70,63 86,50 86 C37 86,24 70,24 50 Z" fill="rgba(255,255,255,.13)" stroke="rgba(255,255,255,.28)" stroke-width="1.5"/>
+
+  <!-- Muzzle -->
+  <ellipse cx="50" cy="68" rx="11" ry="8" fill="rgba(224,231,255,.15)" stroke="rgba(255,255,255,.18)" stroke-width="1"/>
+
+  <!-- Left eye sclera -->
+  <circle cx="39" cy="52" r="8.5" fill="#06070f" stroke="rgba(255,255,255,.5)" stroke-width="2"/>
+  <circle cx="39" cy="52" r="4.5" fill="url(#c)" filter="url(#g)"/>
+  <circle cx="39" cy="52" r="2" fill="#020408"/>
+  <circle cx="41.2" cy="49.5" r="1.4" fill="white" opacity=".9"/>
+
+  <!-- Right eye sclera -->
+  <circle cx="61" cy="52" r="8.5" fill="#06070f" stroke="rgba(255,255,255,.5)" stroke-width="2"/>
+  <circle cx="61" cy="52" r="4.5" fill="url(#c)" filter="url(#g)"/>
+  <circle cx="61" cy="52" r="2" fill="#020408"/>
+  <circle cx="63.2" cy="49.5" r="1.4" fill="white" opacity=".9"/>
+
+  <!-- Nose -->
+  <path d="M47.5 65 C47.5 63,52.5 63,52.5 65 L51.5 68 C51 69,49 69,48.5 68 Z" fill="rgba(255,255,255,.7)"/>
+
+  <!-- Top glass shine arc -->
+  <path d="M16 20 C28 10,72 10,84 20" stroke="rgba(255,255,255,.5)" stroke-width="2" stroke-linecap="round"/>
+</svg>
