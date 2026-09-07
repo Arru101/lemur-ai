@@ -221,19 +221,6 @@ export default function Sidebar({
           </div>
           
           <div className="flex items-center gap-1">
-            {/* Quick New Chat Button (Icon Only) */}
-            <button
-              onClick={() => {
-                onNewChat();
-                onClose();
-              }}
-              className="flex items-center justify-center p-2 rounded-xl hover:bg-black/[0.05] dark:hover:bg-white/10 text-neutral-700 dark:text-neutral-300 hover:text-foreground apple-spring active:scale-95 border-0 outline-none group"
-              title="New Chat (⌘N)"
-              aria-label="New Chat"
-            >
-              <SquarePen className="w-4 h-4 stroke-[1.9] group-hover:scale-110 group-hover:text-primary transition-all duration-200" />
-            </button>
-
             {/* Desktop Collapse Button */}
             {onToggleCollapse && (
               <button
