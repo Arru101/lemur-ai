@@ -812,6 +812,9 @@ export default function Home() {
 
     setInput("");
     removeAttachment();
+    if (chatInputRef.current) {
+      chatInputRef.current.style.height = "auto";
+    }
 
     await streamChatResponse(currentChatId, updatedMessages, payloadMessages, fileToUpload);
   };
@@ -866,7 +869,7 @@ export default function Home() {
     setInput(e.target.value);
     const textarea = e.target;
     textarea.style.height = "auto";
-    textarea.style.height = `${Math.min(textarea.scrollHeight, 180)}px`;
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 140)}px`;
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -1167,16 +1170,16 @@ export default function Home() {
         </div>
 
         {/* Input Text Form Area */}
-        <footer className="p-2.5 sm:p-4 md:p-6 border-t border-glass-border select-none bg-background/30 backdrop-blur-md relative safe-bottom safe-left safe-right">
+        <footer className="px-3 py-2 sm:px-4 sm:py-2.5 border-t border-glass-border/30 select-none bg-background/60 dark:bg-neutral-950/50 backdrop-blur-xl relative safe-bottom safe-left safe-right transition-all duration-300">
           
           {/* Scroll to bottom floating action button */}
           {showScrollBtn && (
             <button
               onClick={() => scrollToBottom()}
-              className="absolute -top-12 left-1/2 -translate-x-1/2 flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-neutral-100 dark:bg-neutral-900 border border-glass-border text-foreground hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-all duration-200 shadow-lg glow-primary active:scale-95 z-30 touch-target"
+              className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/90 dark:bg-neutral-900/90 border border-glass-border/70 text-foreground hover:bg-white dark:hover:bg-neutral-800 transition-all duration-200 shadow-md glow-primary active:scale-95 z-30"
               title="Scroll to bottom"
             >
-              <ArrowDown className="w-4 h-4 animate-bounce" />
+              <ArrowDown className="w-3.5 h-3.5 animate-bounce text-primary" />
             </button>
           )}
 
@@ -1184,121 +1187,120 @@ export default function Home() {
             
             {/* File Upload Preview bar */}
             {attachedFile && (
-              <div className="absolute bottom-full left-0 right-0 mb-3 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl border border-glass-border bg-neutral-100 dark:bg-neutral-950 flex items-center justify-between shadow-xl z-20 animate-slide-up">
-                <div className="flex items-center gap-2.5 min-w-0">
+              <div className="absolute bottom-full left-0 right-0 mb-2 px-3 py-1.5 rounded-xl border border-glass-border/60 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-xl flex items-center justify-between shadow-lg z-20 animate-slide-up">
+                <div className="flex items-center gap-2 min-w-0">
                   {imagePreview ? (
-                    <div className="w-8 h-8 rounded-lg overflow-hidden relative flex-shrink-0 border border-glass-border">
+                    <div className="w-7 h-7 rounded-lg overflow-hidden relative flex-shrink-0 border border-glass-border">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={imagePreview} alt="Upload preview" className="object-cover w-full h-full" />
                     </div>
                   ) : (
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
-                      <FileText className="w-4 h-4" />
+                    <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                      <FileText className="w-3.5 h-3.5" />
                     </div>
                   )}
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold text-foreground truncate">{attachedFile.name}</p>
-                    <p className="text-[10px] text-neutral-500 uppercase">{attachedFile.type || "File"}</p>
+                    <p className="text-xs font-medium text-foreground truncate">{attachedFile.name}</p>
+                    <p className="text-[10px] text-neutral-500 uppercase font-mono">{attachedFile.type || "File"}</p>
                   </div>
                 </div>
                 <button
                   onClick={removeAttachment}
-                  className="touch-target p-1 rounded-full hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-500 hover:text-foreground transition-colors"
+                  className="p-1 rounded-full hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-400 hover:text-foreground transition-colors"
                   title="Remove attachment"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-3.5 h-3.5" />
                 </button>
               </div>
             )}
 
-            {/* Input Controls Capsule Container */}
+            {/* Premium Compact Chat Box Capsule */}
             <form 
               onSubmit={handleSubmit}
-              className="glass-input flex flex-col rounded-2xl border border-glass-border overflow-hidden bg-neutral-900/10 dark:bg-black/30 shadow-xl focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all duration-300"
+              className="glass-input relative flex items-end gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-2xl sm:rounded-3xl border border-glass-border/60 bg-white/75 dark:bg-neutral-900/70 backdrop-blur-2xl shadow-[0_4px_24px_-2px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_32px_-4px_rgba(0,0,0,0.45)] focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/15 transition-all duration-300"
             >
-              <textarea
-                ref={chatInputRef}
-                rows={1}
-                value={input}
-                onChange={handleTextAreaChange}
-                onKeyDown={handleKeyPress}
-                placeholder={t.placeholder}
-                maxLength={4000}
-                className="w-full bg-transparent px-3 sm:px-4 pt-3 sm:pt-4 pb-2 text-sm sm:text-base 2xl:text-lg text-foreground placeholder-neutral-500 focus:outline-none resize-none min-h-[44px] max-h-[160px] sm:max-h-[220px] font-sans"
-              />
+              {/* Left: Attachment button */}
+              <div className="flex items-center pb-0.5">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="image/*,text/*,.md,.json,.js,.ts,.py,.html,.css,.csv"
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={handleFileClick}
+                  className="p-2 sm:p-2.5 rounded-xl text-neutral-400 hover:text-primary hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60 active:scale-95 transition-all duration-200"
+                  title={t.uploadFile}
+                >
+                  <Paperclip className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
+                </button>
+              </div>
 
-              <div className="flex items-center justify-between px-2.5 sm:px-3 pb-2.5 sm:pb-3 pt-1 border-t border-dashed border-glass-border/30">
-                {/* Left Attachment Actions */}
-                <div className="flex items-center gap-1 sm:gap-1.5">
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    accept="image/*,text/*,.md,.json,.js,.ts,.py,.html,.css,.csv"
-                    className="hidden"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleFileClick}
-                    className="touch-target p-2 sm:p-2 rounded-xl text-neutral-500 hover:text-primary hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-all duration-200"
-                    title={t.uploadFile}
-                  >
-                    <Paperclip className="w-4 h-4 md:w-4.5 md:h-4.5" />
-                  </button>
-                </div>
+              {/* Center: Streamlined Auto-growing Textarea */}
+              <div className="flex-1 min-w-0 py-0.5">
+                <textarea
+                  ref={chatInputRef}
+                  rows={1}
+                  value={input}
+                  onChange={handleTextAreaChange}
+                  onKeyDown={handleKeyPress}
+                  placeholder={t.placeholder}
+                  maxLength={4000}
+                  className="w-full bg-transparent px-1.5 sm:px-2 text-sm sm:text-base 2xl:text-lg text-foreground placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none resize-none min-h-[36px] max-h-[140px] leading-relaxed font-sans block"
+                />
+              </div>
 
-                {/* Right Input Actions */}
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  
-                  {/* Character gauge tracker */}
-                  <span className="hidden sm:inline text-[10px] 2xl:text-xs text-neutral-500 font-mono mr-1 select-none">
-                    {input.length.toLocaleString()} / 4,000
+              {/* Right: Actions Cluster (Character Count, Voice Input, Send Button) */}
+              <div className="flex items-center gap-1 sm:gap-1.5 pb-0.5 flex-shrink-0">
+                {/* Character gauge tracker (shows subtly when typing) */}
+                {input.length > 150 && (
+                  <span className="hidden sm:inline-block text-[10px] text-neutral-400 font-mono select-none px-1">
+                    {input.length}/4000
                   </span>
+                )}
 
+                {/* Voice Dictation */}
+                <button
+                  type="button"
+                  onClick={handleVoiceInput}
+                  className={`p-2 sm:p-2.5 rounded-xl transition-all duration-200 ${
+                    isListening 
+                      ? "text-red-500 bg-red-500/10 shadow-sm" 
+                      : "text-neutral-400 hover:text-foreground hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60 active:scale-95"
+                  }`}
+                  title={t.voiceInput}
+                >
+                  {isListening ? (
+                    <div className="flex items-center gap-1">
+                      <Mic className="w-4 h-4 sm:w-[18px] sm:h-[18px] animate-pulse text-red-500" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+                    </div>
+                  ) : (
+                    <Mic className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
+                  )}
+                </button>
+
+                {/* Submit / Cancel response togglers */}
+                {loading ? (
                   <button
                     type="button"
-                    onClick={handleVoiceInput}
-                    className={`touch-target flex items-center gap-1 p-2 rounded-xl transition-all duration-200 ${
-                      isListening 
-                        ? "text-red-500 bg-red-500/10" 
-                        : "text-neutral-500 hover:text-secondary hover:bg-neutral-200 dark:hover:bg-neutral-800"
-                    }`}
-                    title={t.voiceInput}
+                    onClick={handleCancelResponse}
+                    className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 2xl:w-10 2xl:h-10 rounded-xl sm:rounded-2xl bg-rose-500/15 text-rose-500 hover:bg-rose-500/25 active:scale-90 transition-all duration-200 border border-rose-500/30"
+                    title="Stop generating"
                   >
-                    {isListening ? (
-                      <>
-                        <Mic className="w-4 h-4 md:w-4.5 md:h-4.5 animate-pulse" />
-                        <div className="soundwave scale-75 select-none pointer-events-none">
-                          <span className="soundwave-bar" />
-                          <span className="soundwave-bar" />
-                          <span className="soundwave-bar" />
-                        </div>
-                      </>
-                    ) : (
-                      <Mic className="w-4 h-4 md:w-4.5 md:h-4.5" />
-                    )}
+                    <StopCircle className="w-4 h-4 2xl:w-5 2xl:h-5" />
                   </button>
-
-                  {/* Submit / Cancel response togglers */}
-                  {loading ? (
-                    <button
-                      type="button"
-                      onClick={handleCancelResponse}
-                      className="touch-target flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 2xl:w-11 2xl:h-11 rounded-xl bg-rose-500/20 text-rose-500 hover:bg-rose-500/25 active:scale-95 transition-all duration-200 border border-rose-500/30"
-                      title="Stop generating"
-                    >
-                      <StopCircle className="w-4 h-4 2xl:w-5 2xl:h-5" />
-                    </button>
-                  ) : (
-                    <button
-                      type="submit"
-                      disabled={(!input.trim() && !attachedFile) || loading}
-                      className="touch-target flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 2xl:w-11 2xl:h-11 rounded-xl bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/95 hover:to-indigo-600/95 disabled:opacity-40 disabled:cursor-not-allowed text-white shadow-md active:scale-95 transition-all duration-200 glow-primary"
-                    >
-                      <Send className="w-4 h-4 2xl:w-5 2xl:h-5" />
-                    </button>
-                  )}
-                </div>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={(!input.trim() && !attachedFile) || loading}
+                    className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 2xl:w-10 2xl:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-r from-primary via-indigo-600 to-violet-600 hover:from-primary/90 hover:via-indigo-600/90 hover:to-violet-600/90 disabled:opacity-30 disabled:cursor-not-allowed text-white shadow-sm hover:shadow-primary/25 active:scale-90 transition-all duration-200 glow-primary"
+                  >
+                    <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-0.5" />
+                  </button>
+                )}
               </div>
             </form>
           </div>
