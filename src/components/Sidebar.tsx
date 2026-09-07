@@ -151,60 +151,62 @@ export default function Sidebar({
         }`}
       >
         {/* Brand Header */}
-        <div className="flex items-center justify-between h-14 sm:h-15 px-4 border-b border-black/[0.05] dark:border-white/[0.06]">
-          <div className="flex items-center gap-2.5">
-            <LemurLogo className="w-7 h-7" />
-            <div className="flex items-center gap-1.5">
-              <span className="text-base font-bold tracking-tight text-neutral-900 dark:text-white font-jakarta">
+        <div className="flex items-center justify-between h-14 sm:h-16 px-4 sm:px-5 border-b border-white/10">
+          <div className="flex items-center gap-3 select-none">
+            <div className="w-8 h-8 rounded-xl ios-glass flex items-center justify-center shadow-sm">
+              <LemurLogo className="w-5 h-5" />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm sm:text-base font-bold tracking-tight text-neutral-900 dark:text-white font-sans">
                 {t.appName}
               </span>
-              <span className="px-1.5 py-0.5 rounded-md text-[9px] font-semibold font-mono bg-black/[0.05] dark:bg-white/[0.08] text-neutral-600 dark:text-neutral-300 uppercase tracking-wide">
-                PRO
+              <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold font-mono bg-primary/15 text-primary border border-primary/25 uppercase tracking-wide">
+                v2.5 Pro
               </span>
             </div>
           </div>
           {/* Close button for mobile */}
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl lg:hidden hover:bg-black/5 dark:hover:bg-white/5 text-neutral-400 hover:text-foreground transition-all duration-150 active:scale-95 flex items-center justify-center border-0 outline-none"
+            className="p-2 rounded-xl lg:hidden hover:bg-white/10 text-neutral-400 hover:text-foreground apple-spring active:scale-95 flex items-center justify-center border-0 outline-none"
             title="Close navigation"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Action Button: New Chat & Search */}
-        <div className="px-3 py-3 space-y-2 border-b border-black/[0.05] dark:border-white/[0.06]">
+        <div className="px-3.5 py-3 space-y-2.5 border-b border-white/10">
           <button
             onClick={() => {
               onNewChat();
               onClose();
             }}
-            className="w-full flex items-center justify-between px-3 h-9 rounded-xl bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:opacity-90 active:scale-[0.98] transition-all duration-150 border-0 outline-none shadow-sm text-xs font-medium"
+            className="w-full flex items-center justify-between px-3.5 h-10 rounded-2xl bg-primary hover:bg-primary/90 text-white shadow-[0_4px_16px_rgba(99,102,241,0.35),inset_0_1px_1px_rgba(255,255,255,0.35)] border border-primary/40 active:scale-[0.98] apple-spring text-xs font-semibold"
           >
             <div className="flex items-center gap-2">
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 stroke-[2.5]" />
               <span>{t.newChat}</span>
             </div>
-            <kbd className="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/20 dark:bg-black/10 select-none">
+            <kbd className="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-white/20 select-none shadow-sm">
               ⌘N
             </kbd>
           </button>
 
           {/* Search bar for Filtering conversations */}
-          <div className="relative flex items-center rounded-xl bg-black/[0.03] dark:bg-white/[0.04] hover:bg-black/[0.05] dark:hover:bg-white/[0.06] border border-black/[0.04] dark:border-white/[0.06] focus-within:border-black/[0.12] dark:focus-within:border-white/[0.12] transition-all duration-150">
+          <div className="relative flex items-center rounded-xl bg-white/[0.04] dark:bg-white/[0.06] hover:bg-white/[0.08] border border-white/10 focus-within:border-primary/40 focus-within:bg-white/[0.08] transition-all duration-150 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]">
             <Search className="absolute left-2.5 w-3.5 h-3.5 text-neutral-400 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search conversations..."
-              className="w-full pl-8 pr-7 py-1.5 text-xs bg-transparent border-0 outline-none ring-0 text-foreground placeholder-neutral-400 font-sans"
+              className="w-full pl-8 pr-7 py-2 text-xs bg-transparent border-0 outline-none ring-0 text-foreground placeholder-neutral-400 font-sans"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-2 p-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 text-neutral-400 hover:text-foreground"
+                className="absolute right-2 p-0.5 rounded-full hover:bg-white/10 text-neutral-400 hover:text-foreground"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -237,14 +239,14 @@ export default function Sidebar({
                   key={chat.id}
                   onClick={() => !isEditing && onSelect(chat.id)}
                   onDoubleClick={() => startRename(chat.id, chat.title)}
-                  className={`group relative flex items-center gap-2.5 px-3 py-2 rounded-xl cursor-pointer select-none transition-all duration-150 border-0 ${
+                  className={`group relative flex items-center gap-2.5 px-3 py-2 rounded-xl cursor-pointer select-none apple-spring border ${
                     isActive
-                      ? "bg-black/[0.06] dark:bg-white/[0.08] text-foreground font-medium shadow-sm"
-                      : "hover:bg-black/[0.03] dark:hover:bg-white/[0.04] text-neutral-600 dark:text-neutral-400 hover:text-foreground"
+                      ? "bg-white/[0.1] text-foreground font-semibold border-white/20 shadow-[0_4px_16px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.2)]"
+                      : "border-transparent hover:bg-white/[0.05] text-neutral-400 hover:text-foreground"
                   }`}
                 >
                   {isActive ? (
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0 shadow-[0_0_8px_var(--primary)]" />
                   ) : (
                     <MessageSquare className="w-3.5 h-3.5 flex-shrink-0 opacity-40 group-hover:opacity-80" />
                   )}
@@ -257,7 +259,7 @@ export default function Sidebar({
                       onChange={(e) => setEditingTitle(e.target.value)}
                       onBlur={submitRename}
                       onKeyDown={handleRenameKeyDown}
-                      className="flex-1 text-xs bg-white dark:bg-neutral-900 border-0 ring-1 ring-primary text-foreground outline-none px-2 rounded-lg py-1 shadow-sm"
+                      className="flex-1 text-xs bg-white dark:bg-neutral-900 border border-primary text-foreground outline-none px-2 rounded-lg py-1 shadow-sm font-sans"
                     />
                   ) : (
                     <span className="flex-1 truncate text-xs sm:text-sm leading-5 pr-10 font-sans">
@@ -273,14 +275,14 @@ export default function Sidebar({
                           e.stopPropagation();
                           startRename(chat.id, chat.title);
                         }}
-                        className="hover:text-primary p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 text-neutral-400 transition-colors border-0 outline-none"
+                        className="hover:text-primary p-1 rounded-lg hover:bg-white/10 text-neutral-400 transition-colors border-0 outline-none"
                         title="Rename Chat"
                       >
                         <Edit3 className="w-3 h-3" />
                       </button>
                       <button
                         onClick={(e) => handleDelete(e, chat.id)}
-                        className="hover:text-rose-500 p-1 rounded-lg hover:bg-rose-500/10 text-neutral-400 transition-colors border-0 outline-none"
+                        className="hover:text-rose-400 p-1 rounded-lg hover:bg-rose-500/15 text-neutral-400 transition-colors border-0 outline-none"
                         title="Delete Conversation"
                       >
                         <Trash2 className="w-3 h-3" />
@@ -294,20 +296,20 @@ export default function Sidebar({
         </div>
 
         {/* Settings Footer Panel */}
-        <div className="p-3 sm:p-3.5 border-t border-black/[0.04] dark:border-white/[0.04] space-y-2 bg-black/[0.015] dark:bg-black/25 safe-bottom">
+        <div className="p-3 sm:p-3.5 border-t border-white/10 space-y-2 bg-black/20 backdrop-blur-xl safe-bottom">
           {/* Language Selector Capsule */}
-          <div className="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] hover:bg-black/[0.05] dark:hover:bg-white/[0.06] transition-colors border-0">
-            <span className="text-xs font-medium text-neutral-500 flex items-center gap-1.5">
+          <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 transition-colors">
+            <span className="text-xs font-medium text-neutral-400 flex items-center gap-2">
               <Globe className="w-3.5 h-3.5 text-primary flex-shrink-0" />
               <span>{t.language}</span>
             </span>
             <select
               value={language}
               onChange={(e) => onLanguageChange(e.target.value)}
-              className="text-xs font-semibold bg-transparent border-0 outline-none ring-0 cursor-pointer text-foreground text-right max-w-[150px] truncate"
+              className="text-xs font-semibold bg-transparent border-0 outline-none ring-0 cursor-pointer text-foreground text-right max-w-[150px] truncate font-sans"
             >
               {LANGUAGE_OPTIONS.map((opt) => (
-                <option key={opt.code} value={opt.code} className="bg-neutral-100 dark:bg-neutral-900 text-foreground py-1">
+                <option key={opt.code} value={opt.code} className="bg-neutral-900 text-foreground py-1">
                   {opt.native} ({opt.name})
                 </option>
               ))}
@@ -317,10 +319,10 @@ export default function Sidebar({
           {/* Theme Toggler Capsule */}
           <div 
             onClick={onThemeToggle}
-            className="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] hover:bg-black/[0.05] dark:hover:bg-white/[0.06] transition-colors cursor-pointer border-0"
+            className="flex items-center justify-between px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 transition-colors cursor-pointer"
           >
-            <span className="text-xs font-medium text-neutral-500 flex items-center gap-1.5">
-              {theme === "dark" ? <Moon className="w-3.5 h-3.5 text-secondary flex-shrink-0" /> : <Sun className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />}
+            <span className="text-xs font-medium text-neutral-400 flex items-center gap-2">
+              {theme === "dark" ? <Moon className="w-3.5 h-3.5 text-secondary flex-shrink-0" /> : <Sun className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />}
               <span>{t.theme}</span>
             </span>
             <div className="flex items-center gap-1 text-[11px] font-semibold text-foreground">
@@ -333,29 +335,29 @@ export default function Sidebar({
             <button
               onClick={() => setShowExportMenu(!showExportMenu)}
               disabled={conversations.length === 0}
-              className="w-full flex items-center justify-center gap-2 h-9 rounded-xl border-0 bg-black/[0.03] dark:bg-white/[0.04] hover:bg-black/[0.06] dark:hover:bg-white/[0.07] disabled:opacity-30 disabled:cursor-not-allowed text-xs font-medium text-foreground transition-all duration-200"
+              className="w-full flex items-center justify-center gap-2 h-9 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.07] disabled:opacity-30 disabled:cursor-not-allowed text-xs font-medium text-foreground transition-all duration-200"
             >
               <Download className="w-3.5 h-3.5" />
               <span>{t.exportChat}</span>
             </button>
 
             {showExportMenu && (
-              <div className="absolute bottom-full left-0 right-0 mb-2 p-1.5 rounded-2xl bg-white/95 dark:bg-neutral-900/95 backdrop-blur-2xl border-0 shadow-2xl z-30 flex flex-col gap-0.5">
+              <div className="absolute bottom-full left-0 right-0 mb-2 p-1.5 rounded-2xl ios-glass border border-white/15 shadow-2xl z-30 flex flex-col gap-0.5">
                 <button
                   onClick={(e) => handleExportClick(e, "md")}
-                  className="w-full text-left text-xs px-2.5 py-2 rounded-xl hover:bg-primary/10 hover:text-primary transition-colors border-0"
+                  className="w-full text-left text-xs px-2.5 py-2 rounded-xl hover:bg-white/10 hover:text-primary transition-colors border-0 font-sans"
                 >
                   {t.exportMarkdown}
                 </button>
                 <button
                   onClick={(e) => handleExportClick(e, "txt")}
-                  className="w-full text-left text-xs px-2.5 py-2 rounded-xl hover:bg-primary/10 hover:text-primary transition-colors border-0"
+                  className="w-full text-left text-xs px-2.5 py-2 rounded-xl hover:bg-white/10 hover:text-primary transition-colors border-0 font-sans"
                 >
                   {t.exportText}
                 </button>
                 <button
                   onClick={(e) => handleExportClick(e, "pdf")}
-                  className="w-full text-left text-xs px-2.5 py-2 rounded-xl hover:bg-primary/10 hover:text-primary transition-colors border-0"
+                  className="w-full text-left text-xs px-2.5 py-2 rounded-xl hover:bg-white/10 hover:text-primary transition-colors border-0 font-sans"
                 >
                   {t.exportPDF}
                 </button>
@@ -367,7 +369,7 @@ export default function Sidebar({
           {conversations.length > 0 && (
             <button
               onClick={handleClearAll}
-              className="w-full flex items-center justify-center gap-1.5 py-1.5 text-[11px] font-semibold text-rose-500 hover:text-rose-400 bg-rose-500/10 hover:bg-rose-500/15 rounded-xl active:scale-95 transition-all duration-200 border-0"
+              className="w-full flex items-center justify-center gap-1.5 py-2 text-[11px] font-semibold text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/15 border border-rose-500/20 rounded-xl active:scale-95 transition-all duration-200"
             >
               <Trash2 className="w-3 h-3" />
               <span>{t.clearHistory}</span>

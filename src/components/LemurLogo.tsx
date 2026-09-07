@@ -15,118 +15,107 @@ export default function LemurLogo({ className = "w-8 h-8" }: LemurLogoProps) {
       className={className}
     >
       <defs>
-        {/* Dynamic Gradients */}
-        <linearGradient id="lemurGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="var(--primary)" />
-          <stop offset="100%" stopColor="var(--secondary)" />
-        </linearGradient>
-        
-        <linearGradient id="earGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="var(--accent)" />
-          <stop offset="100%" stopColor="var(--primary)" />
+        {/* Apple-grade Luminous Liquid Gradients */}
+        <linearGradient id="appleGlassFace" x1="10%" y1="0%" x2="90%" y2="100%">
+          <stop offset="0%" stopColor="#818cf8" />
+          <stop offset="50%" stopColor="#6366f1" />
+          <stop offset="100%" stopColor="#4f46e5" />
         </linearGradient>
 
-        <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="3" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
+        <linearGradient id="appleGlassAccent" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#38bdf8" />
+          <stop offset="100%" stopColor="#6366f1" />
+        </linearGradient>
+
+        <linearGradient id="appleGlassMask" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.3" />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity="0.05" />
+        </linearGradient>
+
+        <linearGradient id="appleEarInner" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="#818cf8" stopOpacity="0.8" />
+        </linearGradient>
       </defs>
 
-      {/* Cyber Ears */}
-      {/* Left Ear */}
-      <path
-        d="M32 28 L14 8 L22 34 Z"
-        fill="url(#earGrad)"
-        opacity="0.8"
-        stroke="var(--card-border)"
-        strokeWidth="1"
-      />
-      {/* Right Ear */}
-      <path
-        d="M68 28 L86 8 L78 34 Z"
-        fill="url(#earGrad)"
-        opacity="0.8"
-        stroke="var(--card-border)"
-        strokeWidth="1"
-      />
-
-      {/* Poly Outer Shield */}
-      <path
-        d="M50 16 L76 38 L68 72 L50 88 L32 72 L24 38 Z"
-        fill="url(#lemurGrad)"
-        opacity="0.08"
-        stroke="url(#lemurGrad)"
+      {/* Optical Outer Glass Bezel Squircle */}
+      <rect
+        x="6"
+        y="6"
+        width="88"
+        height="88"
+        rx="26"
+        fill="url(#appleGlassMask)"
+        stroke="rgba(255, 255, 255, 0.2)"
         strokeWidth="1.5"
       />
 
-      {/* Low-Poly Forehead Plane */}
+      {/* Ears */}
+      {/* Left Ear */}
       <path
-        d="M50 16 L62 36 L38 36 Z"
-        fill="url(#lemurGrad)"
-        opacity="0.85"
+        d="M26 36 C22 20, 32 14, 40 24"
+        stroke="url(#appleGlassFace)"
+        strokeWidth="3.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M28 32 C25 24, 32 20, 37 26"
+        fill="url(#appleEarInner)"
+        opacity="0.8"
       />
 
-      {/* Low-Poly Left Cheek Patch */}
+      {/* Right Ear */}
       <path
-        d="M38 36 L50 52 L26 56 L24 38 Z"
-        fill="#06060c"
-        stroke="var(--card-border)"
-        strokeWidth="1"
+        d="M74 36 C78 20, 68 14, 60 24"
+        stroke="url(#appleGlassFace)"
+        strokeWidth="3.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M72 32 C75 24, 68 20, 63 26"
+        fill="url(#appleEarInner)"
+        opacity="0.8"
       />
 
-      {/* Low-Poly Right Cheek Patch */}
+      {/* Lemur Face Contour Glass Dome */}
       <path
-        d="M62 36 L76 38 L74 56 L50 52 Z"
-        fill="#06060c"
-        stroke="var(--card-border)"
-        strokeWidth="1"
+        d="M26 46 C26 32, 74 32, 74 46 C74 66, 62 82, 50 82 C38 82, 26 66, 26 46 Z"
+        fill="url(#appleGlassFace)"
+        fillOpacity="0.12"
+        stroke="url(#appleGlassFace)"
+        strokeWidth="2.5"
       />
 
-      {/* Geometric Muzzle / Nose */}
+      {/* Concentric Mask Arc */}
       <path
-        d="M50 52 L56 72 L44 72 Z"
-        fill="url(#lemurGrad)"
-        opacity="0.9"
-      />
-      <path
-        d="M50 72 L53 78 L47 78 Z"
-        fill="var(--secondary)"
-        filter="url(#glow)"
+        d="M32 44 C38 38, 62 38, 68 44 C65 56, 56 60, 50 60 C44 60, 35 56, 32 44 Z"
+        fill="url(#appleGlassMask)"
       />
 
-      {/* Glowing Cybernetic Eyes */}
+      {/* Apple Optical Eyes */}
       {/* Left Eye */}
-      <circle
-        cx="37"
-        cy="47"
-        r="6"
-        fill="none"
-        stroke="var(--secondary)"
-        strokeWidth="1.8"
-        filter="url(#glow)"
-      />
-      <circle cx="37" cy="47" r="2.2" fill="var(--secondary)" />
+      <circle cx="40" cy="48" r="7.5" fill="#0b0d14" stroke="url(#appleGlassAccent)" strokeWidth="2" />
+      <circle cx="40" cy="48" r="3.2" fill="#38bdf8" />
+      <circle cx="42" cy="46" r="1.2" fill="#ffffff" />
 
       {/* Right Eye */}
-      <circle
-        cx="63"
-        cy="47"
-        r="6"
-        fill="none"
-        stroke="var(--secondary)"
-        strokeWidth="1.8"
-        filter="url(#glow)"
-      />
-      <circle cx="63" cy="47" r="2.2" fill="var(--secondary)" />
+      <circle cx="60" cy="48" r="7.5" fill="#0b0d14" stroke="url(#appleGlassAccent)" strokeWidth="2" />
+      <circle cx="60" cy="48" r="3.2" fill="#38bdf8" />
+      <circle cx="62" cy="46" r="1.2" fill="#ffffff" />
 
-      {/* Constellation Neural Connections */}
-      <line x1="50" y1="16" x2="50" y2="36" stroke="var(--secondary)" strokeWidth="1" strokeDasharray="2 2" />
-      <line x1="37" y1="47" x2="24" y2="38" stroke="var(--primary)" strokeWidth="0.8" opacity="0.6" />
-      <line x1="63" y1="47" x2="76" y2="38" stroke="var(--primary)" strokeWidth="0.8" opacity="0.6" />
-      <line x1="50" y1="88" x2="50" y2="78" stroke="var(--secondary)" strokeWidth="1" opacity="0.5" />
+      {/* Refined Nose / Muzzle */}
+      <path
+        d="M48 62 C48 60, 52 60, 52 62 L51 65 C50.5 66, 49.5 66, 49 65 Z"
+        fill="#818cf8"
+      />
+
+      {/* Hairline Glass Specular Reflection Highlight */}
+      <path
+        d="M18 18 C30 10, 70 10, 82 18"
+        stroke="rgba(255, 255, 255, 0.45)"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }

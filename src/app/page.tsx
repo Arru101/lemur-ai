@@ -926,16 +926,15 @@ export default function Home() {
       />
 
       {/* Main Workspace Frame */}
-      <main className="flex-1 flex flex-col h-full overflow-hidden bg-background min-w-0">
+      <main className="flex-1 flex flex-col h-full overflow-hidden bg-background/50 backdrop-blur-3xl min-w-0 relative">
         
         {/* Application Header Panel */}
-        {/* Application Header Panel */}
-        <header className="flex items-center justify-between h-14 sm:h-15 px-3 sm:px-5 border-b border-black/[0.05] dark:border-white/[0.06] select-none bg-background/80 backdrop-blur-md z-10 safe-top safe-left safe-right">
-          <div className="flex items-center gap-2 min-w-0">
+        <header className="flex items-center justify-between h-14 sm:h-16 px-4 sm:px-6 border-b border-white/10 select-none bg-background/50 backdrop-blur-2xl z-10 safe-top safe-left safe-right shadow-sm">
+          <div className="flex items-center gap-2.5 min-w-0">
             {/* Sidebar toggle for mobile & tablet */}
             <button
               onClick={() => setSidebarOpen(true)}
-              className="touch-target flex items-center justify-center p-2 rounded-xl lg:hidden hover:bg-black/[0.04] dark:hover:bg-white/[0.06] text-foreground transition-all duration-150 active:scale-95 flex-shrink-0"
+              className="touch-target flex items-center justify-center p-2 rounded-xl lg:hidden hover:bg-white/10 text-foreground transition-all duration-150 active:scale-95 flex-shrink-0"
               title="Open Navigation"
             >
               <Menu className="w-5 h-5" />
@@ -946,17 +945,17 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
-                className="flex items-center gap-2 text-xs sm:text-sm font-medium bg-black/[0.03] dark:bg-white/[0.05] hover:bg-black/[0.06] dark:hover:bg-white/[0.08] border border-black/[0.06] dark:border-white/[0.07] px-3 py-1.5 rounded-xl cursor-pointer transition-all duration-150 text-foreground max-w-[200px] sm:max-w-none shadow-sm"
+                className="flex items-center gap-2 text-xs sm:text-sm font-semibold bg-white/[0.04] dark:bg-white/[0.06] hover:bg-white/[0.08] dark:hover:bg-white/[0.1] border border-white/12 px-3 py-1.5 rounded-xl cursor-pointer apple-spring text-foreground max-w-[200px] sm:max-w-none shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15)] active:scale-[0.98]"
               >
-                {model === "smart-router" && <Zap className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />}
-                {model === "gemini-flash" && <Sparkles className="w-3.5 h-3.5 text-primary flex-shrink-0" />}
-                {model === "gemini-lite" && <Cpu className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />}
+                {model === "smart-router" && <Zap className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />}
+                {model === "gemini-flash" && <Sparkles className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />}
+                {model === "gemini-lite" && <Cpu className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />}
                 {model === "nemotron-lightning" && <Brain className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />}
                 {model === "minimax-m3" && <Compass className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />}
                 {model === "gemma-26b" && <PenTool className="w-3.5 h-3.5 text-rose-400 flex-shrink-0" />}
                 {model === "nemotron-ultra" && <Calculator className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />}
                 
-                <span className="font-sans font-medium truncate">{
+                <span className="font-sans font-semibold tracking-tight truncate">{
                   model === "smart-router" ? t.smartRouter :
                   model === "gemini-flash" ? "Gemini 2.5 Flash" :
                   model === "gemini-lite" ? "Gemini 3.5 Lite" :
@@ -971,13 +970,13 @@ export default function Home() {
 
               {/* Dropdown Options List */}
               {modelDropdownOpen && (
-                <div className="absolute left-0 mt-2 w-[calc(100vw-2rem)] max-w-xs sm:w-80 rounded-2xl bg-white dark:bg-[#12141a] border border-black/[0.08] dark:border-white/[0.09] shadow-2xl z-30 p-1.5 flex flex-col gap-1 msg-enter max-h-96 overflow-y-auto scrollbar-thin">
+                <div className="absolute left-0 mt-2 w-[calc(100vw-2rem)] max-w-xs sm:w-80 rounded-2xl ios-glass border border-white/15 p-2 flex flex-col gap-1 msg-enter max-h-96 overflow-y-auto scrollbar-thin z-40 shadow-2xl">
                   <button
                     type="button"
                     onClick={() => { setModel("smart-router"); setModelDropdownOpen(false); }}
-                    className={`flex items-start gap-2.5 w-full p-2 rounded-xl text-left transition-colors ${model === "smart-router" ? "bg-primary/10 text-primary font-medium" : "hover:bg-black/[0.04] dark:hover:bg-white/[0.05] text-foreground"}`}
+                    className={`flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${model === "smart-router" ? "bg-primary/20 text-primary font-semibold border border-primary/30" : "hover:bg-white/10 text-foreground"}`}
                   >
-                    <Zap className="w-4 h-4 mt-0.5 text-amber-500 flex-shrink-0" />
+                    <Zap className="w-4 h-4 mt-0.5 text-amber-400 flex-shrink-0" />
                     <div>
                       <p className="text-xs font-semibold">{t.smartRouter}</p>
                       <p className="text-[10px] text-neutral-400 leading-tight mt-0.5">Auto-routes to the optimal model for your prompt</p>
@@ -987,9 +986,9 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => { setModel("gemini-flash"); setModelDropdownOpen(false); }}
-                    className={`flex items-start gap-2.5 w-full p-2 rounded-xl text-left transition-colors ${model === "gemini-flash" ? "bg-primary/10 text-primary font-medium" : "hover:bg-black/[0.04] dark:hover:bg-white/[0.05] text-foreground"}`}
+                    className={`flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${model === "gemini-flash" ? "bg-primary/20 text-primary font-semibold border border-primary/30" : "hover:bg-white/10 text-foreground"}`}
                   >
-                    <Sparkles className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
+                    <Sparkles className="w-4 h-4 mt-0.5 text-indigo-400 flex-shrink-0" />
                     <div>
                       <p className="text-xs font-semibold">Gemini 2.5 Flash</p>
                       <p className="text-[10px] text-neutral-400 leading-tight mt-0.5">Ultra-fast Google SOTA, vision & multimodal</p>
@@ -999,9 +998,9 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => { setModel("gemini-lite"); setModelDropdownOpen(false); }}
-                    className={`flex items-start gap-2.5 w-full p-2 rounded-xl text-left transition-colors ${model === "gemini-lite" ? "bg-primary/10 text-primary font-medium" : "hover:bg-black/[0.04] dark:hover:bg-white/[0.05] text-foreground"}`}
+                    className={`flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${model === "gemini-lite" ? "bg-primary/20 text-primary font-semibold border border-primary/30" : "hover:bg-white/10 text-foreground"}`}
                   >
-                    <Cpu className="w-4 h-4 mt-0.5 text-blue-400 flex-shrink-0" />
+                    <Cpu className="w-4 h-4 mt-0.5 text-sky-400 flex-shrink-0" />
                     <div>
                       <p className="text-xs font-semibold">Gemini 3.5 Flash Lite</p>
                       <p className="text-[10px] text-neutral-400 leading-tight mt-0.5">Sub-second instant latency for fast summaries</p>
@@ -1011,7 +1010,7 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => { setModel("nemotron-lightning"); setModelDropdownOpen(false); }}
-                    className={`flex items-start gap-2.5 w-full p-2 rounded-xl text-left transition-colors ${model === "nemotron-lightning" ? "bg-primary/10 text-primary font-medium" : "hover:bg-black/[0.04] dark:hover:bg-white/[0.05] text-foreground"}`}
+                    className={`flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${model === "nemotron-lightning" ? "bg-primary/20 text-primary font-semibold border border-primary/30" : "hover:bg-white/10 text-foreground"}`}
                   >
                     <Brain className="w-4 h-4 mt-0.5 text-cyan-400 flex-shrink-0" />
                     <div>
@@ -1023,7 +1022,7 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => { setModel("minimax-m3"); setModelDropdownOpen(false); }}
-                    className={`flex items-start gap-2.5 w-full p-2 rounded-xl text-left transition-colors ${model === "minimax-m3" ? "bg-primary/10 text-primary font-medium" : "hover:bg-black/[0.04] dark:hover:bg-white/[0.05] text-foreground"}`}
+                    className={`flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${model === "minimax-m3" ? "bg-primary/20 text-primary font-semibold border border-primary/30" : "hover:bg-white/10 text-foreground"}`}
                   >
                     <Compass className="w-4 h-4 mt-0.5 text-emerald-400 flex-shrink-0" />
                     <div>
@@ -1035,7 +1034,7 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => { setModel("gemma-26b"); setModelDropdownOpen(false); }}
-                    className={`flex items-start gap-2.5 w-full p-2 rounded-xl text-left transition-colors ${model === "gemma-26b" ? "bg-primary/10 text-primary font-medium" : "hover:bg-black/[0.04] dark:hover:bg-white/[0.05] text-foreground"}`}
+                    className={`flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${model === "gemma-26b" ? "bg-primary/20 text-primary font-semibold border border-primary/30" : "hover:bg-white/10 text-foreground"}`}
                   >
                     <PenTool className="w-4 h-4 mt-0.5 text-rose-400 flex-shrink-0" />
                     <div>
@@ -1047,7 +1046,7 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => { setModel("nemotron-ultra"); setModelDropdownOpen(false); }}
-                    className={`flex items-start gap-2.5 w-full p-2 rounded-xl text-left transition-colors ${model === "nemotron-ultra" ? "bg-primary/10 text-primary font-medium" : "hover:bg-black/[0.04] dark:hover:bg-white/[0.05] text-foreground"}`}
+                    className={`flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${model === "nemotron-ultra" ? "bg-primary/20 text-primary font-semibold border border-primary/30" : "hover:bg-white/10 text-foreground"}`}
                   >
                     <Calculator className="w-4 h-4 mt-0.5 text-amber-400 flex-shrink-0" />
                     <div>
@@ -1060,19 +1059,19 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <button
               onClick={handleNewChat}
-              className="flex items-center gap-1.5 text-xs font-medium px-2.5 sm:px-3 py-1.5 rounded-xl text-neutral-600 dark:text-neutral-400 hover:text-foreground hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-all duration-150"
+              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-foreground apple-spring shadow-sm active:scale-95"
               title={t.newChat}
             >
               <Plus className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">{t.newChat}</span>
             </button>
-            <div className="h-3.5 w-[1px] bg-black/[0.08] dark:bg-white/[0.08] mx-0.5" />
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 select-none">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Online
+            <div className="h-4 w-[1px] bg-white/10 mx-0.5" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 select-none shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Live
             </span>
           </div>
         </header>
@@ -1085,13 +1084,13 @@ export default function Home() {
         >
           {messages.length === 0 ? (
             /* Empty Chat State - Modern Minimalist Hero */
-            <div className="max-w-3xl 2xl:max-w-4xl mx-auto py-10 sm:py-16 md:py-24 flex flex-col items-center text-center space-y-6 select-none msg-enter px-2">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-black/[0.03] dark:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.08] flex items-center justify-center shadow-sm">
-                <LemurLogo className="w-9 h-9 sm:w-10 sm:h-10" />
+            <div className="max-w-3xl 2xl:max-w-4xl mx-auto py-10 sm:py-16 md:py-20 flex flex-col items-center text-center space-y-6 select-none msg-enter px-2">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl ios-glass-card flex items-center justify-center shadow-xl shadow-indigo-500/10 hover:scale-105 transition-transform duration-300">
+                <LemurLogo className="w-11 h-11 sm:w-14 sm:h-14" />
               </div>
 
               <div className="space-y-2">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-neutral-900 dark:text-white font-jakarta">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-neutral-900 dark:text-white font-sans">
                   {t.suggestHeading}
                 </h1>
                 <p className="text-xs sm:text-sm md:text-base text-neutral-500 dark:text-neutral-400 max-w-lg mx-auto font-normal">
@@ -1100,71 +1099,71 @@ export default function Home() {
               </div>
 
               {/* Grid Suggestions cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl mt-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full max-w-2xl mt-4">
                 <div 
                   onClick={(e) => handleSubmit(e, t.suggestDescCoding)}
-                  className="bg-black/[0.02] dark:bg-white/[0.03] hover:bg-black/[0.04] dark:hover:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.07] hover:border-black/[0.12] dark:hover:border-white/[0.12] p-4 rounded-2xl cursor-pointer text-left transition-all duration-200 group active:scale-[0.99]"
+                  className="ios-glass-card p-4.5 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-2px] hover:border-primary/40"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-primary/15 text-primary border border-primary/20 shadow-sm flex-shrink-0">
                       <Code2 className="w-4 h-4" />
                     </div>
-                    <h3 className="text-xs sm:text-sm font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-primary transition-colors font-jakarta">
+                    <h3 className="text-xs sm:text-sm font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-primary transition-colors font-sans tracking-tight">
                       {t.suggestTitleCoding}
                     </h3>
                   </div>
-                  <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-2 line-clamp-2 leading-relaxed">
+                  <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-2.5 line-clamp-2 leading-relaxed">
                     {t.suggestDescCoding}
                   </p>
                 </div>
 
                 <div 
                   onClick={(e) => handleSubmit(e, t.suggestDescMath)}
-                  className="bg-black/[0.02] dark:bg-white/[0.03] hover:bg-black/[0.04] dark:hover:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.07] hover:border-black/[0.12] dark:hover:border-white/[0.12] p-4 rounded-2xl cursor-pointer text-left transition-all duration-200 group active:scale-[0.99]"
+                  className="ios-glass-card p-4.5 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-2px] hover:border-emerald-500/40"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-emerald-500/15 text-emerald-500 border border-emerald-500/20 shadow-sm flex-shrink-0">
                       <Calculator className="w-4 h-4" />
                     </div>
-                    <h3 className="text-xs sm:text-sm font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-emerald-500 transition-colors font-jakarta">
+                    <h3 className="text-xs sm:text-sm font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-emerald-500 transition-colors font-sans tracking-tight">
                       {t.suggestTitleMath}
                     </h3>
                   </div>
-                  <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-2 line-clamp-2 leading-relaxed">
+                  <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-2.5 line-clamp-2 leading-relaxed">
                     {t.suggestDescMath}
                   </p>
                 </div>
 
                 <div 
                   onClick={(e) => handleSubmit(e, t.suggestDescCreative)}
-                  className="bg-black/[0.02] dark:bg-white/[0.03] hover:bg-black/[0.04] dark:hover:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.07] hover:border-black/[0.12] dark:hover:border-white/[0.12] p-4 rounded-2xl cursor-pointer text-left transition-all duration-200 group active:scale-[0.99]"
+                  className="ios-glass-card p-4.5 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-2px] hover:border-rose-500/40"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-xl bg-rose-500/10 text-rose-500">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-rose-500/15 text-rose-500 border border-rose-500/20 shadow-sm flex-shrink-0">
                       <PenTool className="w-4 h-4" />
                     </div>
-                    <h3 className="text-xs sm:text-sm font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-rose-500 transition-colors font-jakarta">
+                    <h3 className="text-xs sm:text-sm font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-rose-500 transition-colors font-sans tracking-tight">
                       {t.suggestTitleCreative}
                     </h3>
                   </div>
-                  <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-2 line-clamp-2 leading-relaxed">
+                  <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-2.5 line-clamp-2 leading-relaxed">
                     {t.suggestDescCreative}
                   </p>
                 </div>
 
                 <div 
                   onClick={(e) => handleSubmit(e, t.suggestDescExplain)}
-                  className="bg-black/[0.02] dark:bg-white/[0.03] hover:bg-black/[0.04] dark:hover:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.07] hover:border-black/[0.12] dark:hover:border-white/[0.12] p-4 rounded-2xl cursor-pointer text-left transition-all duration-200 group active:scale-[0.99]"
+                  className="ios-glass-card p-4.5 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-2px] hover:border-indigo-500/40"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-500">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-indigo-500/15 text-indigo-500 border border-indigo-500/20 shadow-sm flex-shrink-0">
                       <BookOpen className="w-4 h-4" />
                     </div>
-                    <h3 className="text-xs sm:text-sm font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-indigo-500 transition-colors font-jakarta">
+                    <h3 className="text-xs sm:text-sm font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-indigo-500 transition-colors font-sans tracking-tight">
                       {t.suggestTitleExplain}
                     </h3>
                   </div>
-                  <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-2 line-clamp-2 leading-relaxed">
+                  <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-2.5 line-clamp-2 leading-relaxed">
                     {t.suggestDescExplain}
                   </p>
                 </div>
@@ -1198,12 +1197,12 @@ export default function Home() {
 
               {/* Initial thinking state fallback before assistant message mounts */}
               {loading && messages.length > 0 && messages[messages.length - 1].role !== "assistant" && (
-                <div className="flex w-full gap-3 sm:gap-4 py-4 px-3 sm:py-5 sm:px-5 rounded-2xl sm:rounded-3xl bg-white/40 dark:bg-white/[0.025] backdrop-blur-2xl border-0 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_32px_-6px_rgba(0,0,0,0.4)] select-none msg-enter">
-                  <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-primary via-indigo-500 to-violet-500 text-white shadow-md shadow-primary/25 border-0">
+                <div className="flex w-full gap-3 sm:gap-4 py-4 px-3 sm:py-5 sm:px-5 rounded-2xl sm:rounded-3xl ios-glass-card select-none msg-enter">
+                  <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-primary via-indigo-500 to-violet-500 text-white shadow-md shadow-primary/25 border border-white/20">
                     <Sparkles className="w-4 h-4 sm:w-4.5 sm:h-4.5 animate-pulse text-white" />
                   </div>
                   <div className="flex flex-col gap-2 w-full justify-center">
-                    <span className="text-xs sm:text-sm text-primary font-semibold tracking-wide flex items-center gap-2 font-jakarta">
+                    <span className="text-xs sm:text-sm text-primary font-semibold tracking-tight flex items-center gap-2 font-sans">
                       <span className="w-2 h-2 rounded-full bg-primary animate-ping" />
                       Lemur AI is reasoning and preparing response...
                     </span>
@@ -1227,7 +1226,7 @@ export default function Home() {
           {showScrollBtn && (
             <button
               onClick={() => scrollToBottom()}
-              className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white dark:bg-neutral-800 border border-black/[0.08] dark:border-white/[0.08] text-foreground hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-all duration-150 shadow-md active:scale-95 z-30"
+              className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center justify-center w-8 h-8 rounded-full ios-glass text-foreground hover:bg-white/10 transition-all duration-150 shadow-lg active:scale-95 z-30"
               title="Scroll to bottom"
             >
               <ArrowDown className="w-3.5 h-3.5 text-primary" />
@@ -1238,10 +1237,10 @@ export default function Home() {
             
             {/* File Upload Preview bar */}
             {attachedFile && (
-              <div className="mb-2 px-3 py-2 rounded-xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#181920] flex items-center justify-between shadow-md z-20 animate-slide-up">
+              <div className="mb-2.5 px-3 py-2 rounded-2xl ios-glass border border-white/15 flex items-center justify-between shadow-lg z-20 animate-slide-up">
                 <div className="flex items-center gap-2.5 min-w-0">
                   {imagePreview ? (
-                    <div className="w-8 h-8 rounded-lg overflow-hidden relative flex-shrink-0 border border-black/[0.05] dark:border-white/[0.05]">
+                    <div className="w-8 h-8 rounded-lg overflow-hidden relative flex-shrink-0 border border-white/10">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={imagePreview} alt="Upload preview" className="object-cover w-full h-full" />
                     </div>
@@ -1257,7 +1256,7 @@ export default function Home() {
                 </div>
                 <button
                   onClick={removeAttachment}
-                  className="p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-neutral-400 hover:text-foreground transition-colors"
+                  className="p-1 rounded-full hover:bg-white/10 text-neutral-400 hover:text-foreground transition-colors"
                   title="Remove attachment"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -1265,10 +1264,10 @@ export default function Home() {
               </div>
             )}
 
-            {/* Modern Ergonomic Chat Box Capsule */}
+            {/* Apple iPhone Floating Action Dock Capsule */}
             <form 
               onSubmit={handleSubmit}
-              className="glass-input relative flex flex-col rounded-2xl sm:rounded-3xl p-2 sm:p-2.5 transition-all duration-200"
+              className="ios-glass-dock relative flex flex-col rounded-2xl sm:rounded-3xl p-2 sm:p-2.5 transition-all duration-200"
             >
               {/* Top: Auto-growing Textarea */}
               <div className="w-full px-2 pt-1 pb-1">
@@ -1280,7 +1279,7 @@ export default function Home() {
                   onKeyDown={handleKeyPress}
                   placeholder={t.placeholder}
                   maxLength={4000}
-                  className="w-full bg-transparent text-sm sm:text-base text-foreground placeholder:text-neutral-400 dark:placeholder:text-neutral-500 border-0 outline-none ring-0 resize-none min-h-[40px] max-h-[160px] leading-relaxed font-sans block shadow-none"
+                  className="w-full bg-transparent text-sm sm:text-base text-foreground placeholder:text-neutral-400 dark:placeholder:text-neutral-500 border-0 outline-none ring-0 resize-none min-h-[40px] max-h-[160px] leading-relaxed font-sans block shadow-none focus:outline-none focus:ring-0"
                 />
               </div>
 
@@ -1298,15 +1297,15 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={handleFileClick}
-                    className="p-2 rounded-xl text-neutral-400 hover:text-foreground hover:bg-black/[0.04] dark:hover:bg-white/[0.06] active:scale-95 transition-all duration-150 border-0 outline-none"
+                    className="p-2 rounded-xl text-neutral-400 hover:text-foreground hover:bg-white/[0.08] active:scale-95 transition-all duration-150 border-0 outline-none"
                     title={t.uploadFile}
                   >
                     <Paperclip className="w-4 h-4" />
                   </button>
 
-                  <div className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-medium text-neutral-400 dark:text-neutral-500 select-none">
-                    <Sparkles className="w-3 h-3 text-primary" />
-                    <span>{
+                  <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/[0.04] dark:bg-white/[0.06] border border-white/10 text-[11px] font-semibold text-neutral-400 dark:text-neutral-300 select-none shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
+                    <Sparkles className="w-3 h-3 text-primary flex-shrink-0" />
+                    <span className="truncate">{
                       model === "smart-router" ? "Smart Router" :
                       model === "gemini-flash" ? "Gemini 2.5 Flash" :
                       model === "gemini-lite" ? "Gemini Lite" :
@@ -1332,8 +1331,8 @@ export default function Home() {
                     onClick={handleVoiceInput}
                     className={`p-2 rounded-xl transition-all duration-150 border-0 outline-none ${
                       isListening 
-                        ? "text-red-500 bg-red-500/10 shadow-sm" 
-                        : "text-neutral-400 hover:text-foreground hover:bg-black/[0.04] dark:hover:bg-white/[0.06] active:scale-95"
+                        ? "text-red-500 bg-red-500/15 shadow-sm" 
+                        : "text-neutral-400 hover:text-foreground hover:bg-white/[0.08] active:scale-95"
                     }`}
                     title={t.voiceInput}
                   >
@@ -1363,7 +1362,7 @@ export default function Home() {
                       disabled={(!input.trim() && !attachedFile) || loading}
                       className={`flex items-center justify-center w-8 h-8 rounded-full transition-all duration-150 border-0 outline-none ${
                         input.trim() || attachedFile
-                          ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:opacity-90 active:scale-95 shadow-sm"
+                          ? "bg-primary hover:bg-primary/90 text-white shadow-[0_2px_12px_rgba(99,102,241,0.45),inset_0_1px_0_rgba(255,255,255,0.3)] active:scale-95"
                           : "bg-black/[0.06] dark:bg-white/[0.08] text-neutral-400 dark:text-neutral-600 cursor-not-allowed"
                       }`}
                     >
@@ -1374,7 +1373,7 @@ export default function Home() {
               </div>
             </form>
 
-            <p className="text-[11px] text-center text-neutral-400 dark:text-neutral-500 mt-2 select-none">
+            <p className="text-[11px] text-center text-neutral-400 dark:text-neutral-500 mt-2.5 select-none font-sans">
               Lemur AI can make mistakes. Verify critical information.
             </p>
           </div>

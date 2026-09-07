@@ -183,32 +183,32 @@ function ChatMessageComponent({
     >
       {/* Assistant Avatar */}
       {!isUser && (
-        <div className="flex-shrink-0 flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-black/[0.03] dark:bg-white/[0.06] border border-black/[0.06] dark:border-white/[0.08] text-foreground select-none mt-0.5 shadow-sm">
+        <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-2xl ios-glass border border-white/15 text-foreground select-none mt-1 shadow-md">
           {isGenerating ? (
-            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary animate-pulse" />
+            <Sparkles className="w-4 h-4 text-primary animate-pulse" />
           ) : (
-            <LemurLogo className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+            <LemurLogo className="w-5 h-5" />
           )}
         </div>
       )}
 
       {/* Message Content Area */}
       <div
-        className={`flex flex-col max-w-[calc(100%-2.25rem)] sm:max-w-[85%] md:max-w-[78%] 2xl:max-w-[82%] gap-1 w-full min-w-0 ${
+        className={`flex flex-col max-w-[calc(100%-2.25rem)] sm:max-w-[85%] md:max-w-[80%] 2xl:max-w-[82%] gap-1 w-full min-w-0 ${
           isUser ? "items-end" : "items-start"
         }`}
       >
         {/* Model metadata & Status Header */}
         {!isUser && (
-          <div className="flex items-center justify-between w-full mb-1 select-none flex-wrap gap-2">
+          <div className="flex items-center justify-between w-full mb-1.5 select-none flex-wrap gap-2 px-1">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 font-jakarta">
+              <span className="text-xs font-semibold text-neutral-900 dark:text-neutral-100 font-sans tracking-tight">
                 {message.model || "Lemur AI"}
               </span>
 
               {isGenerating ? (
-                <span className="flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 animate-pulse">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span className="flex items-center gap-1.5 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/25 animate-pulse shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                   Streaming
                 </span>
               ) : null}
@@ -236,8 +236,8 @@ function ChatMessageComponent({
             isUser
               ? isEditing
                 ? "w-full"
-                : "px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl sm:rounded-3xl bg-neutral-100 dark:bg-[#1a1c24] text-neutral-900 dark:text-neutral-100 border border-black/[0.06] dark:border-white/[0.08] shadow-sm text-left font-sans"
-              : "chat-prose max-w-none"
+                : "px-4 sm:px-5 py-2.5 sm:py-3.5 rounded-2xl sm:rounded-[22px] ios-glass-bubble text-white shadow-md text-left font-sans"
+              : "ios-glass-card px-4.5 sm:px-6 py-4 sm:py-5 rounded-2xl sm:rounded-3xl chat-prose max-w-none text-left"
           }`}
         >
           {isUser ? (
@@ -266,7 +266,7 @@ function ChatMessageComponent({
                 </div>
               </div>
             ) : (
-              <p className="whitespace-pre-wrap font-sans text-sm sm:text-[15px] leading-relaxed tracking-[-0.01em] font-normal text-white/95 selection:bg-white/30">
+              <p className="whitespace-pre-wrap font-sans text-sm sm:text-[15px] leading-relaxed tracking-tight font-normal text-white selection:bg-white/30">
                 {message.content}
               </p>
             )
@@ -274,19 +274,19 @@ function ChatMessageComponent({
             <>
               {/* Collapsible Thought Process / Reasoning Accordion */}
               {thinkingText && (
-                <div className="mb-4 rounded-2xl border-0 overflow-hidden bg-neutral-100/60 dark:bg-white/[0.035] backdrop-blur-sm transition-all shadow-sm">
+                <div className="mb-4 rounded-2xl border border-white/10 overflow-hidden bg-white/[0.03] backdrop-blur-xl transition-all shadow-sm">
                   <button
                     type="button"
                     onClick={() => setThoughtExpanded((prev) => !prev)}
-                    className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-neutral-200/40 dark:hover:bg-white/[0.04] transition-colors cursor-pointer select-none text-xs text-neutral-500 dark:text-neutral-400"
+                    className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-white/[0.05] transition-colors cursor-pointer select-none text-xs text-neutral-400"
                   >
                     <div className="flex items-center gap-2">
                       <Brain className={`w-3.5 h-3.5 ${isThinkingActive ? "text-cyan-400 animate-pulse" : "text-neutral-400"}`} />
-                      <span className="font-semibold font-jakarta text-foreground/80">
+                      <span className="font-semibold font-sans text-foreground/90">
                         {isThinkingActive ? "Thinking in real-time..." : "Thought process"}
                       </span>
                       {!isThinkingActive && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-neutral-200/80 dark:bg-neutral-800/80 text-neutral-600 dark:text-neutral-300 font-mono border-0">
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/[0.06] text-neutral-300 font-mono border border-white/10">
                           {thinkingText.split(/\s+/).filter(Boolean).length} words
                         </span>
                       )}
@@ -304,7 +304,7 @@ function ChatMessageComponent({
                   </button>
 
                   {(isThinkingActive || thoughtExpanded) && (
-                    <div className="px-4 py-3.5 text-[12px] sm:text-[12.5px] text-neutral-600 dark:text-neutral-300 font-mono whitespace-pre-wrap leading-[1.7] max-h-72 overflow-y-auto scrollbar-thin bg-black/[0.02] dark:bg-black/30 selection:bg-cyan-500/20">
+                    <div className="px-4 py-3.5 text-[12px] sm:text-[12.5px] text-neutral-300 font-mono whitespace-pre-wrap leading-[1.7] max-h-72 overflow-y-auto scrollbar-thin bg-black/40 border-t border-white/10 selection:bg-cyan-500/20">
                       {thinkingText}
                       {isThinkingActive && <span className="streaming-cursor ml-1" />}
                     </div>
@@ -317,27 +317,27 @@ function ChatMessageComponent({
                 remarkPlugins={[remarkGfm]}
                 components={{
                   p: ({ children }) => (
-                    <p className="mb-3.5 last:mb-0 leading-[1.75] text-[14.5px] sm:text-[15.5px] text-neutral-800 dark:text-neutral-200 tracking-[-0.01em] font-normal font-sans">
+                    <p className="mb-3.5 last:mb-0 leading-[1.75] text-[14.5px] sm:text-[15.5px] text-neutral-800 dark:text-neutral-200 tracking-tight font-normal font-sans">
                       {children}
                     </p>
                   ),
                   h1: ({ children }) => (
-                    <h1 className="text-xl sm:text-2xl font-bold mt-7 mb-3 text-neutral-900 dark:text-white tracking-tight font-jakarta first:mt-1">
+                    <h1 className="text-xl sm:text-2xl font-bold mt-7 mb-3 text-neutral-900 dark:text-white tracking-tight font-sans first:mt-1">
                       {children}
                     </h1>
                   ),
                   h2: ({ children }) => (
-                    <h2 className="text-lg sm:text-xl font-bold mt-6 mb-2.5 text-neutral-900 dark:text-white/95 tracking-tight font-jakarta first:mt-1">
+                    <h2 className="text-lg sm:text-xl font-bold mt-6 mb-2.5 text-neutral-900 dark:text-white/95 tracking-tight font-sans first:mt-1">
                       {children}
                     </h2>
                   ),
                   h3: ({ children }) => (
-                    <h3 className="text-base sm:text-lg font-semibold mt-4.5 mb-2 text-neutral-850 dark:text-neutral-100 tracking-tight font-jakarta first:mt-1">
+                    <h3 className="text-base sm:text-lg font-semibold mt-4.5 mb-2 text-neutral-850 dark:text-neutral-100 tracking-tight font-sans first:mt-1">
                       {children}
                     </h3>
                   ),
                   h4: ({ children }) => (
-                    <h4 className="text-sm sm:text-base font-semibold mt-3.5 mb-1.5 text-neutral-800 dark:text-neutral-200 tracking-tight font-jakarta">
+                    <h4 className="text-sm sm:text-base font-semibold mt-3.5 mb-1.5 text-neutral-800 dark:text-neutral-200 tracking-tight font-sans">
                       {children}
                     </h4>
                   ),
@@ -362,7 +362,7 @@ function ChatMessageComponent({
                     </ol>
                   ),
                   li: ({ children }) => (
-                    <li className="leading-[1.7] text-[14px] sm:text-[15px] pl-1 tracking-[-0.01em]">
+                    <li className="leading-[1.7] text-[14px] sm:text-[15px] pl-1 tracking-tight">
                       {children}
                     </li>
                   ),
@@ -385,14 +385,14 @@ function ChatMessageComponent({
                     </a>
                   ),
                   table: ({ children }) => (
-                    <div className="overflow-x-auto my-5 rounded-2xl border-0 shadow-md bg-neutral-100/60 dark:bg-neutral-900/40 backdrop-blur-sm">
+                    <div className="overflow-x-auto my-5 rounded-2xl border border-white/10 shadow-md bg-neutral-100/60 dark:bg-neutral-900/40 backdrop-blur-md">
                       <table className="min-w-full text-xs sm:text-sm font-sans">
                         {children}
                       </table>
                     </div>
                   ),
                   thead: ({ children }) => (
-                    <thead className="bg-neutral-200/60 dark:bg-neutral-800/80 text-[11px] font-bold uppercase tracking-wider text-neutral-600 dark:text-neutral-300 select-none border-0">
+                    <thead className="bg-white/10 dark:bg-white/[0.06] text-[11px] font-bold uppercase tracking-wider text-neutral-600 dark:text-neutral-300 select-none border-b border-white/10">
                       {children}
                     </thead>
                   ),
@@ -402,12 +402,12 @@ function ChatMessageComponent({
                     </tbody>
                   ),
                   tr: ({ children }) => (
-                    <tr className="hover:bg-primary/[0.02] dark:hover:bg-white/[0.02] transition-colors">
+                    <tr className="hover:bg-primary/[0.03] dark:hover:bg-white/[0.03] transition-colors">
                       {children}
                     </tr>
                   ),
                   th: ({ children }) => (
-                    <th className="px-4 py-3 text-left font-semibold font-jakarta tracking-wider text-neutral-800 dark:text-neutral-200 border-0">
+                    <th className="px-4 py-3 text-left font-semibold font-sans tracking-wider text-neutral-800 dark:text-neutral-200 border-0">
                       {children}
                     </th>
                   ),
@@ -436,24 +436,24 @@ function ChatMessageComponent({
                     const codeBlockId = `code-${lang}-${codeContent.length}`;
 
                     return (
-                      <div className="my-4 rounded-2xl overflow-hidden border-0 bg-[#0d1017] shadow-xl shadow-black/30 code-container">
-                        {/* macOS-style Header */}
-                        <div className="flex items-center justify-between px-4 py-2.5 bg-neutral-900/90 text-xs select-none border-0">
+                      <div className="my-4 rounded-2xl overflow-hidden border border-white/12 bg-[#0d1017]/95 backdrop-blur-xl shadow-2xl code-container">
+                        {/* macOS-style Frosted Header */}
+                        <div className="flex items-center justify-between px-4 py-2.5 bg-white/[0.04] border-b border-white/10 text-xs select-none">
                           <div className="flex items-center gap-2.5">
-                            {/* Window Dots */}
+                            {/* Apple Traffic Lights */}
                             <div className="flex items-center gap-1.5">
-                              <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80 inline-block" />
-                              <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80 inline-block" />
-                              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80 inline-block" />
+                              <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f56] inline-block shadow-[0_0_6px_rgba(255,95,86,0.5)]" />
+                              <span className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e] inline-block shadow-[0_0_6px_rgba(255,189,46,0.5)]" />
+                              <span className="w-2.5 h-2.5 rounded-full bg-[#27c93f] inline-block shadow-[0_0_6px_rgba(39,201,63,0.5)]" />
                             </div>
-                            <span className="px-2 py-0.5 rounded-md bg-white/5 font-mono uppercase text-neutral-300 font-semibold text-[10px] tracking-wider border-0">
+                            <span className="px-2 py-0.5 rounded-md bg-white/10 font-mono uppercase text-neutral-300 font-semibold text-[10px] tracking-wider border border-white/10">
                               {lang}
                             </span>
                           </div>
 
                           <button
                             onClick={(e) => copyCode(e, codeContent, codeBlockId)}
-                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white transition-all duration-150 active:scale-95 text-xs font-medium border-0"
+                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-neutral-300 hover:text-white transition-all duration-150 active:scale-95 text-xs font-medium border border-white/10"
                             title="Copy Code"
                           >
                             {copiedCodeId === codeBlockId ? (
@@ -504,12 +504,12 @@ function ChatMessageComponent({
 
         {/* Modern Minimal Action Bar */}
         {!isGenerating && (
-          <div className="flex items-center gap-0.5 mt-2 select-none text-neutral-400 dark:text-neutral-500 opacity-90 md:opacity-0 md:group-hover:opacity-100 touch-visible transition-all duration-150 w-fit">
+          <div className="flex items-center gap-1 mt-1.5 select-none text-neutral-400 dark:text-neutral-500 opacity-90 md:opacity-0 md:group-hover:opacity-100 touch-visible transition-all duration-150 w-fit">
             {/* User Edit */}
             {isUser && !isEditing && onEdit && (
               <button
                 onClick={() => setIsEditing(true)}
-                className="p-1.5 rounded-lg hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-foreground transition-colors"
+                className="p-1.5 rounded-xl hover:bg-white/10 hover:text-foreground text-neutral-400 apple-spring active:scale-95"
                 title="Edit Prompt"
               >
                 <Edit className="w-3.5 h-3.5" />
@@ -520,10 +520,10 @@ function ChatMessageComponent({
             {!isEditing && (
               <button
                 onClick={(e) => copyToClipboard(e, displayContent)}
-                className="p-1.5 rounded-lg hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-foreground transition-colors"
+                className="p-1.5 rounded-xl hover:bg-white/10 hover:text-foreground text-neutral-400 apple-spring active:scale-95"
                 title="Copy Message"
               >
-                {copiedText ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedText ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
             )}
 
@@ -531,8 +531,8 @@ function ChatMessageComponent({
             {!isUser && !isEditing && (
               <button
                 onClick={onToggleSpeech}
-                className={`flex items-center gap-1.5 p-1.5 rounded-lg hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-foreground transition-colors ${
-                  isSpeaking ? "text-primary bg-primary/10" : ""
+                className={`flex items-center gap-1.5 p-1.5 rounded-xl hover:bg-white/10 hover:text-foreground text-neutral-400 apple-spring active:scale-95 ${
+                  isSpeaking ? "text-primary bg-primary/15 border border-primary/20" : ""
                 }`}
                 title={isSpeaking ? "Stop Reading" : "Read Aloud"}
               >
@@ -556,8 +556,8 @@ function ChatMessageComponent({
               <>
                 <button
                   onClick={() => onFeedback("up")}
-                  className={`p-1.5 rounded-lg hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-foreground transition-colors ${
-                    message.feedback === "up" ? "text-emerald-500 bg-emerald-500/10" : ""
+                  className={`p-1.5 rounded-xl hover:bg-white/10 hover:text-foreground text-neutral-400 apple-spring active:scale-95 ${
+                    message.feedback === "up" ? "text-emerald-400 bg-emerald-500/15 border border-emerald-500/20" : ""
                   }`}
                   title="Helpful response"
                 >
@@ -565,8 +565,8 @@ function ChatMessageComponent({
                 </button>
                 <button
                   onClick={() => onFeedback("down")}
-                  className={`p-1.5 rounded-lg hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-foreground transition-colors ${
-                    message.feedback === "down" ? "text-rose-500 bg-rose-500/10" : ""
+                  className={`p-1.5 rounded-xl hover:bg-white/10 hover:text-foreground text-neutral-400 apple-spring active:scale-95 ${
+                    message.feedback === "down" ? "text-rose-400 bg-rose-500/15 border border-rose-500/20" : ""
                   }`}
                   title="Not helpful"
                 >
@@ -579,7 +579,7 @@ function ChatMessageComponent({
             {!isUser && !isEditing && isLast && onRegenerate && (
               <button
                 onClick={onRegenerate}
-                className="p-1.5 rounded-lg hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-foreground transition-colors"
+                className="p-1.5 rounded-xl hover:bg-white/10 hover:text-foreground text-neutral-400 apple-spring active:scale-95"
                 title="Regenerate Response"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
@@ -590,9 +590,9 @@ function ChatMessageComponent({
 
         {/* Related Questions block */}
         {!isUser && !isGenerating && questions.length > 0 && onSelectQuestion && (
-          <div className="flex flex-col gap-2.5 mt-4 pt-3.5 w-full select-none msg-enter">
-            <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-neutral-200/60 dark:via-white/[0.06] to-transparent mb-1" />
-            <span className="text-[11px] font-semibold text-neutral-500 dark:text-neutral-400 font-jakarta flex items-center gap-1.5 tracking-wide">
+          <div className="flex flex-col gap-2.5 mt-4 pt-3 w-full select-none msg-enter">
+            <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-white/10 to-transparent mb-1" />
+            <span className="text-[11px] font-semibold text-neutral-400 font-sans flex items-center gap-1.5 tracking-wide">
               <Sparkles className="w-3 h-3 text-primary" />
               Suggested Follow-ups
             </span>
@@ -601,7 +601,7 @@ function ChatMessageComponent({
                 <button
                   key={qIdx}
                   onClick={() => onSelectQuestion(q)}
-                  className="group/chip text-xs sm:text-[13px] text-left px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-neutral-100/90 dark:bg-white/[0.04] hover:bg-primary/10 dark:hover:bg-primary/20 text-neutral-700 dark:text-neutral-200 hover:text-primary dark:hover:text-primary transition-all duration-200 active:scale-95 shadow-sm hover:shadow-md border-0 flex items-center gap-2 touch-target"
+                  className="group/chip text-xs sm:text-[13px] text-left px-3.5 py-2 rounded-xl ios-glass hover:border-primary/40 text-neutral-700 dark:text-neutral-200 hover:text-primary dark:hover:text-primary apple-spring active:scale-95 shadow-sm hover:shadow-md flex items-center gap-2 touch-target"
                 >
                   <span>{q}</span>
                   <ArrowRight className="w-3 h-3 opacity-50 group-hover/chip:opacity-100 group-hover/chip:translate-x-0.5 transition-all text-primary flex-shrink-0" />
@@ -614,8 +614,8 @@ function ChatMessageComponent({
 
       {/* User Avatar */}
       {isUser && (
-        <div className="flex-shrink-0 flex items-center justify-center w-7 h-7 sm:w-9 sm:h-9 rounded-xl sm:rounded-2xl bg-neutral-200 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 font-bold shadow-md select-none border-0 mt-0.5">
-          <User className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5" />
+        <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white font-bold shadow-md shadow-indigo-500/25 border border-white/20 select-none mt-1">
+          <User className="w-4 h-4" />
         </div>
       )}
     </div>
