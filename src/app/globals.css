@@ -185,11 +185,19 @@ textarea:focus-visible {
 }
 
 .glass-sidebar {
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
   background-color: var(--sidebar-bg);
-  border-right: 1px solid var(--card-border);
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: 4px 0 32px -4px rgba(0, 0, 0, 0.3);
 }
+
+[data-theme="light"] .glass-sidebar {
+  background-color: rgba(250, 250, 252, 0.88);
+  border-right: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 4px 0 24px -4px rgba(0, 0, 0, 0.03);
+}
+
 
 .glass-input {
   backdrop-filter: blur(28px);

@@ -433,7 +433,32 @@ export default function Home() {
     }
 
     const recognition = new SpeechRecognition();
-    recognition.lang = language === "zh" ? "zh-CN" : language === "es" ? "es-ES" : language === "fr" ? "fr-FR" : "en-US";
+
+    const langMap: Record<string, string> = {
+      hi: "hi-IN",
+      ur: "ur-IN",
+      ar: "ar-SA",
+      bn: "bn-IN",
+      ta: "ta-IN",
+      te: "te-IN",
+      mr: "mr-IN",
+      gu: "gu-IN",
+      kn: "kn-IN",
+      ml: "ml-IN",
+      pa: "pa-IN",
+      or: "or-IN",
+      as: "as-IN",
+      sa: "sa-IN",
+      zh: "zh-CN",
+      ja: "ja-JP",
+      es: "es-ES",
+      fr: "fr-FR",
+      de: "de-DE",
+      pt: "pt-BR",
+      it: "it-IT",
+      en: "en-US",
+    };
+    recognition.lang = langMap[language] || "en-US";
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
