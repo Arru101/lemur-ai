@@ -41,6 +41,24 @@ function checkRateLimit(ip: string): boolean {
 
 const LANGUAGE_MAP: Record<string, string> = {
   en: "English",
+  bho: "Bhojpuri",
+  bhojpuri: "Bhojpuri",
+  sa: "Sanskrit",
+  sanskrit: "Sanskrit",
+  sankrit: "Sanskrit",
+  hi: "Hindi",
+  bn: "Bengali",
+  ur: "Urdu",
+  ar: "Arabic",
+  ta: "Tamil",
+  te: "Telugu",
+  mr: "Marathi",
+  gu: "Gujarati",
+  kn: "Kannada",
+  ml: "Malayalam",
+  pa: "Punjabi",
+  or: "Odia",
+  as: "Assamese",
   es: "Spanish",
   fr: "French",
   de: "German",
@@ -436,21 +454,40 @@ async function streamDirectGemini(
   apiKey: string,
   sendEvent: (payload: StreamEventPayload) => Promise<void>
 ): Promise<boolean> {
-  const contents: GeminiContent[] = [];
-
+  // Format contents for Gemini:
+  // 1. Only 'user' and 'model' roles allowed
+  // 2. Ensure non-empty text parts
+  // 3. Alternate turns between 'user' and 'model' (merge adjacent same-role messages)
+  const rawContents: GeminiContent[] = [];
   for (const msg of messages) {
-    // Gemini API only supports "user" and "model" roles in contents
     if (msg.role === "system") continue;
-    const role = msg.role === "assistant" ? "model" : "user";
-    contents.push({
+    const role: "user" | "model" = msg.role === "assistant" ? "model" : "user";
+    const text = (msg.content || "").trim();
+    if (!text) continue;
+    rawContents.push({
       role,
-      parts: [{ text: msg.content }],
+      parts: [{ text }],
     });
   }
 
+  // Merge consecutive same-role turns into a single turn to satisfy Gemini alternation rule
+  const contents: GeminiContent[] = [];
+  for (const c of rawContents) {
+    if (contents.length > 0 && contents[contents.length - 1].role === c.role) {
+      const prevParts = contents[contents.length - 1].parts;
+      prevParts[0].text = `${prevParts[0].text}\n\n${c.parts[0].text}`;
+    } else {
+      contents.push({ role: c.role, parts: [{ text: c.parts[0].text }] });
+    }
+  }
+
   // Ensure conversation always starts with a user turn (Gemini requirement)
-  if (contents.length > 0 && contents[0].role !== "user") {
+  while (contents.length > 0 && contents[0].role !== "user") {
     contents.shift();
+  }
+
+  if (contents.length === 0) {
+    contents.push({ role: "user", parts: [{ text: "Hello" }] });
   }
 
   // Multimodal file support (vision + documents)
@@ -557,12 +594,16 @@ async function streamOpenRouter(
   apiKey: string,
   sendEvent: (payload: StreamEventPayload) => Promise<void>
 ): Promise<boolean> {
+  const validMessages = messages
+    .filter((m) => (m.content || "").trim().length > 0)
+    .map((m) => ({ role: m.role, content: m.content.trim() }));
+
   const openrouterMessages: Array<{
     role: string;
     content: string | Array<{ type: string; text?: string; image_url?: { url: string } }>;
   }> = [
     { role: "system", content: systemPrompt },
-    ...messages.map((m) => ({ role: m.role, content: m.content })),
+    ...validMessages,
   ];
 
   if (file && file.data && file.type) {

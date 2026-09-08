@@ -26,7 +26,9 @@ import {
   Calculator, 
   PenTool, 
   BookOpen, 
-  PanelLeft 
+  PanelLeft,
+  Check,
+  ArrowUpRight
 } from "lucide-react";
 
 interface Message {
@@ -516,6 +518,7 @@ export default function Home() {
 
     const langMap: Record<string, string> = {
       hi: "hi-IN",
+      bho: "bho-IN",
       ur: "ur-IN",
       ar: "ar-SA",
       bn: "bn-IN",
@@ -921,10 +924,21 @@ export default function Home() {
 
   // --- Message Edit & Resubmit ---
   const handleEditUserMessage = async (msgIdx: number, newContent: string) => {
-    if (!activeId || loading) return;
+    if (!activeId) return;
 
-    const currentChat = conversations.find((c) => c.id === activeId);
+    // Abort any ongoing stream before initiating edited response
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+      setLoading(false);
+    }
+
+    const currentChat =
+      conversationsRef.current.find((c) => c.id === activeId) ||
+      conversations.find((c) => c.id === activeId);
     if (!currentChat) return;
+
+    if (msgIdx < 0 || msgIdx >= currentChat.messages.length) return;
 
     const prefixMessages = currentChat.messages.slice(0, msgIdx);
     const editedUserMsg: Message = {
@@ -934,21 +948,38 @@ export default function Home() {
     };
 
     const updatedMessages = [...prefixMessages, editedUserMsg];
-    updateChatMessages(activeId, updatedMessages);
+
+    // If first message in conversation was edited, update title to match
+    let newTitle = currentChat.title;
+    if (msgIdx === 0) {
+      newTitle = newContent.substring(0, 30) + (newContent.length > 30 ? "..." : "");
+    }
+
+    updateChatMessages(activeId, updatedMessages, newTitle);
 
     const payloadMessages = updatedMessages.map((m) => ({
       role: m.role,
       content: m.content,
     }));
 
+    scrollToBottom("smooth");
     await streamChatResponse(activeId, updatedMessages, payloadMessages);
   };
 
   // --- Message Regeneration ---
   const handleRegenerate = async () => {
-    if (!activeId || loading) return;
+    if (!activeId) return;
 
-    const currentChat = conversations.find((c) => c.id === activeId);
+    // Abort any ongoing stream before regenerating
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+      setLoading(false);
+    }
+
+    const currentChat =
+      conversationsRef.current.find((c) => c.id === activeId) ||
+      conversations.find((c) => c.id === activeId);
     if (!currentChat || currentChat.messages.length < 2) return;
 
     const poppedMessages = [...currentChat.messages];
@@ -961,6 +992,7 @@ export default function Home() {
       content: m.content,
     }));
 
+    scrollToBottom("smooth");
     await streamChatResponse(activeId, poppedMessages, payloadMessages);
   };
 
@@ -1075,102 +1107,98 @@ export default function Home() {
               {/* Dropdown Options List */}
               {modelDropdownOpen && (
                 <div className="absolute left-0 mt-2 w-[calc(100vw-2rem)] max-w-xs sm:w-80 rounded-2xl ios-glass border border-black/[0.08] dark:border-white/15 p-2 flex flex-col gap-1 msg-enter max-h-96 overflow-y-auto scrollbar-thin z-40 shadow-2xl">
-                  <button
-                    type="button"
-                    onClick={() => { setModel("smart-router"); setModelDropdownOpen(false); }}
-                    className={`group flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${
-                      model === "smart-router" 
-                        ? "bg-primary/20 text-primary font-semibold border border-primary/30 shadow-sm" 
-                        : "hover:bg-black/[0.05] dark:hover:bg-white/10 text-foreground"
-                    }`}
-                  >
-                    <div className="p-1.5 rounded-lg bg-gradient-to-tr from-indigo-500/20 via-sky-500/20 to-cyan-400/20 border border-indigo-500/30 text-indigo-500 dark:text-cyan-400 flex-shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6 mt-0.5">
-                      <BrainCircuit className="w-4 h-4 stroke-[2]" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <p className="text-xs font-semibold">{t.smartRouter}</p>
-                        <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold font-mono bg-cyan-500/15 text-cyan-600 dark:text-cyan-300 border border-cyan-500/25 uppercase tracking-wide">
-                          Auto
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-tight mt-0.5">
-                        Auto-routes to the optimal model for your prompt
-                      </p>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => { setModel("gemini-flash"); setModelDropdownOpen(false); }}
-                    className={`flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${model === "gemini-flash" ? "bg-primary/20 text-primary font-semibold border border-primary/30" : "hover:bg-black/[0.05] dark:hover:bg-white/10 text-foreground"}`}
-                  >
-                    <Sparkles className="w-4 h-4 mt-0.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0" />
-                    <div>
-                      <p className="text-xs font-semibold">Gemini 2.5 Flash</p>
-                      <p className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-tight mt-0.5">Ultra-fast Google SOTA, vision & multimodal</p>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => { setModel("gemini-lite"); setModelDropdownOpen(false); }}
-                    className={`flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${model === "gemini-lite" ? "bg-primary/20 text-primary font-semibold border border-primary/30" : "hover:bg-black/[0.05] dark:hover:bg-white/10 text-foreground"}`}
-                  >
-                    <Cpu className="w-4 h-4 mt-0.5 text-sky-500 dark:text-sky-400 flex-shrink-0" />
-                    <div>
-                      <p className="text-xs font-semibold">Gemini 3.5 Flash Lite</p>
-                      <p className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-tight mt-0.5">Sub-second instant latency for fast summaries</p>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => { setModel("nemotron-lightning"); setModelDropdownOpen(false); }}
-                    className={`flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${model === "nemotron-lightning" ? "bg-primary/20 text-primary font-semibold border border-primary/30" : "hover:bg-black/[0.05] dark:hover:bg-white/10 text-foreground"}`}
-                  >
-                    <Brain className="w-4 h-4 mt-0.5 text-cyan-500 dark:text-cyan-400 flex-shrink-0" />
-                    <div>
-                      <p className="text-xs font-semibold">Nemotron 3.5 Lightning</p>
-                      <p className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-tight mt-0.5">1M context, rapid reasoning & math logic</p>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => { setModel("minimax-m3"); setModelDropdownOpen(false); }}
-                    className={`flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${model === "minimax-m3" ? "bg-primary/20 text-primary font-semibold border border-primary/30" : "hover:bg-black/[0.05] dark:hover:bg-white/10 text-foreground"}`}
-                  >
-                    <Compass className="w-4 h-4 mt-0.5 text-emerald-500 dark:text-emerald-400 flex-shrink-0" />
-                    <div>
-                      <p className="text-xs font-semibold">MiniMax M3</p>
-                      <p className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-tight mt-0.5">1M context, multilingual & long essays</p>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => { setModel("gemma-26b"); setModelDropdownOpen(false); }}
-                    className={`flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${model === "gemma-26b" ? "bg-primary/20 text-primary font-semibold border border-primary/30" : "hover:bg-black/[0.05] dark:hover:bg-white/10 text-foreground"}`}
-                  >
-                    <PenTool className="w-4 h-4 mt-0.5 text-rose-500 dark:text-rose-400 flex-shrink-0" />
-                    <div>
-                      <p className="text-xs font-semibold">Gemma 4 26B</p>
-                      <p className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-tight mt-0.5">Google latest open instruction-following model</p>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => { setModel("nemotron-ultra"); setModelDropdownOpen(false); }}
-                    className={`flex items-start gap-2.5 w-full p-2.5 rounded-xl text-left apple-spring ${model === "nemotron-ultra" ? "bg-primary/20 text-primary font-semibold border border-primary/30" : "hover:bg-black/[0.05] dark:hover:bg-white/10 text-foreground"}`}
-                  >
-                    <Calculator className="w-4 h-4 mt-0.5 text-amber-500 dark:text-amber-400 flex-shrink-0" />
-                    <div>
-                      <p className="text-xs font-semibold">Nemotron 3 Ultra 550B</p>
-                      <p className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-tight mt-0.5">Massive 550B parameters for deep analysis</p>
-                    </div>
-                  </button>
+                  {[
+                    {
+                      id: "smart-router",
+                      name: t.smartRouter,
+                      badge: "Auto",
+                      desc: "Auto-routes to the optimal model for your prompt",
+                      icon: BrainCircuit,
+                      color: "from-indigo-500/20 via-sky-500/20 to-cyan-400/20 text-indigo-500 dark:text-cyan-400 border-indigo-500/30",
+                    },
+                    {
+                      id: "gemini-flash",
+                      name: "Gemini 2.5 Flash",
+                      desc: "Ultra-fast Google SOTA, vision & multimodal",
+                      icon: Sparkles,
+                      color: "from-indigo-500/20 to-violet-500/20 text-indigo-500 dark:text-indigo-400 border-indigo-500/30",
+                    },
+                    {
+                      id: "gemini-lite",
+                      name: "Gemini 3.5 Flash Lite",
+                      desc: "Sub-second instant latency for fast summaries",
+                      icon: Cpu,
+                      color: "from-sky-500/20 to-blue-500/20 text-sky-500 dark:text-sky-400 border-sky-500/30",
+                    },
+                    {
+                      id: "nemotron-lightning",
+                      name: "Nemotron 3.5 Lightning",
+                      desc: "1M context, rapid reasoning & math logic",
+                      icon: Brain,
+                      color: "from-cyan-500/20 to-teal-500/20 text-cyan-500 dark:text-cyan-400 border-cyan-500/30",
+                    },
+                    {
+                      id: "minimax-m3",
+                      name: "MiniMax M3",
+                      desc: "1M context, multilingual & long essays",
+                      icon: Compass,
+                      color: "from-emerald-500/20 to-teal-500/20 text-emerald-500 dark:text-emerald-400 border-emerald-500/30",
+                    },
+                    {
+                      id: "gemma-26b",
+                      name: "Gemma 4 26B",
+                      desc: "Google latest open instruction-following model",
+                      icon: PenTool,
+                      color: "from-rose-500/20 to-pink-500/20 text-rose-500 dark:text-rose-400 border-rose-500/30",
+                    },
+                    {
+                      id: "nemotron-ultra",
+                      name: "Nemotron 3 Ultra 550B",
+                      desc: "Massive 550B parameters for deep analysis",
+                      icon: Calculator,
+                      color: "from-amber-500/20 to-orange-500/20 text-amber-500 dark:text-amber-400 border-amber-500/30",
+                    },
+                  ].map((opt) => {
+                    const IconComp = opt.icon;
+                    const isSelected = model === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => {
+                          setModel(opt.id);
+                          setModelDropdownOpen(false);
+                        }}
+                        className={`group flex items-center justify-between w-full p-2.5 rounded-xl text-left apple-spring transition-all ${
+                          isSelected
+                            ? "bg-indigo-500/10 dark:bg-white/10 text-foreground font-semibold border border-indigo-500/25 dark:border-white/15 shadow-sm"
+                            : "hover:bg-black/[0.04] dark:hover:bg-white/[0.06] text-foreground border border-transparent"
+                        }`}
+                      >
+                        <div className="flex items-start gap-2.5 min-w-0">
+                          <div className={`p-1.5 rounded-lg bg-gradient-to-tr ${opt.color} border flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-200`}>
+                            <IconComp className="w-4 h-4 stroke-[2]" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-xs font-semibold truncate">{opt.name}</p>
+                              {opt.badge && (
+                                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold font-mono bg-cyan-500/15 text-cyan-600 dark:text-cyan-300 border border-cyan-500/25 uppercase tracking-wide">
+                                  {opt.badge}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-tight mt-0.5 line-clamp-1">
+                              {opt.desc}
+                            </p>
+                          </div>
+                        </div>
+                        {isSelected && (
+                          <Check className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0 ml-2 stroke-[2.5]" />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -1222,15 +1250,18 @@ export default function Home() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 w-full max-w-xl mt-2">
                 <div 
                   onClick={(e) => handleSubmit(e, t.suggestDescCoding)}
-                  className="ios-glass-card p-3 sm:p-3.5 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-2px] hover:border-primary/40"
+                  className="ios-glass-card p-3 sm:p-3.5 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-2px] hover:border-primary/40 transition-all duration-200"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-xl bg-primary/15 text-primary border border-primary/20 shadow-sm flex-shrink-0">
-                      <Code2 className="w-3.5 h-3.5" />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2 rounded-xl bg-primary/15 text-primary border border-primary/20 shadow-sm flex-shrink-0 group-hover:scale-105 transition-transform duration-200">
+                        <Code2 className="w-3.5 h-3.5" />
+                      </div>
+                      <h3 className="text-xs sm:text-sm font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-primary transition-colors font-sans tracking-tight">
+                        {t.suggestTitleCoding}
+                      </h3>
                     </div>
-                    <h3 className="text-xs sm:text-sm font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-primary transition-colors font-sans tracking-tight">
-                      {t.suggestTitleCoding}
-                    </h3>
+                    <ArrowUpRight className="w-3.5 h-3.5 text-primary opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-200 flex-shrink-0" />
                   </div>
                   <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-1.5 line-clamp-2 leading-relaxed">
                     {t.suggestDescCoding}
@@ -1239,15 +1270,18 @@ export default function Home() {
 
                 <div 
                   onClick={(e) => handleSubmit(e, t.suggestDescMath)}
-                  className="ios-glass-card p-3 sm:p-3.5 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-2px] hover:border-emerald-500/40"
+                  className="ios-glass-card p-3 sm:p-3.5 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-2px] hover:border-emerald-500/40 transition-all duration-200"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-500 border border-emerald-500/20 shadow-sm flex-shrink-0">
-                      <Calculator className="w-3.5 h-3.5" />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-500 border border-emerald-500/20 shadow-sm flex-shrink-0 group-hover:scale-105 transition-transform duration-200">
+                        <Calculator className="w-3.5 h-3.5" />
+                      </div>
+                      <h3 className="text-xs sm:text-sm font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-emerald-500 transition-colors font-sans tracking-tight">
+                        {t.suggestTitleMath}
+                      </h3>
                     </div>
-                    <h3 className="text-xs sm:text-sm font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-emerald-500 transition-colors font-sans tracking-tight">
-                      {t.suggestTitleMath}
-                    </h3>
+                    <ArrowUpRight className="w-3.5 h-3.5 text-emerald-500 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-200 flex-shrink-0" />
                   </div>
                   <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-1.5 line-clamp-2 leading-relaxed">
                     {t.suggestDescMath}
@@ -1256,15 +1290,18 @@ export default function Home() {
 
                 <div 
                   onClick={(e) => handleSubmit(e, t.suggestDescCreative)}
-                  className="ios-glass-card p-3 sm:p-3.5 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-2px] hover:border-rose-500/40"
+                  className="ios-glass-card p-3 sm:p-3.5 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-2px] hover:border-rose-500/40 transition-all duration-200"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-xl bg-rose-500/15 text-rose-500 border border-rose-500/20 shadow-sm flex-shrink-0">
-                      <PenTool className="w-3.5 h-3.5" />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2 rounded-xl bg-rose-500/15 text-rose-500 border border-rose-500/20 shadow-sm flex-shrink-0 group-hover:scale-105 transition-transform duration-200">
+                        <PenTool className="w-3.5 h-3.5" />
+                      </div>
+                      <h3 className="text-xs sm:text-sm font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-rose-500 transition-colors font-sans tracking-tight">
+                        {t.suggestTitleCreative}
+                      </h3>
                     </div>
-                    <h3 className="text-xs sm:text-sm font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-rose-500 transition-colors font-sans tracking-tight">
-                      {t.suggestTitleCreative}
-                    </h3>
+                    <ArrowUpRight className="w-3.5 h-3.5 text-rose-500 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-200 flex-shrink-0" />
                   </div>
                   <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-1.5 line-clamp-2 leading-relaxed">
                     {t.suggestDescCreative}
@@ -1273,15 +1310,18 @@ export default function Home() {
 
                 <div 
                   onClick={(e) => handleSubmit(e, t.suggestDescExplain)}
-                  className="ios-glass-card p-3 sm:p-3.5 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-2px] hover:border-indigo-500/40"
+                  className="ios-glass-card p-3 sm:p-3.5 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-2px] hover:border-indigo-500/40 transition-all duration-200"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-xl bg-indigo-500/15 text-indigo-500 border border-indigo-500/20 shadow-sm flex-shrink-0">
-                      <BookOpen className="w-3.5 h-3.5" />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2 rounded-xl bg-indigo-500/15 text-indigo-500 border border-indigo-500/20 shadow-sm flex-shrink-0 group-hover:scale-105 transition-transform duration-200">
+                        <BookOpen className="w-3.5 h-3.5" />
+                      </div>
+                      <h3 className="text-xs sm:text-sm font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-indigo-500 transition-colors font-sans tracking-tight">
+                        {t.suggestTitleExplain}
+                      </h3>
                     </div>
-                    <h3 className="text-xs sm:text-sm font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-indigo-500 transition-colors font-sans tracking-tight">
-                      {t.suggestTitleExplain}
-                    </h3>
+                    <ArrowUpRight className="w-3.5 h-3.5 text-indigo-500 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-200 flex-shrink-0" />
                   </div>
                   <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-1.5 line-clamp-2 leading-relaxed">
                     {t.suggestDescExplain}

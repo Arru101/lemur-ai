@@ -136,6 +136,13 @@ function ChatMessageComponent({
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content);
 
+  // Sync editContent whenever message.content updates and not currently editing
+  React.useEffect(() => {
+    if (!isEditing) {
+      setEditContent(message.content);
+    }
+  }, [message.content, isEditing]);
+
   const copyToClipboard = async (e: React.MouseEvent, text: string) => {
     try {
       triggerConfetti(e.clientX, e.clientY);
@@ -159,8 +166,9 @@ function ChatMessageComponent({
   };
 
   const handleEditSubmit = () => {
-    if (editContent.trim() && editContent !== message.content && onEdit) {
-      onEdit(editContent.trim());
+    const trimmed = editContent.trim();
+    if (trimmed && onEdit) {
+      onEdit(trimmed);
     }
     setIsEditing(false);
   };
@@ -247,25 +255,49 @@ function ChatMessageComponent({
             isEditing ? (
               <div className="flex flex-col gap-2 w-full">
                 <textarea
+                  autoFocus
                   value={editContent}
                   onChange={(e) => setEditContent(e.target.value)}
-                  className="w-full text-sm p-3 rounded-xl bg-neutral-100 dark:bg-neutral-900 border border-primary text-foreground outline-none resize-y min-h-[80px]"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleEditSubmit();
+                    } else if (e.key === "Escape") {
+                      e.preventDefault();
+                      setIsEditing(false);
+                      setEditContent(message.content);
+                    }
+                  }}
+                  rows={Math.max(2, Math.min(8, editContent.split("\n").length))}
+                  className="w-full text-sm p-3 rounded-xl bg-neutral-100 dark:bg-[#131625] border border-primary/50 focus:border-primary text-foreground outline-none resize-y min-h-[72px] shadow-sm font-sans"
+                  placeholder="Edit your message..."
                 />
-                <div className="flex items-center gap-2 self-end">
-                  <button
-                    onClick={() => setIsEditing(false)}
-                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-neutral-200 dark:bg-neutral-800 hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors"
-                  >
-                    <XSquare className="w-3.5 h-3.5" />
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleEditSubmit}
-                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
-                  >
-                    <CheckSquare className="w-3.5 h-3.5" />
-                    Save & Submit
-                  </button>
+                <div className="flex items-center justify-between w-full pt-0.5">
+                  <span className="text-[10px] text-neutral-400 select-none hidden sm:inline">
+                    Enter to submit, Shift+Enter for newline
+                  </span>
+                  <div className="flex items-center gap-2 ml-auto">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditing(false);
+                        setEditContent(message.content);
+                      }}
+                      className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-neutral-200 dark:bg-neutral-800 hover:bg-neutral-300 dark:hover:bg-neutral-700 text-foreground transition-colors apple-spring active:scale-95"
+                    >
+                      <XSquare className="w-3.5 h-3.5" />
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleEditSubmit}
+                      disabled={!editContent.trim()}
+                      className="flex items-center gap-1 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors shadow-sm apple-spring active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+                    >
+                      <CheckSquare className="w-3.5 h-3.5" />
+                      Save & Submit
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -515,7 +547,11 @@ function ChatMessageComponent({
             {/* User Edit */}
             {isUser && !isEditing && onEdit && (
               <button
-                onClick={() => setIsEditing(true)}
+                type="button"
+                onClick={() => {
+                  setEditContent(message.content);
+                  setIsEditing(true);
+                }}
                 className="p-1.5 rounded-xl hover:bg-black/[0.06] dark:hover:bg-white/10 hover:text-foreground text-neutral-500 dark:text-neutral-400 apple-spring active:scale-95"
                 title="Edit Prompt"
               >

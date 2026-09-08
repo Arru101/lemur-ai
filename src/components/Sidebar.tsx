@@ -35,6 +35,7 @@ interface SidebarProps {
 export const LANGUAGE_OPTIONS = [
   { code: "en", name: "English", native: "English" },
   { code: "hi", name: "Hindi", native: "हिन्दी" },
+  { code: "bho", name: "Bhojpuri", native: "भोजपुरी" },
   { code: "bn", name: "Bengali", native: "বাংলা" },
   { code: "ur", name: "Urdu", native: "اردو" },
   { code: "ar", name: "Arabic", native: "العربية" },
@@ -87,6 +88,7 @@ export default function Sidebar({
 
   // --- Custom Language & Export Dropup State ---
   const [languageDropupOpen, setLanguageDropupOpen] = useState(false);
+  const [languageSearch, setLanguageSearch] = useState("");
   const languageRef = useRef<HTMLDivElement>(null);
   const exportRef = useRef<HTMLDivElement>(null);
 
@@ -95,6 +97,7 @@ export default function Sidebar({
     const handleClickOutside = (e: MouseEvent) => {
       if (languageRef.current && !languageRef.current.contains(e.target as Node)) {
         setLanguageDropupOpen(false);
+        setLanguageSearch("");
       }
       if (exportRef.current && !exportRef.current.contains(e.target as Node)) {
         setShowExportMenu(false);
@@ -107,6 +110,17 @@ export default function Sidebar({
   const currentLanguageObj = useMemo(() => {
     return LANGUAGE_OPTIONS.find((l) => l.code === language) || LANGUAGE_OPTIONS[0];
   }, [language]);
+
+  const filteredLanguages = useMemo(() => {
+    if (!languageSearch.trim()) return LANGUAGE_OPTIONS;
+    const q = languageSearch.toLowerCase().trim();
+    return LANGUAGE_OPTIONS.filter(
+      (opt) =>
+        opt.name.toLowerCase().includes(q) ||
+        opt.native.toLowerCase().includes(q) ||
+        opt.code.toLowerCase().includes(q)
+    );
+  }, [languageSearch]);
 
   // --- Touch Swipe Left to Close on Mobile ---
   const touchStartXRef = useRef<number | null>(null);
@@ -386,12 +400,40 @@ export default function Sidebar({
 
               {/* Floating Language Dropup Menu */}
               {languageDropupOpen && (
-                <div className="absolute bottom-full left-0 mb-3 w-56 p-1.5 rounded-2xl ios-glass border border-black/[0.08] dark:border-white/15 shadow-2xl z-50 flex flex-col gap-0.5 msg-enter max-h-72">
-                  <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 select-none border-b border-black/[0.06] dark:border-white/10">
-                    {t.language}
+                <div className="absolute bottom-full left-0 mb-3 w-64 p-2 rounded-2xl ios-glass border border-black/[0.08] dark:border-white/15 shadow-2xl z-50 flex flex-col gap-1 msg-enter max-h-80">
+                  <div className="flex items-center justify-between px-2 py-1 select-none border-b border-black/[0.06] dark:border-white/10">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                      {t.language}
+                    </span>
+                    <span className="text-[10px] text-neutral-400 font-mono">
+                      {filteredLanguages.length}
+                    </span>
                   </div>
-                  <div className="overflow-y-auto max-h-56 space-y-0.5 pr-0.5 scrollbar-thin hardware-scroll mt-1">
-                    {LANGUAGE_OPTIONS.map((opt) => {
+
+                  {/* Search bar inside language dropup */}
+                  <div className="relative my-0.5">
+                    <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400" />
+                    <input
+                      type="text"
+                      placeholder="Search language..."
+                      value={languageSearch}
+                      onChange={(e) => setLanguageSearch(e.target.value)}
+                      className="w-full text-xs pl-8 pr-7 py-1.5 rounded-xl bg-black/[0.04] dark:bg-white/[0.06] border border-black/[0.06] dark:border-white/10 text-foreground outline-none placeholder:text-neutral-400 font-sans"
+                      autoFocus
+                    />
+                    {languageSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setLanguageSearch("")}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded text-neutral-400 hover:text-foreground"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="overflow-y-auto max-h-56 space-y-0.5 pr-0.5 scrollbar-thin hardware-scroll mt-0.5">
+                    {filteredLanguages.map((opt) => {
                       const isSelected = opt.code === language;
                       return (
                         <button
@@ -400,6 +442,7 @@ export default function Sidebar({
                           onClick={() => {
                             onLanguageChange(opt.code);
                             setLanguageDropupOpen(false);
+                            setLanguageSearch("");
                           }}
                           className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs apple-spring text-left border-0 ${
                             isSelected
@@ -415,6 +458,11 @@ export default function Sidebar({
                         </button>
                       );
                     })}
+                    {filteredLanguages.length === 0 && (
+                      <div className="py-4 text-center text-xs text-neutral-400 font-sans">
+                        No languages found
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
