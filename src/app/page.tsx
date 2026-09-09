@@ -5,12 +5,14 @@ import Sidebar from "../components/Sidebar";
 import ChatMessage from "../components/ChatMessage";
 import LemurLogo from "../components/LemurLogo";
 import Toast, { ToastItem, ToastType, setGlobalToastFn } from "../components/Toast";
+import PdfViewerModal from "../components/PdfViewerModal";
 import { translations } from "../utils/translations";
 import { 
   Menu, 
   Mic, 
   Paperclip, 
   FileText, 
+  FileSpreadsheet,
   X, 
   Sparkles, 
   Cpu, 
@@ -132,6 +134,7 @@ export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [pdfModalOpen, setPdfModalOpen] = useState(false);
   
   // Custom dropdown selector state
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
@@ -373,10 +376,16 @@ export default function Home() {
         e.preventDefault();
         handleNewChatRef.current();
       }
-      // Escape: Close any open dropdowns or mobile sidebar
+      // Alt+P: Toggle Stored PDF Reference Guide
+      if (e.altKey && e.key.toLowerCase() === "p") {
+        e.preventDefault();
+        setPdfModalOpen((prev) => !prev);
+      }
+      // Escape: Close any open dropdowns, PDF modal, or mobile sidebar
       if (e.key === "Escape") {
         setModelDropdownOpen(false);
         setSidebarOpen(false);
+        setPdfModalOpen(false);
       }
     };
 
@@ -1046,6 +1055,7 @@ export default function Home() {
         onClose={() => setSidebarOpen(false)}
         isCollapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        onOpenPdf={() => setPdfModalOpen(true)}
       />
 
       {/* Main Workspace Frame */}
@@ -1204,7 +1214,19 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
+            {/* Quick Access PDF Reference Button */}
+            <button
+              type="button"
+              onClick={() => setPdfModalOpen(true)}
+              className="group flex items-center gap-1.5 px-2.5 sm:px-3 h-9 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/15 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 dark:border-emerald-500/30 apple-spring shadow-xs active:scale-95 text-xs font-semibold"
+              title="Excel Shortcuts & Reference PDF (Alt+P)"
+              aria-label="Open Excel Shortcuts PDF Guide"
+            >
+              <FileSpreadsheet className="w-4 h-4 stroke-[2] transition-transform duration-200 group-hover:scale-110" />
+              <span className="hidden sm:inline font-sans">Excel Guide</span>
+            </button>
+
             <button
               onClick={handleNewChat}
               className="group w-9 h-9 flex items-center justify-center rounded-xl bg-black/[0.04] dark:bg-[#131625] hover:bg-black/[0.08] dark:hover:bg-[#1a1f33] border border-black/[0.08] dark:border-white/12 hover:dark:border-indigo-400/40 text-foreground apple-spring shadow-sm active:scale-95"
@@ -1546,6 +1568,9 @@ export default function Home() {
 
       {/* Toast Notifications */}
       <Toast toasts={toasts} onDismiss={dismissToast} />
+
+      {/* Stored PDF Document Viewer Modal */}
+      <PdfViewerModal isOpen={pdfModalOpen} onClose={() => setPdfModalOpen(false)} />
     </div>
   );
 }

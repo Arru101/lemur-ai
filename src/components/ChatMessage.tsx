@@ -136,13 +136,6 @@ function ChatMessageComponent({
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content);
 
-  // Sync editContent whenever message.content updates and not currently editing
-  React.useEffect(() => {
-    if (!isEditing) {
-      setEditContent(message.content);
-    }
-  }, [message.content, isEditing]);
-
   const copyToClipboard = async (e: React.MouseEvent, text: string) => {
     try {
       triggerConfetti(e.clientX, e.clientY);

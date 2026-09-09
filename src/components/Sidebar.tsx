@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { SquarePen, Trash2, Globe, Sun, Moon, Download, Search, X, MessageSquare, Edit3, PanelLeftClose, Check } from "lucide-react";
+import { SquarePen, Trash2, Globe, Sun, Moon, Download, Search, X, MessageSquare, Edit3, PanelLeftClose, Check, FileSpreadsheet } from "lucide-react";
 import { translations } from "../utils/translations";
 import { triggerConfetti } from "../utils/confetti";
 import LemurLogo from "./LemurLogo";
@@ -30,6 +30,7 @@ interface SidebarProps {
   onClose: () => void;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
+  onOpenPdf?: () => void;
 }
 
 export const LANGUAGE_OPTIONS = [
@@ -75,6 +76,7 @@ export default function Sidebar({
   onClose,
   isCollapsed = false,
   onToggleCollapse,
+  onOpenPdf,
 }: SidebarProps) {
   const t = translations[language] || translations.en;
   
@@ -266,6 +268,23 @@ export default function Sidebar({
               )}
             </div>
 
+            {/* Professional Stored PDF Reference Button */}
+            {onOpenPdf && (
+              <button
+                type="button"
+                onClick={onOpenPdf}
+                title="Excel Shortcuts & Reference Guide (Alt+P)"
+                aria-label="Excel Shortcuts Guide"
+                className="group relative w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 dark:bg-emerald-500/15 dark:hover:bg-emerald-500/25 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 dark:border-emerald-500/30 shadow-xs active:scale-95 apple-spring transition-all"
+              >
+                <FileSpreadsheet className="w-4 h-4 stroke-[2] transition-transform duration-300 group-hover:scale-110" />
+                <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                </span>
+              </button>
+            )}
+
             {/* Icon-Only New Chat Button */}
             <button
               onClick={() => {
@@ -434,6 +453,21 @@ export default function Sidebar({
                 <Sun className="w-4 h-4 text-amber-500 stroke-[1.75] transition-transform duration-300 group-hover:rotate-45" />
               )}
             </button>
+
+            {/* Stored PDF Reference Trigger */}
+            {onOpenPdf && (
+              <button
+                type="button"
+                onClick={onOpenPdf}
+                className="group relative flex items-center justify-center w-10 h-10 rounded-xl hover:bg-emerald-500/15 text-neutral-600 dark:text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 apple-spring active:scale-95 border-0 outline-none"
+                title="Excel Shortcuts & Reference PDF (Alt+P)"
+              >
+                <FileSpreadsheet className="w-4 h-4 stroke-[1.75] transition-transform duration-200 group-hover:scale-110" />
+                <span className="absolute bottom-1 right-1 text-[8px] font-mono font-bold uppercase text-emerald-600 dark:text-emerald-400 tracking-tighter leading-none">
+                  PDF
+                </span>
+              </button>
+            )}
 
             {/* Export Menu Icon Trigger */}
             <div className="relative" ref={exportRef}>
