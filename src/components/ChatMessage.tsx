@@ -240,8 +240,8 @@ function ChatMessageComponent({
             isUser
               ? isEditing
                 ? "w-full"
-                : "px-4 sm:px-5 py-2.5 sm:py-3.5 rounded-2xl sm:rounded-[22px] ios-glass-bubble text-white shadow-md text-left font-sans"
-              : "ios-glass-card px-4.5 sm:px-6 py-4 sm:py-5 rounded-2xl sm:rounded-3xl chat-prose max-w-none text-left"
+                : "px-3.5 sm:px-5 py-2.5 sm:py-3.5 rounded-2xl sm:rounded-[22px] ios-glass-bubble text-white shadow-md text-left font-sans"
+              : "ios-glass-card px-3.5 sm:px-6 py-3.5 sm:py-5 rounded-2xl sm:rounded-3xl chat-prose max-w-none text-left"
           }`}
         >
           {isUser ? (
@@ -413,7 +413,7 @@ function ChatMessageComponent({
                     </a>
                   ),
                   table: ({ children }) => (
-                    <div className="overflow-x-auto my-5 rounded-2xl border border-black/[0.08] dark:border-white/10 shadow-md bg-neutral-100/90 dark:bg-neutral-900/80">
+                    <div className="overflow-x-auto my-4 sm:my-5 rounded-2xl border border-black/[0.08] dark:border-white/10 shadow-md bg-neutral-100/90 dark:bg-neutral-900/80 max-w-full scrollbar-thin hardware-scroll">
                       <table className="min-w-full text-xs sm:text-sm font-sans">
                         {children}
                       </table>
@@ -468,9 +468,9 @@ function ChatMessageComponent({
                     const codeBlockId = `code-${idx ?? 0}-${lang}-${codeContent.length}-${Math.abs(codeHash)}`;
 
                     return (
-                      <div className="my-4 rounded-2xl overflow-hidden border border-white/12 bg-[#0d1017] shadow-xl code-container transform-gpu">
+                      <div className="my-3.5 sm:my-4 rounded-2xl overflow-hidden border border-white/12 bg-[#0d1017] shadow-xl code-container transform-gpu max-w-full">
                         {/* macOS-style Frosted Header */}
-                        <div className="flex items-center justify-between px-4 py-2.5 bg-white/[0.04] border-b border-white/10 text-xs select-none">
+                        <div className="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 bg-white/[0.04] border-b border-white/10 text-xs select-none">
                           <div className="flex items-center gap-2.5">
                             {/* Apple Traffic Lights */}
                             <div className="flex items-center gap-1.5">
@@ -502,7 +502,7 @@ function ChatMessageComponent({
                           </button>
                         </div>
                         {/* Highlighted Code */}
-                        <pre className="p-4 overflow-x-auto text-xs sm:text-[13px] leading-relaxed font-mono text-neutral-100 selection:bg-primary/30">
+                        <pre className="p-3 sm:p-4 overflow-x-auto text-xs sm:text-[13px] leading-relaxed font-mono text-neutral-100 selection:bg-primary/30 scrollbar-thin hardware-scroll">
                           <code
                             dangerouslySetInnerHTML={{
                               __html: highlightCode(codeContent, lang),
@@ -637,10 +637,10 @@ function ChatMessageComponent({
                 <button
                   key={qIdx}
                   onClick={() => onSelectQuestion(q)}
-                  className="group/chip text-xs sm:text-[13px] text-left px-3.5 py-2 rounded-xl ios-glass hover:border-primary/40 text-neutral-700 dark:text-neutral-200 hover:text-primary dark:hover:text-primary apple-spring active:scale-95 shadow-sm hover:shadow-md flex items-center gap-2 touch-target"
+                  className="group/chip text-xs sm:text-[13px] text-left px-3 sm:px-3.5 py-2 rounded-xl ios-glass hover:border-primary/40 text-neutral-700 dark:text-neutral-200 hover:text-primary dark:hover:text-primary apple-spring active:scale-95 shadow-sm hover:shadow-md flex items-center justify-between gap-2 touch-target max-w-full"
                 >
-                  <span>{q}</span>
-                  <ArrowRight className="w-3 h-3 opacity-50 group-hover/chip:opacity-100 group-hover/chip:translate-x-0.5 transition-all text-primary flex-shrink-0" />
+                  <span className="break-words line-clamp-2 sm:line-clamp-none">{q}</span>
+                  <ArrowRight className="w-3.5 h-3.5 opacity-50 group-hover/chip:opacity-100 group-hover/chip:translate-x-0.5 transition-all text-primary flex-shrink-0" />
                 </button>
               ))}
             </div>

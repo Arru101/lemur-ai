@@ -135,6 +135,11 @@ textarea:focus-visible {
 }
 
 /* Touch & Mobile device ergonomics */
+button, a, input, select, textarea, [role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
 @media (hover: none) and (pointer: coarse) {
   .touch-target {
     min-height: 44px;

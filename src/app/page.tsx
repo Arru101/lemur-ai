@@ -5,14 +5,12 @@ import Sidebar from "../components/Sidebar";
 import ChatMessage from "../components/ChatMessage";
 import LemurLogo from "../components/LemurLogo";
 import Toast, { ToastItem, ToastType, setGlobalToastFn } from "../components/Toast";
-import PdfViewerModal from "../components/PdfViewerModal";
 import { translations } from "../utils/translations";
 import { 
   Menu, 
   Mic, 
   Paperclip, 
   FileText, 
-  FileSpreadsheet,
   X, 
   Sparkles, 
   Cpu, 
@@ -134,7 +132,6 @@ export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [pdfModalOpen, setPdfModalOpen] = useState(false);
   
   // Custom dropdown selector state
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
@@ -376,16 +373,10 @@ export default function Home() {
         e.preventDefault();
         handleNewChatRef.current();
       }
-      // Alt+P: Toggle Stored PDF Reference Guide
-      if (e.altKey && e.key.toLowerCase() === "p") {
-        e.preventDefault();
-        setPdfModalOpen((prev) => !prev);
-      }
-      // Escape: Close any open dropdowns, PDF modal, or mobile sidebar
+      // Escape: Close any open dropdowns or mobile sidebar
       if (e.key === "Escape") {
         setModelDropdownOpen(false);
         setSidebarOpen(false);
-        setPdfModalOpen(false);
       }
     };
 
@@ -1055,7 +1046,6 @@ export default function Home() {
         onClose={() => setSidebarOpen(false)}
         isCollapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-        onOpenPdf={() => setPdfModalOpen(true)}
       />
 
       {/* Main Workspace Frame */}
@@ -1089,7 +1079,7 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
-                className="group flex items-center gap-2 text-xs sm:text-sm font-semibold bg-black/[0.03] dark:bg-[#131625] hover:bg-black/[0.06] dark:hover:bg-[#1a1f33] border border-black/[0.08] dark:border-white/12 hover:dark:border-indigo-400/30 px-3 py-1.5 rounded-xl cursor-pointer apple-spring text-foreground max-w-[200px] sm:max-w-none shadow-[inset_0_1px_0_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15)] active:scale-[0.98]"
+                className="group flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-semibold bg-black/[0.03] dark:bg-[#131625] hover:bg-black/[0.06] dark:hover:bg-[#1a1f33] border border-black/[0.08] dark:border-white/12 hover:dark:border-indigo-400/30 px-2.5 sm:px-3 py-1.5 rounded-xl cursor-pointer apple-spring text-foreground max-w-[155px] min-[400px]:max-w-[210px] sm:max-w-none shadow-[inset_0_1px_0_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15)] active:scale-[0.98]"
               >
                 {model === "smart-router" && (
                   <BrainCircuit className="w-3.5 h-3.5 text-indigo-500 dark:text-cyan-400 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6 flex-shrink-0" />
@@ -1116,7 +1106,7 @@ export default function Home() {
 
               {/* Dropdown Options List */}
               {modelDropdownOpen && (
-                <div className="absolute left-0 mt-2 w-[calc(100vw-2rem)] max-w-xs sm:w-80 rounded-2xl ios-glass border border-black/[0.08] dark:border-white/15 p-2 flex flex-col gap-1 msg-enter max-h-96 overflow-y-auto scrollbar-thin z-40 shadow-2xl">
+                <div className="absolute left-0 mt-2 w-[calc(100vw-3rem)] max-w-[290px] sm:max-w-xs sm:w-80 rounded-2xl ios-glass border border-black/[0.08] dark:border-white/15 p-2 flex flex-col gap-1 msg-enter max-h-96 overflow-y-auto scrollbar-thin z-40 shadow-2xl">
                   {[
                     {
                       id: "smart-router",
@@ -1215,18 +1205,6 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Quick Access PDF Reference Button */}
-            <button
-              type="button"
-              onClick={() => setPdfModalOpen(true)}
-              className="group flex items-center gap-1.5 px-2.5 sm:px-3 h-9 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/15 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 dark:border-emerald-500/30 apple-spring shadow-xs active:scale-95 text-xs font-semibold"
-              title="Excel Shortcuts & Reference PDF (Alt+P)"
-              aria-label="Open Excel Shortcuts PDF Guide"
-            >
-              <FileSpreadsheet className="w-4 h-4 stroke-[2] transition-transform duration-200 group-hover:scale-110" />
-              <span className="hidden sm:inline font-sans">Excel Guide</span>
-            </button>
-
             <button
               onClick={handleNewChat}
               className="group w-9 h-9 flex items-center justify-center rounded-xl bg-black/[0.04] dark:bg-[#131625] hover:bg-black/[0.08] dark:hover:bg-[#1a1f33] border border-black/[0.08] dark:border-white/12 hover:dark:border-indigo-400/40 text-foreground apple-spring shadow-sm active:scale-95"
@@ -1255,8 +1233,11 @@ export default function Home() {
           {messages.length === 0 ? (
             /* Empty Chat State - Modern Minimalist Hero (Fits Viewport Perfectly) */
             <div className="max-w-2xl 2xl:max-w-3xl mx-auto flex flex-col items-center text-center space-y-3 sm:space-y-4 select-none msg-enter px-2 w-full my-auto">
-              <div className="w-13 h-13 sm:w-16 sm:h-16 rounded-2xl sm:rounded-3xl ios-glass-card flex items-center justify-center shadow-lg shadow-indigo-500/10 hover:scale-105 transition-transform duration-300">
-                <LemurLogo className="w-8 h-8 sm:w-10 sm:h-10" />
+              <div className="relative flex items-center justify-center mb-0.5">
+                <div className="absolute w-24 h-24 sm:w-28 sm:h-28 bg-gradient-to-tr from-indigo-500/25 via-sky-500/20 to-purple-500/25 rounded-full blur-2xl pointer-events-none -z-10 animate-pulse" />
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl sm:rounded-3xl ios-glass-card flex items-center justify-center shadow-xl shadow-indigo-500/10 hover:scale-105 transition-transform duration-300 border border-white/20">
+                  <LemurLogo className="w-8 h-8 sm:w-10 sm:h-10" />
+                </div>
               </div>
 
               <div className="space-y-1">
@@ -1408,10 +1389,11 @@ export default function Home() {
           {showScrollBtn && (
             <button
               onClick={() => scrollToBottom()}
-              className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center justify-center w-8 h-8 rounded-full ios-glass text-foreground hover:bg-black/[0.06] dark:hover:bg-white/10 transition-all duration-150 shadow-lg active:scale-95 z-30"
+              className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1.5 rounded-full ios-glass text-foreground hover:bg-black/[0.06] dark:hover:bg-white/10 transition-all duration-200 shadow-xl border border-black/[0.08] dark:border-white/15 active:scale-95 z-30 msg-enter"
               title="Scroll to bottom"
             >
-              <ArrowDown className="w-3.5 h-3.5 text-primary" />
+              <ArrowDown className="w-3.5 h-3.5 text-primary animate-bounce" />
+              <span className="text-[11px] font-semibold text-foreground font-sans">Scroll down</span>
             </button>
           )}
 
@@ -1449,7 +1431,7 @@ export default function Home() {
             {/* Apple iPhone Floating Action Dock Capsule */}
             <form 
               onSubmit={handleSubmit}
-              className="ios-glass-dock relative flex flex-col rounded-2xl sm:rounded-3xl p-2 sm:p-2.5 transition-all duration-200"
+              className="ios-glass-dock relative flex flex-col rounded-2xl sm:rounded-3xl p-2 sm:p-2.5 transition-all duration-200 border border-black/[0.08] dark:border-white/12 focus-within:border-primary/50 focus-within:shadow-[0_8px_32px_rgba(99,102,241,0.12)]"
             >
               {/* Top: Auto-growing Textarea */}
               <div className="w-full px-2 pt-1 pb-1">
@@ -1568,9 +1550,6 @@ export default function Home() {
 
       {/* Toast Notifications */}
       <Toast toasts={toasts} onDismiss={dismissToast} />
-
-      {/* Stored PDF Document Viewer Modal */}
-      <PdfViewerModal isOpen={pdfModalOpen} onClose={() => setPdfModalOpen(false)} />
     </div>
   );
 }
