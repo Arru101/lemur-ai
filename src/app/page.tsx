@@ -5,6 +5,7 @@ import Sidebar from "../components/Sidebar";
 import ChatMessage from "../components/ChatMessage";
 import LemurLogo from "../components/LemurLogo";
 import Toast, { ToastItem, ToastType, setGlobalToastFn } from "../components/Toast";
+import ExcelGuideModal from "../components/ExcelGuideModal";
 import { translations } from "../utils/translations";
 import { 
   Menu, 
@@ -136,6 +137,9 @@ export default function Home() {
   // Custom dropdown selector state
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
   
+  // Excel Learning Guide (32-Page) PDF Session state
+  const [excelGuideOpen, setExcelGuideOpen] = useState(false);
+  
   // Voice Dictation & Synthesis
   const [isListening, setIsListening] = useState(false);
   const [speakingIdx, setSpeakingIdx] = useState<number | null>(null);
@@ -254,11 +258,14 @@ export default function Home() {
   }, []);
 
   const autoScrollToBottom = useCallback(() => {
-    if (!isUserScrolledUpRef.current) {
+    if (!isUserScrolledUpRef.current && chatContainerRef.current) {
       if (autoScrollRafRef.current) return;
       autoScrollRafRef.current = requestAnimationFrame(() => {
         autoScrollRafRef.current = null;
-        messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+        const container = chatContainerRef.current;
+        if (container && !isUserScrolledUpRef.current) {
+          container.scrollTop = container.scrollHeight;
+        }
       });
     }
   }, []);
@@ -373,10 +380,16 @@ export default function Home() {
         e.preventDefault();
         handleNewChatRef.current();
       }
+      // Alt+P: Toggle Excel Job-Ready Learning Guide (32p)
+      if (e.altKey && e.key.toLowerCase() === "p") {
+        e.preventDefault();
+        setExcelGuideOpen((prev) => !prev);
+      }
       // Escape: Close any open dropdowns or mobile sidebar
       if (e.key === "Escape") {
         setModelDropdownOpen(false);
         setSidebarOpen(false);
+        setExcelGuideOpen(false);
       }
     };
 
@@ -731,6 +744,7 @@ export default function Home() {
 
     let accumulatedText = "";
     let activeModelName = "Lemur AI";
+    let streamRafId: number | null = null;
 
     try {
       const res = await fetch("/api/chat", {
@@ -757,6 +771,40 @@ export default function Home() {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
+
+      let lastRenderTime = 0;
+
+      const scheduleRender = (force = false) => {
+        const now = performance.now();
+        if (force) {
+          if (streamRafId) {
+            cancelAnimationFrame(streamRafId);
+            streamRafId = null;
+          }
+          updateLastAssistantMessage(chatId, accumulatedText, activeModelName);
+          autoScrollToBottom();
+          lastRenderTime = now;
+          return;
+        }
+
+        // Keep updates synchronized to screen refresh rate (32ms = ~30fps smooth typewriter progression)
+        if (now - lastRenderTime >= 32) {
+          if (streamRafId) cancelAnimationFrame(streamRafId);
+          streamRafId = requestAnimationFrame(() => {
+            streamRafId = null;
+            lastRenderTime = performance.now();
+            updateLastAssistantMessage(chatId, accumulatedText, activeModelName);
+            autoScrollToBottom();
+          });
+        } else if (!streamRafId) {
+          streamRafId = requestAnimationFrame(() => {
+            streamRafId = null;
+            lastRenderTime = performance.now();
+            updateLastAssistantMessage(chatId, accumulatedText, activeModelName);
+            autoScrollToBottom();
+          });
+        }
+      };
 
       while (true) {
         const { value, done } = await reader.read();
@@ -806,10 +854,12 @@ export default function Home() {
         }
 
         if (hasNewTokens) {
-          updateLastAssistantMessage(chatId, accumulatedText, activeModelName);
-          autoScrollToBottom();
+          scheduleRender(false);
         }
       }
+
+      // Flush final stream state immediately
+      scheduleRender(true);
 
       // Handle any trailing buffer
       if (buffer.startsWith("data: ")) {
@@ -817,7 +867,7 @@ export default function Home() {
           const data = JSON.parse(buffer.slice(6).trim());
           if (data.type === "chunk") {
             accumulatedText += data.text;
-            updateLastAssistantMessage(chatId, accumulatedText, activeModelName);
+            scheduleRender(true);
           }
         } catch {}
       }
@@ -840,6 +890,10 @@ export default function Home() {
       updateLastAssistantMessage(chatId, errorContent, activeModelName);
       safeStorage.setItem("lemur-chats", JSON.stringify(conversationsRef.current), true);
     } finally {
+      if (streamRafId) {
+        cancelAnimationFrame(streamRafId);
+        streamRafId = null;
+      }
       setLoading(false);
       abortControllerRef.current = null;
     }
@@ -920,6 +974,27 @@ export default function Home() {
     }
 
     await streamChatResponse(currentChatId, updatedMessages, payloadMessages, fileToUpload);
+  };
+
+  // --- Dedicated Excel Guide Study Session Handler ---
+  const handleStartStudySession = (prompt: string, title?: string) => {
+    setExcelGuideOpen(false);
+    const newId = generateChatId();
+    const newChat: Conversation = {
+      id: newId,
+      title: title || (prompt.length > 30 ? prompt.substring(0, 30) + "..." : prompt),
+      timestamp: getNow(),
+      messages: [],
+    };
+    const updated = [newChat, ...conversationsRef.current];
+    saveChats(updated);
+    setActiveId(newId);
+    setAttachedFile(null);
+    setImagePreview(null);
+    setInput("");
+    setTimeout(() => {
+      handleSubmit(null, prompt);
+    }, 60);
   };
 
   // --- Message Edit & Resubmit ---
@@ -1046,6 +1121,7 @@ export default function Home() {
         onClose={() => setSidebarOpen(false)}
         isCollapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        onOpenPdf={() => setExcelGuideOpen(true)}
       />
 
       {/* Main Workspace Frame */}
@@ -1087,18 +1163,20 @@ export default function Home() {
                 {model === "gemini-flash" && <Sparkles className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0" />}
                 {model === "gemini-lite" && <Cpu className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400 flex-shrink-0" />}
                 {model === "nemotron-lightning" && <Brain className="w-3.5 h-3.5 text-cyan-500 dark:text-cyan-400 flex-shrink-0" />}
-                {model === "minimax-m3" && <Compass className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 flex-shrink-0" />}
-                {model === "gemma-26b" && <PenTool className="w-3.5 h-3.5 text-rose-500 dark:text-rose-400 flex-shrink-0" />}
+                {model === "cohere-code" && <Code2 className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 flex-shrink-0" />}
+                {model === "gemma-31b" && <PenTool className="w-3.5 h-3.5 text-rose-500 dark:text-rose-400 flex-shrink-0" />}
                 {model === "nemotron-ultra" && <Calculator className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400 flex-shrink-0" />}
+                {model === "openrouter-free" && <Compass className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400 flex-shrink-0" />}
                 
                 <span className="font-sans font-semibold tracking-tight truncate">{
                   model === "smart-router" ? t.smartRouter :
-                  model === "gemini-flash" ? "Gemini 2.5 Flash" :
+                  model === "gemini-flash" ? "Gemini 3.8 Flash" :
                   model === "gemini-lite" ? "Gemini 3.5 Lite" :
                   model === "nemotron-lightning" ? "Nemotron 3.5" :
-                  model === "minimax-m3" ? "MiniMax M3" :
-                  model === "gemma-26b" ? "Gemma 4 26B" :
-                  model === "nemotron-ultra" ? "Nemotron 550B" : model
+                  model === "cohere-code" ? "Cohere Code" :
+                  model === "gemma-31b" ? "Gemma 4 31B" :
+                  model === "nemotron-ultra" ? "Nemotron 550B" :
+                  model === "openrouter-free" ? "OpenRouter Free" : model
                 }</span>
                 
                 <ChevronDown className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400 flex-shrink-0 ml-0.5 transition-transform duration-200 group-hover:translate-y-0.5" />
@@ -1118,45 +1196,59 @@ export default function Home() {
                     },
                     {
                       id: "gemini-flash",
-                      name: "Gemini 2.5 Flash",
-                      desc: "Ultra-fast Google SOTA, vision & multimodal",
+                      name: "Gemini 3.8 Flash",
+                      badge: "Flagship",
+                      desc: "Google latest frontier model, vision & complex reasoning",
                       icon: Sparkles,
                       color: "from-indigo-500/20 to-violet-500/20 text-indigo-500 dark:text-indigo-400 border-indigo-500/30",
                     },
                     {
                       id: "gemini-lite",
                       name: "Gemini 3.5 Flash Lite",
-                      desc: "Sub-second instant latency for fast summaries",
+                      badge: "Instant",
+                      desc: "Sub-second ultra-lightweight response latency",
                       icon: Cpu,
                       color: "from-sky-500/20 to-blue-500/20 text-sky-500 dark:text-sky-400 border-sky-500/30",
                     },
                     {
                       id: "nemotron-lightning",
                       name: "Nemotron 3.5 Lightning",
-                      desc: "1M context, rapid reasoning & math logic",
+                      badge: "1M Ctx",
+                      desc: "1,000,000 token context window, math logic & coding",
                       icon: Brain,
                       color: "from-cyan-500/20 to-teal-500/20 text-cyan-500 dark:text-cyan-400 border-cyan-500/30",
                     },
                     {
-                      id: "minimax-m3",
-                      name: "MiniMax M3",
-                      desc: "1M context, multilingual & long essays",
-                      icon: Compass,
+                      id: "cohere-code",
+                      name: "Cohere North Mini Code",
+                      badge: "Code 256K",
+                      desc: "256K context, expert code synthesis & formula debugging",
+                      icon: Code2,
                       color: "from-emerald-500/20 to-teal-500/20 text-emerald-500 dark:text-emerald-400 border-emerald-500/30",
                     },
                     {
-                      id: "gemma-26b",
-                      name: "Gemma 4 26B",
-                      desc: "Google latest open instruction-following model",
+                      id: "gemma-31b",
+                      name: "Gemma 4 31B",
+                      badge: "Google Open",
+                      desc: "Google latest high-capacity open-weights model",
                       icon: PenTool,
                       color: "from-rose-500/20 to-pink-500/20 text-rose-500 dark:text-rose-400 border-rose-500/30",
                     },
                     {
                       id: "nemotron-ultra",
                       name: "Nemotron 3 Ultra 550B",
-                      desc: "Massive 550B parameters for deep analysis",
+                      badge: "550B",
+                      desc: "Massive 550B parameters for deep analytical reasoning",
                       icon: Calculator,
                       color: "from-amber-500/20 to-orange-500/20 text-amber-500 dark:text-amber-400 border-amber-500/30",
+                    },
+                    {
+                      id: "openrouter-free",
+                      name: "OpenRouter Free",
+                      badge: "Failover",
+                      desc: "Dynamic multi-provider balancer for 100% uptime",
+                      icon: Compass,
+                      color: "from-purple-500/20 to-indigo-500/20 text-purple-500 dark:text-purple-400 border-purple-500/30",
                     },
                   ].map((opt) => {
                     const IconComp = opt.icon;
@@ -1383,13 +1475,13 @@ export default function Home() {
         </div>
 
         {/* Input Text Form Area */}
-        <footer className="px-3 py-2 sm:px-4 sm:py-3 bg-transparent relative safe-bottom safe-left safe-right transition-all duration-200">
+        <footer className="px-2.5 pt-0.5 pb-1 sm:px-4 sm:pt-1 sm:pb-2 bg-transparent relative safe-bottom safe-left safe-right transition-all duration-200">
           
           {/* Scroll to bottom floating action button */}
           {showScrollBtn && (
             <button
               onClick={() => scrollToBottom()}
-              className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1.5 rounded-full ios-glass text-foreground hover:bg-black/[0.06] dark:hover:bg-white/10 transition-all duration-200 shadow-xl border border-black/[0.08] dark:border-white/15 active:scale-95 z-30 msg-enter"
+              className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-2.5 py-1 rounded-full ios-glass text-foreground hover:bg-black/[0.06] dark:hover:bg-white/10 transition-all duration-200 shadow-xl border border-black/[0.08] dark:border-white/15 active:scale-95 z-30 msg-enter"
               title="Scroll to bottom"
             >
               <ArrowDown className="w-3.5 h-3.5 text-primary animate-bounce" />
@@ -1401,21 +1493,21 @@ export default function Home() {
             
             {/* File Upload Preview bar */}
             {attachedFile && (
-              <div className="mb-2.5 px-3 py-2 rounded-2xl ios-glass border border-black/[0.08] dark:border-white/15 flex items-center justify-between shadow-lg z-20 animate-slide-up">
-                <div className="flex items-center gap-2.5 min-w-0">
+              <div className="mb-1.5 px-2.5 py-1.5 rounded-xl ios-glass border border-black/[0.08] dark:border-white/15 flex items-center justify-between shadow-lg z-20 animate-slide-up">
+                <div className="flex items-center gap-2 min-w-0">
                   {imagePreview ? (
-                    <div className="w-8 h-8 rounded-lg overflow-hidden relative flex-shrink-0 border border-black/[0.08] dark:border-white/10">
+                    <div className="w-7 h-7 rounded-lg overflow-hidden relative flex-shrink-0 border border-black/[0.08] dark:border-white/10">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={imagePreview} alt="Upload preview" className="object-cover w-full h-full" />
                     </div>
                   ) : (
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
-                      <FileText className="w-4 h-4" />
+                    <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                      <FileText className="w-3.5 h-3.5" />
                     </div>
                   )}
                   <div className="min-w-0">
                     <p className="text-xs font-medium text-foreground truncate">{attachedFile.name}</p>
-                    <p className="text-[10px] text-neutral-500 uppercase font-mono">{attachedFile.type || "File"}</p>
+                    <p className="text-[9px] text-neutral-500 uppercase font-mono">{attachedFile.type || "File"}</p>
                   </div>
                 </div>
                 <button
@@ -1423,7 +1515,7 @@ export default function Home() {
                   className="p-1 rounded-full hover:bg-black/[0.06] dark:hover:bg-white/10 text-neutral-500 dark:text-neutral-400 hover:text-foreground transition-colors"
                   title="Remove attachment"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-3 h-3" />
                 </button>
               </div>
             )}
@@ -1431,10 +1523,10 @@ export default function Home() {
             {/* Apple iPhone Floating Action Dock Capsule */}
             <form 
               onSubmit={handleSubmit}
-              className="ios-glass-dock relative flex flex-col rounded-2xl sm:rounded-3xl p-2 sm:p-2.5 transition-all duration-200 border border-black/[0.08] dark:border-white/12 focus-within:border-primary/50 focus-within:shadow-[0_8px_32px_rgba(99,102,241,0.12)]"
+              className="ios-glass-dock relative flex flex-col rounded-2xl sm:rounded-2.5xl px-3 py-1.5 sm:px-3.5 sm:py-2 transition-all duration-200 border border-black/[0.08] dark:border-white/12 focus-within:border-primary/50 focus-within:shadow-[0_6px_24px_rgba(99,102,241,0.15)] shadow-[0_4px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_24px_rgba(0,0,0,0.45)]"
             >
               {/* Top: Auto-growing Textarea */}
-              <div className="w-full px-2 pt-1 pb-1">
+              <div className="w-full px-0.5 pt-0 pb-0">
                 <textarea
                   ref={chatInputRef}
                   rows={1}
@@ -1443,12 +1535,12 @@ export default function Home() {
                   onKeyDown={handleKeyPress}
                   placeholder={t.placeholder}
                   maxLength={4000}
-                  className="w-full bg-transparent text-sm sm:text-base text-foreground placeholder:text-neutral-500 dark:placeholder:text-neutral-400 border-0 outline-none ring-0 resize-none min-h-[40px] max-h-[160px] leading-relaxed font-sans block shadow-none focus:outline-none focus:ring-0"
+                  className="w-full bg-transparent text-sm sm:text-[15px] text-foreground placeholder:text-neutral-500 dark:placeholder:text-neutral-400 border-0 outline-none ring-0 resize-none min-h-[26px] sm:min-h-[28px] max-h-[130px] leading-snug sm:leading-normal font-sans block shadow-none focus:outline-none focus:ring-0 py-0.5 selection:bg-primary/20"
                 />
               </div>
 
               {/* Bottom Toolbar: Attachment, Model Badge, Voice Dictation, Character Gauge, Send Button */}
-              <div className="flex items-center justify-between pt-1 px-1">
+              <div className="flex items-center justify-between pt-0.5 px-0">
                 {/* Left: Attachment & Model Badge */}
                 <div className="flex items-center gap-1">
                   <input
@@ -1461,13 +1553,13 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={handleFileClick}
-                    className="p-2 rounded-xl text-neutral-500 dark:text-neutral-400 hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] active:scale-95 transition-all duration-150 border-0 outline-none"
+                    className="p-1 sm:p-1.5 rounded-lg text-neutral-500 dark:text-neutral-400 hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] active:scale-95 transition-all duration-150 border-0 outline-none"
                     title={t.uploadFile}
                   >
-                    <Paperclip className="w-4 h-4" />
+                    <Paperclip className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </button>
 
-                  <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-black/[0.03] dark:bg-[#131625] border border-black/[0.08] dark:border-white/10 text-[11px] font-semibold text-neutral-600 dark:text-neutral-300 select-none shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
+                  <div className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-black/[0.03] dark:bg-[#131625] border border-black/[0.06] dark:border-white/10 text-[10.5px] font-semibold text-neutral-600 dark:text-neutral-300 select-none shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
                     {model === "smart-router" ? (
                       <BrainCircuit className="w-3 h-3 text-indigo-500 dark:text-cyan-400 flex-shrink-0" />
                     ) : (
@@ -1475,12 +1567,13 @@ export default function Home() {
                     )}
                     <span className="truncate">{
                       model === "smart-router" ? "Smart Router (Auto)" :
-                      model === "gemini-flash" ? "Gemini 2.5 Flash" :
-                      model === "gemini-lite" ? "Gemini Lite" :
+                      model === "gemini-flash" ? "Gemini 3.8 Flash" :
+                      model === "gemini-lite" ? "Gemini 3.5 Lite" :
                       model === "nemotron-lightning" ? "Nemotron 3.5" :
-                      model === "minimax-m3" ? "MiniMax M3" :
-                      model === "gemma-26b" ? "Gemma 4" :
-                      model === "nemotron-ultra" ? "Nemotron 550B" : model
+                      model === "cohere-code" ? "Cohere Code" :
+                      model === "gemma-31b" ? "Gemma 4 31B" :
+                      model === "nemotron-ultra" ? "Nemotron 550B" :
+                      model === "openrouter-free" ? "OpenRouter Free" : model
                     }</span>
                   </div>
                 </div>
@@ -1497,7 +1590,7 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={handleVoiceInput}
-                    className={`p-2 rounded-xl transition-all duration-150 border-0 outline-none ${
+                    className={`p-1 sm:p-1.5 rounded-lg transition-all duration-150 border-0 outline-none ${
                       isListening 
                         ? "text-red-500 bg-red-500/15 shadow-sm" 
                         : "text-neutral-500 dark:text-neutral-400 hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] active:scale-95"
@@ -1506,11 +1599,11 @@ export default function Home() {
                   >
                     {isListening ? (
                       <div className="flex items-center gap-1">
-                        <Mic className="w-4 h-4 animate-pulse text-red-500" />
+                        <Mic className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-pulse text-red-500" />
                         <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
                       </div>
                     ) : (
-                      <Mic className="w-4 h-4" />
+                      <Mic className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     )}
                   </button>
 
@@ -1519,29 +1612,29 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={handleCancelResponse}
-                      className="flex items-center justify-center w-8 h-8 rounded-full bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:opacity-90 active:scale-95 transition-all duration-150 border-0 outline-none shadow-sm"
+                      className="flex items-center justify-center w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-full bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:opacity-90 active:scale-95 transition-all duration-150 border-0 outline-none shadow-sm"
                       title="Stop generating"
                     >
-                      <Square className="w-3.5 h-3.5 fill-current" />
+                      <Square className="w-3 h-3 fill-current" />
                     </button>
                   ) : (
                     <button
                       type="submit"
                       disabled={(!input.trim() && !attachedFile) || loading}
-                      className={`flex items-center justify-center w-8 h-8 rounded-full transition-all duration-150 border-0 outline-none ${
+                      className={`flex items-center justify-center w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-full transition-all duration-150 border-0 outline-none ${
                         input.trim() || attachedFile
                           ? "bg-primary hover:bg-primary/90 text-white shadow-[0_2px_12px_rgba(99,102,241,0.45),inset_0_1px_0_rgba(255,255,255,0.3)] active:scale-95"
                           : "bg-black/[0.06] dark:bg-white/[0.08] text-neutral-400 dark:text-neutral-500 cursor-not-allowed"
                       }`}
                     >
-                      <ArrowUp className="w-4 h-4 stroke-[2.5]" />
+                      <ArrowUp className="w-3.5 h-3.5 stroke-[2.5]" />
                     </button>
                   )}
                 </div>
               </div>
             </form>
 
-            <p className="text-[11px] text-center text-neutral-500 dark:text-neutral-400 mt-2.5 select-none font-sans">
+            <p className="text-[10px] text-center text-neutral-400 dark:text-neutral-500 mt-1 select-none font-sans tracking-tight">
               Lemur AI can make mistakes. Verify critical information.
             </p>
           </div>
@@ -1550,6 +1643,13 @@ export default function Home() {
 
       {/* Toast Notifications */}
       <Toast toasts={toasts} onDismiss={dismissToast} />
+
+      {/* Excel Job-Ready Learning Guide (32 Pages) PDF Session & Curriculum */}
+      <ExcelGuideModal
+        isOpen={excelGuideOpen}
+        onClose={() => setExcelGuideOpen(false)}
+        onStartStudySession={handleStartStudySession}
+      />
     </div>
   );
 }

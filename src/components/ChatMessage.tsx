@@ -20,6 +20,12 @@ import {
   ChevronDown,
   ChevronUp,
   ArrowRight,
+  Download,
+  Info,
+  Lightbulb,
+  AlertCircle,
+  AlertTriangle,
+  ShieldAlert,
 } from "lucide-react";
 import { highlightCode } from "../utils/highlighter";
 import { triggerConfetti } from "../utils/confetti";
@@ -158,6 +164,44 @@ function ChatMessageComponent({
     }
   };
 
+  const downloadCode = (code: string, lang: string) => {
+    const extMap: Record<string, string> = {
+      javascript: "js",
+      js: "js",
+      typescript: "ts",
+      ts: "ts",
+      python: "py",
+      py: "py",
+      html: "html",
+      css: "css",
+      sql: "sql",
+      json: "json",
+      bash: "sh",
+      sh: "sh",
+      shell: "sh",
+      markdown: "md",
+      md: "md",
+      excel: "xlsx",
+      csv: "csv",
+      rust: "rs",
+      go: "go",
+      java: "java",
+      cpp: "cpp",
+      c: "c",
+    };
+    const cleanLang = (lang || "").toLowerCase();
+    const ext = extMap[cleanLang] || cleanLang || "txt";
+    const blob = new Blob([code], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `snippet.${ext}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const handleEditSubmit = () => {
     const trimmed = editContent.trim();
     if (trimmed && onEdit) {
@@ -180,7 +224,7 @@ function ChatMessageComponent({
   return (
     <div
       className={`group flex w-full gap-3 sm:gap-4 py-2.5 sm:py-3.5 px-1 sm:px-2 message-contain ${
-        isLast ? "msg-enter" : ""
+        isLast && !isGenerating ? "msg-enter" : ""
       } ${
         isUser ? "justify-end" : "justify-start"
       }`}
@@ -241,7 +285,9 @@ function ChatMessageComponent({
               ? isEditing
                 ? "w-full"
                 : "px-3.5 sm:px-5 py-2.5 sm:py-3.5 rounded-2xl sm:rounded-[22px] ios-glass-bubble text-white shadow-md text-left font-sans"
-              : "ios-glass-card px-3.5 sm:px-6 py-3.5 sm:py-5 rounded-2xl sm:rounded-3xl chat-prose max-w-none text-left"
+              : `ios-glass-card px-3.5 sm:px-6 py-3.5 sm:py-5 rounded-2xl sm:rounded-3xl chat-prose max-w-none text-left ${
+                  isGenerating ? "streaming-content" : ""
+                }`
           }`}
         >
           {isUser ? (
@@ -394,11 +440,55 @@ function ChatMessageComponent({
                       {children}
                     </li>
                   ),
-                  blockquote: ({ children }) => (
-                    <blockquote className="my-4 rounded-xl border-l-[3.5px] border-primary border-t-0 border-r-0 border-b-0 bg-primary/[0.04] dark:bg-primary/[0.08] px-4 py-3 text-sm sm:text-[14.5px] text-neutral-700 dark:text-neutral-200 italic shadow-sm leading-relaxed">
-                      {children}
-                    </blockquote>
-                  ),
+                  blockquote: ({ children }) => {
+                    const extractText = (node: React.ReactNode): string => {
+                      if (!node) return "";
+                      if (typeof node === "string") return node;
+                      if (typeof node === "number") return String(node);
+                      if (Array.isArray(node)) return node.map(extractText).join("");
+                      if (React.isValidElement(node) && node.props && (node.props as { children?: React.ReactNode }).children) {
+                        return extractText((node.props as { children?: React.ReactNode }).children);
+                      }
+                      return "";
+                    };
+
+                    const text = extractText(children).trim();
+                    const alertMatch = text.match(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i);
+
+                    if (alertMatch) {
+                      const alertType = alertMatch[1].toUpperCase();
+                      const cleanText = text.replace(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*/i, "");
+
+                      const configMap: Record<string, { title: string; border: string; bg: string; textCol: string; icon: React.ComponentType<{ className?: string }> }> = {
+                        NOTE: { title: "Note", border: "border-sky-500/30", bg: "bg-sky-500/[0.08]", textCol: "text-sky-600 dark:text-sky-400", icon: Info },
+                        TIP: { title: "Tip", border: "border-emerald-500/30", bg: "bg-emerald-500/[0.08]", textCol: "text-emerald-600 dark:text-emerald-400", icon: Lightbulb },
+                        IMPORTANT: { title: "Important", border: "border-indigo-500/30", bg: "bg-indigo-500/[0.08]", textCol: "text-indigo-600 dark:text-indigo-400", icon: AlertCircle },
+                        WARNING: { title: "Warning", border: "border-amber-500/30", bg: "bg-amber-500/[0.08]", textCol: "text-amber-600 dark:text-amber-400", icon: AlertTriangle },
+                        CAUTION: { title: "Caution", border: "border-rose-500/30", bg: "bg-rose-500/[0.08]", textCol: "text-rose-600 dark:text-rose-400", icon: ShieldAlert },
+                      };
+
+                      const cfg = configMap[alertType] || configMap.NOTE;
+                      const IconComp = cfg.icon;
+
+                      return (
+                        <div className={`my-4 rounded-2xl p-4 border ${cfg.border} ${cfg.bg} backdrop-blur-md shadow-xs`}>
+                          <div className={`flex items-center gap-2 mb-1.5 ${cfg.textCol}`}>
+                            <IconComp className="w-4 h-4 stroke-[2] flex-shrink-0" />
+                            <span className="text-xs font-bold uppercase tracking-wider font-sans">{cfg.title}</span>
+                          </div>
+                          <p className="text-xs sm:text-[13.5px] text-neutral-800 dark:text-neutral-200 leading-relaxed font-sans pl-6 whitespace-pre-wrap">
+                            {cleanText}
+                          </p>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <blockquote className="my-4 rounded-2xl border-l-[3.5px] border-primary/70 bg-primary/[0.04] dark:bg-primary/[0.08] px-4 py-3 text-sm sm:text-[14.5px] text-neutral-800 dark:text-neutral-200 italic shadow-sm leading-relaxed">
+                        {children}
+                      </blockquote>
+                    );
+                  },
                   hr: () => (
                     <hr className="my-6 border-0 h-[1px] bg-gradient-to-r from-transparent via-neutral-300 dark:via-white/15 to-transparent" />
                   ),
@@ -483,23 +573,36 @@ function ChatMessageComponent({
                             </span>
                           </div>
 
-                          <button
-                            onClick={(e) => copyCode(e, codeContent, codeBlockId)}
-                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-neutral-300 hover:text-white transition-all duration-150 active:scale-95 text-xs font-medium border border-white/10"
-                            title="Copy Code"
-                          >
-                            {copiedCodeId === codeBlockId ? (
-                              <>
-                                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                                <span className="text-emerald-400 text-[11px] font-semibold">Copied!</span>
-                              </>
-                            ) : (
-                              <>
-                                <Copy className="w-3.5 h-3.5 opacity-75" />
-                                <span className="text-[11px]">Copy</span>
-                              </>
-                            )}
-                          </button>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => downloadCode(codeContent, lang)}
+                              className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-neutral-300 hover:text-white transition-all duration-150 active:scale-95 text-xs font-medium border border-white/10 select-none cursor-pointer"
+                              title="Download Code File"
+                            >
+                              <Download className="w-3.5 h-3.5 opacity-75" />
+                              <span className="text-[11px] hidden sm:inline">Save</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={(e) => copyCode(e, codeContent, codeBlockId)}
+                              className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-neutral-300 hover:text-white transition-all duration-150 active:scale-95 text-xs font-medium border border-white/10 select-none cursor-pointer"
+                              title="Copy Code"
+                            >
+                              {copiedCodeId === codeBlockId ? (
+                                <>
+                                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                                  <span className="text-emerald-400 text-[11px] font-semibold">Copied!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="w-3.5 h-3.5 opacity-75" />
+                                  <span className="text-[11px]">Copy</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
                         </div>
                         {/* Highlighted Code */}
                         <pre className="p-3 sm:p-4 overflow-x-auto text-xs sm:text-[13px] leading-relaxed font-mono text-neutral-100 selection:bg-primary/30 scrollbar-thin hardware-scroll">

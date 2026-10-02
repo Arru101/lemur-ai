@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { SquarePen, Trash2, Globe, Sun, Moon, Download, Search, X, MessageSquare, Edit3, PanelLeftClose, Check } from "lucide-react";
+import { SquarePen, Trash2, Globe, Sun, Moon, Download, Search, X, MessageSquare, Edit3, PanelLeftClose, Check, FileSpreadsheet } from "lucide-react";
 import { translations } from "../utils/translations";
 import { triggerConfetti } from "../utils/confetti";
 import LemurLogo from "./LemurLogo";
@@ -30,6 +30,7 @@ interface SidebarProps {
   onClose: () => void;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
+  onOpenPdf?: () => void;
 }
 
 export const LANGUAGE_OPTIONS = [
@@ -75,6 +76,7 @@ export default function Sidebar({
   onClose,
   isCollapsed = false,
   onToggleCollapse,
+  onOpenPdf,
 }: SidebarProps) {
   const t = translations[language] || translations.en;
   
@@ -274,7 +276,7 @@ export default function Sidebar({
               }}
               title="New Chat (⌘N)"
               aria-label="New Chat"
-              className="group w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-xl bg-neutral-900 hover:bg-neutral-800 dark:bg-gradient-to-tr dark:from-[#1e2338] dark:to-[#161a2c] dark:hover:from-[#282f4c] dark:hover:to-[#1e2338] text-white shadow-xs dark:shadow-[0_4px_16px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.18)] border border-black/10 dark:border-white/12 active:scale-95 apple-spring transition-all"
+              className="group w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-xl bg-neutral-900 hover:bg-neutral-800 dark:bg-gradient-to-tr dark:from-[#1e2338] dark:to-[#161a2c] dark:hover:from-[#282f4c] dark:hover:to-[#1e2338] text-white shadow-xs dark:shadow-[0_4px_16px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.18)] border border-black/10 dark:border-white/12 active:scale-95 apple-spring transition-all cursor-pointer"
             >
               <SquarePen className="w-4 h-4 stroke-[2.2] text-white dark:text-indigo-300 group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300" />
             </button>
@@ -434,6 +436,24 @@ export default function Sidebar({
                 <Sun className="w-4 h-4 text-amber-500 stroke-[1.75] transition-transform duration-300 group-hover:rotate-45" />
               )}
             </button>
+
+            {/* Excel Guide PDF Trigger in Bottom Bar */}
+            {onOpenPdf && (
+              <button
+                type="button"
+                onClick={() => {
+                  onOpenPdf();
+                  onClose();
+                }}
+                className="group relative flex items-center justify-center w-10 h-10 rounded-xl hover:bg-emerald-500/15 text-neutral-600 dark:text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 apple-spring active:scale-95 border-0 outline-none cursor-pointer"
+                title="Excel Job-Ready Learning Guide (32 Pages) (Alt+P)"
+              >
+                <FileSpreadsheet className="w-4 h-4 stroke-[1.75] transition-transform duration-200 group-hover:scale-110 text-emerald-600 dark:text-emerald-400" />
+                <span className="absolute bottom-1 right-1 text-[8px] font-mono font-bold uppercase text-emerald-600 dark:text-emerald-400 tracking-tighter leading-none">
+                  PDF
+                </span>
+              </button>
+            )}
 
             {/* Export Menu Icon Trigger */}
             <div className="relative" ref={exportRef}>

@@ -84,10 +84,10 @@ export const MODELS: Record<string, ModelInfo> = {
     description: "Auto-routes to the best model for your specific prompt",
   },
   "gemini-flash": {
-    name: "Gemini 2.5 Flash",
+    name: "Gemini 3.8 Flash",
     provider: "google",
-    id: "gemini-2.5-flash",
-    description: "Ultra-fast Google SOTA, vision, multimodal & high accuracy",
+    id: "gemini-3.8-flash",
+    description: "Google flagship SOTA, vision, multimodal & deep reasoning",
   },
   "gemini-lite": {
     name: "Gemini 3.5 Flash Lite",
@@ -102,20 +102,6 @@ export const MODELS: Record<string, ModelInfo> = {
     openrouterId: "nvidia/nemotron-3.5-lightning:free",
     description: "1M tokens context, fast reasoning & algorithmic logic",
   },
-  "minimax-m3": {
-    name: "MiniMax M3 (Free)",
-    provider: "openrouter",
-    id: "minimax/minimax-m3:free",
-    openrouterId: "minimax/minimax-m3:free",
-    description: "1M tokens context, exceptional multilingual & long essays",
-  },
-  "gemma-26b": {
-    name: "Gemma 4 26B (Free)",
-    provider: "openrouter",
-    id: "google/gemma-4-26b-a4b-it:free",
-    openrouterId: "google/gemma-4-26b-a4b-it:free",
-    description: "Google's latest open instruction-following model",
-  },
   "nemotron-ultra": {
     name: "Nemotron 3 Ultra 550B (Free)",
     provider: "openrouter",
@@ -123,61 +109,138 @@ export const MODELS: Record<string, ModelInfo> = {
     openrouterId: "nvidia/nemotron-3-ultra-550b-a55b:free",
     description: "Massive 550B parameters for deep synthesis & analysis",
   },
+  "cohere-code": {
+    name: "Cohere North Mini Code (Free)",
+    provider: "openrouter",
+    id: "cohere/north-mini-code:free",
+    openrouterId: "cohere/north-mini-code:free",
+    description: "256K context specialized high-accuracy code model",
+  },
+  "gemma-31b": {
+    name: "Gemma 4 31B (Free)",
+    provider: "openrouter",
+    id: "google/gemma-4-31b-it:free",
+    openrouterId: "google/gemma-4-31b-it:free",
+    description: "Google's upgraded 31B open instruction-following model",
+  },
+  "openrouter-free": {
+    name: "OpenRouter Dynamic (Free)",
+    provider: "openrouter",
+    id: "openrouter/free",
+    openrouterId: "openrouter/free",
+    description: "Auto-routes dynamically across live healthy free models",
+  },
 };
 
-function classifyQuery(query: string, file?: AttachedFilePayload | null): keyof typeof MODELS {
+interface SmartRoutingProfile {
+  modelKey: keyof typeof MODELS;
+  intent: "spreadsheet" | "math_logic" | "code" | "deep_analysis" | "creative" | "quick_lookup" | "general";
+  temperature: number;
+  thinkingBudget: number;
+  reason: string;
+}
+
+function classifyQuery(query: string, file?: AttachedFilePayload | null): SmartRoutingProfile {
   // 1. Multimodal Vision Routing
-  // If an image or document is attached, Gemini 2.5 Flash has native multimodal vision & document processing
+  // If an image or document is attached, Gemini 3.8 Flash provides native multimodal vision & document processing
   if (file && (file.type?.startsWith("image/") || file.data)) {
-    return "gemini-flash";
+    return {
+      modelKey: "gemini-flash",
+      intent: "general",
+      temperature: 0.35,
+      thinkingBudget: 2048,
+      reason: "Multimodal Vision & Document Intelligence",
+    };
   }
 
   const clean = query.trim();
   const q = clean.toLowerCase();
 
-  // 2. Ultra-Deep 550B Architectural & Complex Research Analysis
-  const ultraDeepRegex = /\b(550b|ultra deep|deep analysis|exhaustive analysis|comprehensive breakdown|systematic review|deep literature review|multi-system benchmark|doctoral level|architectural trade-offs|distributed systems consensus)\b/i;
-  if (ultraDeepRegex.test(q)) {
-    return "nemotron-ultra";
+  // 2. Excel, Google Sheets, Financial & Data Modeling
+  const spreadsheetRegex = /\b(excel|spreadsheet|vlookup|xlookup|index match|sumifs|countifs|averageifs|pivot table|pivottable|power query|powerpivot|vba|macro|google sheets|worksheet|cell formula|conditional formatting|textsplit|lambda|let\(|sumproduct|nested if|data validation)\b/i;
+  const spreadsheetFormulaPattern = /=(sum|if|xlookup|vlookup|index|match|count|average|filter|sort|unique|let|lambda)\s*\(/i;
+  if (spreadsheetRegex.test(q) || spreadsheetFormulaPattern.test(clean)) {
+    return {
+      modelKey: "gemini-flash",
+      intent: "spreadsheet",
+      temperature: 0.2, // Deterministic precision for formula correctness
+      thinkingBudget: 3072, // Thinking budget for formula and reference verification
+      reason: "Excel & Spreadsheet Modeling (Verified Syntax Engine)",
+    };
   }
 
-  // 3. Coding, Debugging & Software Engineering
-  // Google's Gemma 4 26B instruction-tuned model has exceptional coding & software logic accuracy
-  const codeRegex = /\b(javascript|typescript|python|rust|golang|c\+\+|java|c#|swift|kotlin|php|ruby|sql|nosql|mongodb|postgres|mysql|html|css|tailwind|react|nextjs|vue|angular|svelte|nodejs|express|fastapi|django|flask|spring boot|docker|kubernetes|aws|git|github|ci\/cd|regex|api|graphql|rest api|json|yaml|xml|sdk|npm|pip|cargo|webpack|vite|algorithm|data structure|refactor|debug|compiler|syntax error|stack trace|runtime error|nullpointer|async|await|promise|middleware|orm|prisma|mongoose)\b/i;
-  const hasCodeFences = /```|\b(def|class|const|let|var|function|import|export|interface|enum|public|private)\s+[a-zA-Z_$]/.test(clean);
-  
-  if (codeRegex.test(q) || hasCodeFences) {
-    return "gemma-26b";
-  }
-
-  // 4. Mathematical Reasoning, Algorithmic Logic & Physics Proofs
-  // Nvidia Nemotron 3.5 Lightning is tuned specifically for deep chain-of-thought mathematical reasoning
+  // 3. Mathematical Reasoning, Algorithmic Logic & Formal Proofs
+  // Nvidia Nemotron 3.5 Lightning is specialized for deep chain-of-thought mathematical reasoning with 1M context
   const mathReasoningRegex = /\b(solve|calculate|differential equation|integral|derivative|calculus|linear algebra|eigenvalue|eigenvector|matrix multiplication|fourier transform|laplace|probability distribution|bayes theorem|hypothesis test|p-value|combinatorics|permutation|discrete math|formal proof|prove that|theorem|lemma|corollary|qed|physics|quantum|thermodynamics|relativity|newtonian|boolean algebra|logic gate|turing machine|np-complete|dynamic programming|dijkstra|bellman-ford|a\* algorithm|simplex method)\b/i;
   const hasMathSymbols = /(\b(d\/dx|\\[a-zA-Z]+|\b\d+\s*[\^*/+-]\s*\d+\b|\b\d+!\b)|\b(x\^2|y\^2)\b)/.test(clean);
-
   if (mathReasoningRegex.test(q) || hasMathSymbols) {
-    return "nemotron-lightning";
+    return {
+      modelKey: "nemotron-lightning",
+      intent: "math_logic",
+      temperature: 0.2,
+      thinkingBudget: 4096,
+      reason: "Nvidia 1M Context Mathematical Logic & Proofs",
+    };
   }
 
-  // 5. Long Creative Writing, Essays, Literary Synthesis & Multilingual Depth
-  // MiniMax M3 is renowned for its 1M context window and mastery of multilingual literature, creative prose, and long-form writing
+  // 4. Ultra-Deep 550B Architectural & Complex Research Analysis
+  const ultraDeepRegex = /\b(550b|ultra deep|deep analysis|exhaustive analysis|comprehensive breakdown|systematic review|deep literature review|multi-system benchmark|doctoral level|architectural trade-offs|distributed systems consensus)\b/i;
+  if (ultraDeepRegex.test(q)) {
+    return {
+      modelKey: "nemotron-ultra",
+      intent: "deep_analysis",
+      temperature: 0.35,
+      thinkingBudget: 4096,
+      reason: "Nvidia 550B Architectural Depth & Systems Analysis",
+    };
+  }
+
+  // 5. Coding, Debugging & Software Engineering
+  const codeRegex = /\b(javascript|typescript|python|rust|golang|c\+\+|java|c#|swift|kotlin|php|ruby|sql|nosql|mongodb|postgres|mysql|html|css|tailwind|react|nextjs|vue|angular|svelte|nodejs|express|fastapi|django|flask|spring boot|docker|kubernetes|aws|git|github|ci\/cd|regex|api|graphql|rest api|json|yaml|xml|sdk|npm|pip|cargo|webpack|vite|algorithm|data structure|refactor|debug|compiler|syntax error|stack trace|runtime error|nullpointer|async|await|promise|middleware|orm|prisma|mongoose)\b/i;
+  const hasCodeFences = /```|\b(def|class|const|let|var|function|import|export|interface|enum|public|private)\s+[a-zA-Z_$]/.test(clean);
+  if (codeRegex.test(q) || hasCodeFences) {
+    return {
+      modelKey: "cohere-code",
+      intent: "code",
+      temperature: 0.25,
+      thinkingBudget: 2560,
+      reason: "Cohere 256K Specialized Code Engine",
+    };
+  }
+
+  // 6. Long Creative Writing, Essays, Literary Synthesis & Multilingual Depth
   const creativeSynthesisRegex = /\b(essay|story|poem|poetry|novel|screenplay|script|narrative|creative writing|fiction|biography|memoir|speech|editorial|blog post|copywriting|paraphrase|metaphor|rhyme|dialogue|playwright|lyrics|chapter|prose|critique|literary analysis)\b/i;
   const hasNonLatinScript = /[\u0600-\u06FF\u0900-\u097F\u0980-\u09FF\u0B80-\u0BFF\u0C00-\u0C7F\u4E00-\u9FFF\u3040-\u30FF]/.test(clean);
-
   if (creativeSynthesisRegex.test(q) || (hasNonLatinScript && clean.length > 70)) {
-    return "minimax-m3";
+    return {
+      modelKey: "gemma-31b",
+      intent: "creative",
+      temperature: 0.65,
+      thinkingBudget: 1536,
+      reason: "Google Gemma 31B Open Literary Synthesis",
+    };
   }
 
-  // 6. Rapid Factoid Lookups & Short Inquiries (< 40 characters)
-  // Gemini 3.5 Flash Lite provides sub-second 200ms responses for quick definitions and greetings
+  // 7. Rapid Factoid Lookups & Short Inquiries (< 40 characters)
   const isGreetingOrSimple = /^(hi|hello|hey|yo|greetings|thanks|thank you|good (morning|afternoon|evening)|who is [a-z0-9 ]{2,30}\??|what is (the )?[a-z0-9 ]{2,30}\??|define [a-z0-9 ]{2,30}\??)\.?$/i.test(clean);
   if (isGreetingOrSimple || (clean.length < 40 && !/[{}<>=/*+\\[\\]_]/.test(clean))) {
-    return "gemini-lite";
+    return {
+      modelKey: "gemini-lite",
+      intent: "quick_lookup",
+      temperature: 0.3,
+      thinkingBudget: 0,
+      reason: "Sub-second Instant Response",
+    };
   }
 
-  // 7. General High-Capacity Intelligence (Default)
-  // Gemini 2.5 Flash is Google's flagship SOTA model for general, multimodal, and comprehensive inquiries
-  return "gemini-flash";
+  // 8. General High-Capacity Intelligence (Default)
+  return {
+    modelKey: "gemini-flash",
+    intent: "general",
+    temperature: 0.35,
+    thinkingBudget: 2048,
+    reason: "Google Gemini 3.8 Flash Frontier Multimodal",
+  };
 }
 
 interface ChatMessagePayload {
@@ -251,9 +314,16 @@ export async function POST(req: NextRequest) {
   // 3. Routing
   let activeModelKey: keyof typeof MODELS = "gemini-flash";
   let isSmartRouted = false;
+  let customTemperature: number | undefined;
+  let customThinkingBudget: number | undefined;
+  let routingIntent: string | undefined;
 
   if (selectedModelId === "smart-router") {
-    activeModelKey = classifyQuery(userPrompt, file);
+    const profile = classifyQuery(userPrompt, file);
+    activeModelKey = profile.modelKey;
+    customTemperature = profile.temperature;
+    customThinkingBudget = profile.thinkingBudget;
+    routingIntent = profile.intent;
     isSmartRouted = true;
   } else if (selectedModelId && selectedModelId in MODELS) {
     activeModelKey = selectedModelId as keyof typeof MODELS;
@@ -261,6 +331,32 @@ export async function POST(req: NextRequest) {
 
   const activeModel = MODELS[activeModelKey];
   const targetLanguage = LANGUAGE_MAP[language || "en"] || "English";
+
+  let intentDirective = "";
+  if (routingIntent === "spreadsheet") {
+    intentDirective = `\n\n# Specialized Excel & Spreadsheet Engineering Directive:
+- Provide exact, tested formulas (e.g. XLOOKUP, INDEX/MATCH, SUMIFS with sum_range first, FILTER, UNIQUE, LET, LAMBDA).
+- Detail explicit row/column coordinates (e.g., $A$2:$D$100).
+- Explain edge case handling (#N/A via XLOOKUP's [if_not_found] argument or IFERROR).
+- Include helpful Excel keyboard shortcuts and testing verification steps.`;
+  } else if (routingIntent === "math_logic") {
+    intentDirective = `\n\n# Specialized Mathematical & Algorithmic Rigor Directive:
+- Lay out formal step-by-step mathematical derivations or proofs with clean LaTeX notation ($...$ and $$...$$).
+- Clearly state hypotheses, boundary conditions, and intermediate steps.
+- For algorithmic complexity, explicitly state Big-O time and space complexity with trade-offs.`;
+  } else if (routingIntent === "code") {
+    intentDirective = `\n\n# Specialized Software Engineering Directive:
+- Deliver production-ready, fully functional code blocks with zero pseudo-code or missing implementations.
+- Include clean error handling, type safety, and edge-case handling.
+- Specify language identifiers on all code fences.`;
+  } else if (routingIntent === "deep_analysis") {
+    intentDirective = `\n\n# Specialized Architectural & Systems Analysis Directive:
+- Provide exhaustive, doctoral-level architectural depth and trade-off evaluations.
+- Methodically explore scalability bottlenecks, consensus protocols, failure modes, and security vectors.`;
+  } else if (routingIntent === "quick_lookup") {
+    intentDirective = `\n\n# Specialized Rapid High-Signal Directive:
+- Deliver an immediate, crisp, high-accuracy factual answer without unnecessary verbosity or filler phrases.`;
+  }
 
   const systemPrompt = `You are Lemur AI, an advanced, deeply knowledgeable, and authentic AI assistant.
 
@@ -289,6 +385,10 @@ export async function POST(req: NextRequest) {
 5. **Language**:
    - Always respond naturally in ${targetLanguage}. Maintain all conversation in ${targetLanguage} unless explicitly requested otherwise.
 
+6. **Excel & Workplace Spreadsheet Mastery**:
+   - When asked about Microsoft Excel, formulas, data cleaning, lookups, PivotTables, Power Query, or the Job-Ready Excel Handbook, provide exact, verified formulas (e.g., modern XLOOKUP, dynamic arrays =FILTER/=UNIQUE, =SUMIFS with sum_range first, and whole-row conditional formatting rules with locked columns like =$D2="Complete").
+   - Always explain how formulas work, detail step-by-step build orders, and provide testing/validation steps.${intentDirective}
+
 At the very end of your response, you MUST append exactly 3 short, insightful follow-up questions for the user inside a <related_questions> block, one per line starting with a dash, like this:
 <related_questions>
 - Question 1?
@@ -296,8 +396,10 @@ At the very end of your response, you MUST append exactly 3 short, insightful fo
 - Question 3?
 </related_questions>`;
 
-  const geminiKey = process.env.GEMINI_API_KEY;
-  const openrouterKey = process.env.OPENROUTER_API_KEY;
+  const clientGeminiKey = req.headers.get("x-gemini-key")?.trim() || undefined;
+  const clientOpenRouterKey = req.headers.get("x-openrouter-key")?.trim() || undefined;
+  const geminiKey = clientGeminiKey || process.env.GEMINI_API_KEY;
+  const openrouterKey = clientOpenRouterKey || process.env.OPENROUTER_API_KEY;
 
   if (!geminiKey && !openrouterKey) {
     return NextResponse.json(
@@ -319,7 +421,7 @@ At the very end of your response, you MUST append exactly 3 short, insightful fo
     }
   };
 
-  // Asynchronous streaming worker with 4-Tier Resilience
+  // Asynchronous streaming worker with 6-Tier Bulletproof Resilience
   (async () => {
     let resolvedModelName = isSmartRouted ? `${activeModel.name} (Auto-Routed)` : activeModel.name;
     let fallbackWarning: string | undefined;
@@ -345,12 +447,13 @@ At the very end of your response, you MUST append exactly 3 short, insightful fo
             activeModel.id,
             file,
             openrouterKey,
-            sendEvent
+            sendEvent,
+            { temperature: customTemperature }
           );
         } catch (orErr: unknown) {
           const errMsg = orErr instanceof Error ? orErr.message : String(orErr);
           console.warn(`[Lemur AI] OpenRouter model ${activeModel.id} failed: ${errMsg}. Failing over.`);
-          fallbackWarning = `Model ${activeModel.name} was busy or rate-limited. Switched to Gemini 2.5 Flash backup.`;
+          fallbackWarning = `Model ${activeModel.name} was busy or rate-limited. Switched to Gemini 3.8 Flash backup.`;
         }
       } else if (activeModel.provider === "google" && geminiKey) {
         try {
@@ -361,7 +464,11 @@ At the very end of your response, you MUST append exactly 3 short, insightful fo
             activeModel.id,
             file,
             geminiKey,
-            sendEvent
+            sendEvent,
+            {
+              temperature: customTemperature,
+              thinkingBudget: customThinkingBudget,
+            }
           );
         } catch (gemErr: unknown) {
           const errMsg = gemErr instanceof Error ? gemErr.message : String(gemErr);
@@ -370,10 +477,10 @@ At the very end of your response, you MUST append exactly 3 short, insightful fo
         }
       }
 
-      // --- TIER 2: Gemini 2.5 Flash Fallback ---
+      // --- TIER 2: Gemini 3.8 Flash Fallback ---
       if (!streamed && geminiKey) {
         if (fallbackWarning) {
-          resolvedModelName = "Gemini 2.5 Flash (Backup)";
+          resolvedModelName = "Gemini 3.8 Flash (Backup)";
           await sendEvent({
             type: "warning",
             warning: fallbackWarning,
@@ -382,22 +489,47 @@ At the very end of your response, you MUST append exactly 3 short, insightful fo
         }
 
         try {
-          console.log("[Lemur AI] Streaming with Direct Google Gemini 2.5 Flash fallback...");
+          console.log("[Lemur AI] Streaming with Direct Google Gemini 3.8 Flash fallback...");
+          streamed = await streamDirectGemini(
+            messages,
+            systemPrompt,
+            "gemini-3.8-flash",
+            file,
+            geminiKey,
+            sendEvent,
+            {
+              temperature: customTemperature,
+              thinkingBudget: customThinkingBudget,
+            }
+          );
+        } catch (gemErr: unknown) {
+          const errMsg = gemErr instanceof Error ? gemErr.message : String(gemErr);
+          console.warn(`[Lemur AI] Gemini 3.8 Flash fallback failed: ${errMsg}. Trying Gemini 2.5 Flash.`);
+        }
+      }
+
+      // --- TIER 3: Gemini 2.5 Flash Fallback ---
+      if (!streamed && geminiKey) {
+        try {
+          console.log("[Lemur AI] Streaming with Gemini 2.5 Flash fallback...");
           streamed = await streamDirectGemini(
             messages,
             systemPrompt,
             "gemini-2.5-flash",
             file,
             geminiKey,
-            sendEvent
+            sendEvent,
+            {
+              temperature: customTemperature,
+              thinkingBudget: customThinkingBudget,
+            }
           );
-        } catch (gemErr: unknown) {
-          const errMsg = gemErr instanceof Error ? gemErr.message : String(gemErr);
-          console.warn(`[Lemur AI] Gemini 2.5 Flash fallback failed: ${errMsg}. Trying Gemini 3.5 Flash Lite.`);
+        } catch (g2Err: unknown) {
+          console.warn("[Lemur AI] Gemini 2.5 Flash fallback failed:", g2Err);
         }
       }
 
-      // --- TIER 3: Gemini 3.5 Flash Lite (Ultra-speed secondary) ---
+      // --- TIER 4: Gemini 3.5 Flash Lite (Ultra-speed tertiary) ---
       if (!streamed && geminiKey) {
         try {
           console.log("[Lemur AI] Streaming with Gemini 3.5 Flash Lite fallback...");
@@ -407,17 +539,21 @@ At the very end of your response, you MUST append exactly 3 short, insightful fo
             "gemini-3.5-flash-lite",
             file,
             geminiKey,
-            sendEvent
+            sendEvent,
+            {
+              temperature: customTemperature,
+              thinkingBudget: customThinkingBudget,
+            }
           );
         } catch (liteErr: unknown) {
           console.warn("[Lemur AI] Gemini 3.5 Flash Lite fallback failed:", liteErr);
         }
       }
 
-      // --- TIER 4: OpenRouter High-Capacity 1M-Context Free Fallback (MiniMax M3) ---
+      // --- TIER 5: OpenRouter Dynamic Free Auto-Router (openrouter/free) ---
       if (!streamed && openrouterKey) {
-        const fallbackId = "minimax/minimax-m3:free";
-        console.log(`[Lemur AI] Attempting ultimate fallback to OpenRouter: ${fallbackId}`);
+        const fallbackId = "openrouter/free";
+        console.log(`[Lemur AI] Attempting fallback to OpenRouter Dynamic Free: ${fallbackId}`);
         try {
           streamed = await streamOpenRouter(
             messages,
@@ -425,7 +561,27 @@ At the very end of your response, you MUST append exactly 3 short, insightful fo
             fallbackId,
             file,
             openrouterKey,
-            sendEvent
+            sendEvent,
+            { temperature: customTemperature }
+          );
+        } catch (orFreeErr: unknown) {
+          console.warn("[Lemur AI] OpenRouter dynamic free fallback failed:", orFreeErr);
+        }
+      }
+
+      // --- TIER 6: OpenRouter 1M Context Free Model (Nemotron 3.5 Lightning) ---
+      if (!streamed && openrouterKey) {
+        const fallbackId = "nvidia/nemotron-3.5-lightning:free";
+        console.log(`[Lemur AI] Attempting ultimate fallback to OpenRouter Nemotron: ${fallbackId}`);
+        try {
+          streamed = await streamOpenRouter(
+            messages,
+            systemPrompt,
+            fallbackId,
+            file,
+            openrouterKey,
+            sendEvent,
+            { temperature: customTemperature }
           );
         } catch (ultimateErr: unknown) {
           console.error("[Lemur AI] Ultimate fallback failed:", ultimateErr);
@@ -471,7 +627,11 @@ async function streamDirectGemini(
   modelName: string,
   file: AttachedFilePayload | null | undefined,
   apiKey: string,
-  sendEvent: (payload: StreamEventPayload) => Promise<void>
+  sendEvent: (payload: StreamEventPayload) => Promise<void>,
+  options?: {
+    temperature?: number;
+    thinkingBudget?: number;
+  }
 ): Promise<boolean> {
   // Format contents for Gemini:
   // 1. Only 'user' and 'model' roles allowed
@@ -524,6 +684,8 @@ async function streamDirectGemini(
   }
 
   const isFlashModel = modelName.includes("flash") || modelName.includes("2.5");
+  const defaultBudget = isFlashModel ? 2048 : 0;
+  const thinkingBudget = options?.thinkingBudget !== undefined ? options.thinkingBudget : defaultBudget;
 
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:streamGenerateContent?alt=sse&key=${apiKey}`;
   const payload = {
@@ -532,9 +694,9 @@ async function streamDirectGemini(
       parts: [{ text: systemPrompt }],
     },
     generationConfig: {
-      temperature: 0.45,
+      temperature: options?.temperature ?? 0.45,
       maxOutputTokens: 8192,
-      ...(isFlashModel ? { thinkingConfig: { thinkingBudget: 2048 } } : {}),
+      ...(thinkingBudget > 0 ? { thinkingConfig: { thinkingBudget } } : {}),
     },
     safetySettings: [
       { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
@@ -561,6 +723,30 @@ async function streamDirectGemini(
   const decoder = new TextDecoder();
   let buffer = "";
   let tokensStreamed = 0;
+  let inReasoning = false;
+
+  const processCandidates = async (candidates: Array<{ content?: { parts?: Array<{ text?: string; thought?: boolean }> } }>) => {
+    for (const cand of candidates || []) {
+      for (const part of cand.content?.parts || []) {
+        if (!part.text) continue;
+        if (part.thought) {
+          if (!inReasoning) {
+            inReasoning = true;
+            await sendEvent({ type: "chunk", text: "<think>\n" });
+          }
+          await sendEvent({ type: "chunk", text: part.text });
+          tokensStreamed++;
+        } else {
+          if (inReasoning) {
+            inReasoning = false;
+            await sendEvent({ type: "chunk", text: "\n</think>\n\n" });
+          }
+          await sendEvent({ type: "chunk", text: part.text });
+          tokensStreamed++;
+        }
+      }
+    }
+  };
 
   while (true) {
     const { value, done } = await reader.read();
@@ -579,10 +765,8 @@ async function streamDirectGemini(
 
       try {
         const parsed = JSON.parse(dataStr);
-        const textPart = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (textPart) {
-          await sendEvent({ type: "chunk", text: textPart });
-          tokensStreamed++;
+        if (parsed.candidates) {
+          await processCandidates(parsed.candidates);
         }
       } catch {
         // Skip unparseable lines
@@ -593,12 +777,14 @@ async function streamDirectGemini(
   if (buffer.startsWith("data: ")) {
     try {
       const parsed = JSON.parse(buffer.slice(6).trim());
-      const textPart = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (textPart) {
-        await sendEvent({ type: "chunk", text: textPart });
-        tokensStreamed++;
+      if (parsed.candidates) {
+        await processCandidates(parsed.candidates);
       }
     } catch {}
+  }
+
+  if (inReasoning) {
+    await sendEvent({ type: "chunk", text: "\n</think>\n\n" });
   }
 
   return tokensStreamed > 0;
@@ -611,7 +797,10 @@ async function streamOpenRouter(
   modelId: string,
   file: AttachedFilePayload | null | undefined,
   apiKey: string,
-  sendEvent: (payload: StreamEventPayload) => Promise<void>
+  sendEvent: (payload: StreamEventPayload) => Promise<void>,
+  options?: {
+    temperature?: number;
+  }
 ): Promise<boolean> {
   const validMessages = messages
     .filter((m) => (m.content || "").trim().length > 0)
@@ -652,7 +841,7 @@ async function streamOpenRouter(
     body: JSON.stringify({
       model: modelId,
       messages: openrouterMessages,
-      temperature: 0.45,
+      temperature: options?.temperature ?? 0.45,
       stream: true,
     }),
   });

@@ -1,17 +1,18 @@
 import type { NextConfig } from "next";
 
 // Define a strict Content Security Policy (CSP) compatible with Next.js
-// Allows Google APIs and OpenRouter connections, blocking unverified sources.
+// Allows Google APIs, OpenRouter connections, and same-origin PDF/frame viewing in secure environments.
 const cspHeader = `
   default-src 'self';
   script-src 'self' 'unsafe-eval' 'unsafe-inline';
   style-src 'self' 'unsafe-inline';
   img-src 'self' blob: data:;
   font-src 'self';
-  object-src 'none';
+  frame-src 'self' blob:;
+  object-src 'self' blob:;
   base-uri 'self';
   form-action 'self';
-  frame-ancestors 'none';
+  frame-ancestors 'self';
   connect-src 'self' https://generativelanguage.googleapis.com https://openrouter.ai;
   block-all-mixed-content;
   upgrade-insecure-requests;
@@ -30,7 +31,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: "X-Frame-Options",
-            value: "DENY",
+            value: "SAMEORIGIN",
           },
           {
             key: "X-Content-Type-Options",
