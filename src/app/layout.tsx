@@ -122,6 +122,26 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        {/* Defensive Error Shield: Guarantees ad blocking on secure systems/firewalls never halts web app */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.addEventListener('error', function(e) {
+                if (e.filename && (e.filename.includes('profitableratecpmnetwork') || e.filename.includes('exemplarfederallithe') || e.filename.includes('fizzyacerbitymellow') || e.filename.includes('protrafficinspector'))) {
+                  e.stopImmediatePropagation();
+                  e.preventDefault();
+                  return true;
+                }
+              }, true);
+              window.addEventListener('unhandledrejection', function(e) {
+                var reason = (e && e.reason) ? (e.reason.message || String(e.reason)) : '';
+                if (reason && (reason.includes('profitableratecpmnetwork') || reason.includes('exemplarfederallithe') || reason.includes('fizzy'))) {
+                  e.preventDefault();
+                }
+              });
+            `,
+          }}
+        />
         <script async src="https://pl31713601.profitableratecpmnetwork.com/99/dc/7f/99dc7f93effa31288ad7ab054a4ee276.js" />
       </head>
       <body className="h-full bg-background text-foreground font-sans selection:bg-primary/25 selection:text-primary">
