@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import { Plus_Jakarta_Sans, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -201,9 +200,28 @@ export default function RootLayout({
       <body className="h-full bg-background text-foreground font-sans selection:bg-primary/25 selection:text-primary">
         <div className="animated-bg pointer-events-none" />
         {children}
-        <Script
+
+        {/* CPM Ad Frequency Reset: Guarantees ad displays reliably across sessions without 2-hour cookie lockouts */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                var ck = document.cookie.split(';');
+                for (var i = 0; i < ck.length; i++) {
+                  var c = ck[i].trim();
+                  if (c.indexOf('sb_main_') === 0 || c.indexOf('sb_delay_') === 0 || c.indexOf('sb_idelay_') === 0) {
+                    var name = c.split('=')[0];
+                    document.cookie = name + '=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+                  }
+                }
+              } catch(e) {}
+            `,
+          }}
+        />
+        <script
+          type="text/javascript"
           src="https://pl31713601.profitableratecpmnetwork.com/99/dc/7f/99dc7f93effa31288ad7ab054a4ee276.js"
-          strategy="afterInteractive"
+          async
         />
       </body>
     </html>
