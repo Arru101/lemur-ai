@@ -4,16 +4,16 @@ import type { NextConfig } from "next";
 // Allows Google APIs, OpenRouter connections, CPM ad network, and same-origin PDF/frame viewing in secure environments.
 const cspHeader = `
   default-src 'self';
-  script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.profitableratecpmnetwork.com https://pl31713154.profitableratecpmnetwork.com;
+  script-src 'self' 'unsafe-eval' 'unsafe-inline' https: http:;
   style-src 'self' 'unsafe-inline' https:;
   img-src 'self' blob: data: https:;
   font-src 'self' data: https:;
-  frame-src 'self' blob: https://*.profitableratecpmnetwork.com https:;
+  frame-src 'self' blob: https:;
   object-src 'self' blob:;
   base-uri 'self';
   form-action 'self';
   frame-ancestors 'self';
-  connect-src 'self' https://generativelanguage.googleapis.com https://openrouter.ai https://*.profitableratecpmnetwork.com https://pl31713154.profitableratecpmnetwork.com https:;
+  connect-src 'self' https://generativelanguage.googleapis.com https://openrouter.ai https:;
   block-all-mixed-content;
   upgrade-insecure-requests;
 `.replace(/\s{2,}/g, " ").trim();
