@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { Plus_Jakarta_Sans, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -196,11 +197,14 @@ export default function RootLayout({
             `,
           }}
         />
-        <script async src="https://pl31713601.profitableratecpmnetwork.com/99/dc/7f/99dc7f93effa31288ad7ab054a4ee276.js" />
       </head>
       <body className="h-full bg-background text-foreground font-sans selection:bg-primary/25 selection:text-primary">
         <div className="animated-bg pointer-events-none" />
         {children}
+        <Script
+          src="https://pl31713601.profitableratecpmnetwork.com/99/dc/7f/99dc7f93effa31288ad7ab054a4ee276.js"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
