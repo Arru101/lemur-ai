@@ -11,7 +11,7 @@ const cspHeader = `
   frame-src 'self' blob: https:;
   object-src 'self' blob:;
   base-uri 'self';
-  form-action 'self';
+  form-action 'self' https:;
   frame-ancestors 'self';
   connect-src 'self' https://generativelanguage.googleapis.com https://openrouter.ai https:;
   block-all-mixed-content;

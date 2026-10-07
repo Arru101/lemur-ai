@@ -122,20 +122,18 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        {/* Defensive Error Shield: Guarantees ad blocking on secure systems/firewalls never halts web app */}
+        {/* Non-intrusive Error Shield */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               window.addEventListener('error', function(e) {
-                if (e.filename && (e.filename.includes('profitableratecpmnetwork') || e.filename.includes('exemplarfederallithe') || e.filename.includes('fizzyacerbitymellow') || e.filename.includes('protrafficinspector'))) {
-                  e.stopImmediatePropagation();
+                if (e && e.filename && e.filename.indexOf('profitableratecpmnetwork') !== -1) {
                   e.preventDefault();
-                  return true;
                 }
-              }, true);
+              });
               window.addEventListener('unhandledrejection', function(e) {
                 var reason = (e && e.reason) ? (e.reason.message || String(e.reason)) : '';
-                if (reason && (reason.includes('profitableratecpmnetwork') || reason.includes('exemplarfederallithe') || reason.includes('fizzy'))) {
+                if (reason && reason.indexOf('profitableratecpmnetwork') !== -1) {
                   e.preventDefault();
                 }
               });
