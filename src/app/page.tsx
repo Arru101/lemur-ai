@@ -121,6 +121,15 @@ const getNow = (): number => Date.now();
 
 const generateChatId = (): string => `chat-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
+const getClientId = (): string => {
+  let cid = safeStorage.getItem("lemur-client-id");
+  if (!cid) {
+    cid = `cid_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+    safeStorage.setItem("lemur-client-id", cid);
+  }
+  return cid;
+};
+
 export default function Home() {
   // --- States ---
   const [hydrated, setHydrated] = useState(false);
@@ -220,6 +229,14 @@ export default function Home() {
       const savedLanguage = safeStorage.getItem("lemur-lang");
       if (savedLanguage) {
         setLanguage(savedLanguage);
+      }
+
+      // Model Loading & Legacy Alias Migration
+      const savedModel = safeStorage.getItem("lemur-model");
+      if (savedModel) {
+        if (savedModel === "cohere-code") setModel("nemotron-super");
+        else if (savedModel === "gemma-31b") setModel("dots-note");
+        else setModel(savedModel);
       }
 
       // Conversations Loading (using session storage)
@@ -339,7 +356,10 @@ export default function Home() {
       setInput("");
       setAttachedFile(null);
       setImagePreview(null);
-      chatInputRef.current?.focus();
+      if (chatInputRef.current) {
+        chatInputRef.current.style.height = "auto";
+        chatInputRef.current.focus();
+      }
       return;
     }
     const newId = generateChatId();
@@ -361,6 +381,19 @@ export default function Home() {
   useEffect(() => {
     handleNewChatRef.current = handleNewChat;
   }, [handleNewChat]);
+
+  // --- Close Model Dropdown on Outside Click ---
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setModelDropdownOpen(false);
+      }
+    };
+    if (modelDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [modelDropdownOpen]);
 
   // --- Global Keyboard Shortcuts ---
   useEffect(() => {
@@ -385,17 +418,23 @@ export default function Home() {
         e.preventDefault();
         setExcelGuideOpen((prev) => !prev);
       }
-      // Escape: Close any open dropdowns or mobile sidebar
+      // Escape: Close any open dropdowns/modals or cancel ongoing generation
       if (e.key === "Escape") {
-        setModelDropdownOpen(false);
-        setSidebarOpen(false);
-        setExcelGuideOpen(false);
+        if (modelDropdownOpen || sidebarOpen || excelGuideOpen) {
+          setModelDropdownOpen(false);
+          setSidebarOpen(false);
+          setExcelGuideOpen(false);
+        } else if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+          abortControllerRef.current = null;
+          setLoading(false);
+        }
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [modelDropdownOpen, sidebarOpen, excelGuideOpen]);
 
   // --- Delete chat ---
   const handleDeleteChat = useCallback((id: string) => {
@@ -595,9 +634,19 @@ export default function Home() {
       window.speechSynthesis.cancel();
       
       const cleanText = text
+        .replace(/<think>[\s\S]*?<\/think>/gi, "")
+        .replace(/<related_questions>[\s\S]*?<\/related_questions>/gi, "")
+        .replace(/<think>[\s\S]*/gi, "")
+        .replace(/<related_questions>[\s\S]*/gi, "")
         .replace(/[#*`_~[\]()\-]/g, "")
-        .replace(/```[\s\S]*?```/g, "[code block omitted]");
+        .replace(/```[\s\S]*?```/g, "[code block omitted]")
+        .trim();
         
+      if (!cleanText) {
+        addToast("info", "No spoken text available for this message.");
+        return;
+      }
+
       const utterance = new SpeechSynthesisUtterance(cleanText);
       utterance.onend = () => setSpeakingIdx(null);
       utterance.onerror = () => setSpeakingIdx(null);
@@ -749,7 +798,10 @@ export default function Home() {
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-client-id": getClientId(),
+        },
         signal: controller.signal,
         body: JSON.stringify({
           messages: payloadMessages,
@@ -904,8 +956,10 @@ export default function Home() {
     if (e && typeof e.preventDefault === "function") {
       e.preventDefault();
     }
-    const promptToSend = customPrompt || input;
-    if (!promptToSend.trim() && !attachedFile) return;
+    const rawPrompt = customPrompt || input;
+    if (!rawPrompt.trim() && !attachedFile) return;
+
+    const effectivePrompt = rawPrompt.trim() || (attachedFile ? "Please examine and provide a thorough, accurate analysis of this attached file." : "");
 
     let currentChatId = activeId;
     let currentChat = conversations.find((c) => c.id === currentChatId);
@@ -915,7 +969,7 @@ export default function Home() {
       currentChatId = newId;
       const newChat: Conversation = {
         id: newId,
-        title: promptToSend.substring(0, 26) || "New Conversation",
+        title: rawPrompt.trim() ? (rawPrompt.trim().substring(0, 26) + (rawPrompt.length > 26 ? "..." : "")) : (attachedFile?.name ? `File: ${attachedFile.name.substring(0, 20)}` : "New Conversation"),
         timestamp: getNow(),
         messages: [],
       };
@@ -926,25 +980,27 @@ export default function Home() {
 
     const userMessage: Message = {
       role: "user",
-      content: promptToSend,
+      content: effectivePrompt,
       timestamp: getNow(),
     };
 
     const promptWithAttachedText = attachedFile && attachedFile.content
-      ? `[Attached Document: ${attachedFile.name}]\n\n${promptToSend}`
-      : promptToSend;
+      ? `[Attached Document: ${attachedFile.name}]\n\n${effectivePrompt}`
+      : effectivePrompt;
 
     const displayUserMsg: Message = {
       ...userMessage,
       content: attachedFile
-        ? `${t.fileUploaded} ${attachedFile.name}\n\n${promptToSend}`
-        : promptToSend,
+        ? `${t.fileUploaded} ${attachedFile.name}${rawPrompt.trim() ? `\n\n${rawPrompt.trim()}` : ""}`
+        : effectivePrompt,
     };
 
     const updatedMessages = [...currentChat.messages, displayUserMsg];
     let newTitle = currentChat.title;
     if (currentChat.messages.length === 0) {
-      newTitle = promptToSend.substring(0, 30) + (promptToSend.length > 30 ? "..." : "");
+      newTitle = rawPrompt.trim()
+        ? rawPrompt.trim().substring(0, 30) + (rawPrompt.length > 30 ? "..." : "")
+        : (attachedFile?.name ? `File: ${attachedFile.name.substring(0, 25)}` : "Conversation");
     }
 
     updateChatMessages(currentChatId, updatedMessages, newTitle);
@@ -1155,6 +1211,9 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
+                aria-haspopup="listbox"
+                aria-expanded={modelDropdownOpen}
+                aria-label="Select AI Model"
                 className="group flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-semibold bg-black/[0.03] dark:bg-[#131625] hover:bg-black/[0.06] dark:hover:bg-[#1a1f33] border border-black/[0.08] dark:border-white/12 hover:dark:border-indigo-400/30 px-2.5 sm:px-3 py-1.5 rounded-xl cursor-pointer apple-spring text-foreground max-w-[155px] min-[400px]:max-w-[210px] sm:max-w-none shadow-[inset_0_1px_0_0_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15)] active:scale-[0.98]"
               >
                 {model === "smart-router" && (
@@ -1163,18 +1222,18 @@ export default function Home() {
                 {model === "gemini-flash" && <Sparkles className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0" />}
                 {model === "gemini-lite" && <Cpu className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400 flex-shrink-0" />}
                 {model === "nemotron-lightning" && <Brain className="w-3.5 h-3.5 text-cyan-500 dark:text-cyan-400 flex-shrink-0" />}
-                {model === "cohere-code" && <Code2 className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 flex-shrink-0" />}
-                {model === "gemma-31b" && <PenTool className="w-3.5 h-3.5 text-rose-500 dark:text-rose-400 flex-shrink-0" />}
+                {model === "nemotron-super" && <Code2 className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 flex-shrink-0" />}
+                {model === "dots-note" && <PenTool className="w-3.5 h-3.5 text-rose-500 dark:text-rose-400 flex-shrink-0" />}
                 {model === "nemotron-ultra" && <Calculator className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400 flex-shrink-0" />}
                 {model === "openrouter-free" && <Compass className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400 flex-shrink-0" />}
                 
                 <span className="font-sans font-semibold tracking-tight truncate">{
                   model === "smart-router" ? t.smartRouter :
-                  model === "gemini-flash" ? "Gemini 3.8 Flash" :
+                  model === "gemini-flash" ? "Gemini 2.5 Flash" :
                   model === "gemini-lite" ? "Gemini 3.5 Lite" :
                   model === "nemotron-lightning" ? "Nemotron 3.5" :
-                  model === "cohere-code" ? "Cohere Code" :
-                  model === "gemma-31b" ? "Gemma 4 31B" :
+                  model === "nemotron-super" ? "Nemotron 120B" :
+                  model === "dots-note" ? "Dots 3 Note" :
                   model === "nemotron-ultra" ? "Nemotron 550B" :
                   model === "openrouter-free" ? "OpenRouter Free" : model
                 }</span>
@@ -1196,9 +1255,9 @@ export default function Home() {
                     },
                     {
                       id: "gemini-flash",
-                      name: "Gemini 3.8 Flash",
+                      name: "Gemini 2.5 Flash",
                       badge: "Flagship",
-                      desc: "Google latest frontier model, vision & complex reasoning",
+                      desc: "Google flagship, multimodal vision & complex reasoning",
                       icon: Sparkles,
                       color: "from-indigo-500/20 to-violet-500/20 text-indigo-500 dark:text-indigo-400 border-indigo-500/30",
                     },
@@ -1219,18 +1278,18 @@ export default function Home() {
                       color: "from-cyan-500/20 to-teal-500/20 text-cyan-500 dark:text-cyan-400 border-cyan-500/30",
                     },
                     {
-                      id: "cohere-code",
-                      name: "Cohere North Mini Code",
-                      badge: "Code 256K",
-                      desc: "256K context, expert code synthesis & formula debugging",
+                      id: "nemotron-super",
+                      name: "Nemotron 3 Super 120B",
+                      badge: "Code 120B",
+                      desc: "120B specialized code synthesis & logic engine",
                       icon: Code2,
                       color: "from-emerald-500/20 to-teal-500/20 text-emerald-500 dark:text-emerald-400 border-emerald-500/30",
                     },
                     {
-                      id: "gemma-31b",
-                      name: "Gemma 4 31B",
-                      badge: "Google Open",
-                      desc: "Google latest high-capacity open-weights model",
+                      id: "dots-note",
+                      name: "Dots 3 Note 512K",
+                      badge: "512K Ctx",
+                      desc: "512K massive context research & literature synthesis",
                       icon: PenTool,
                       color: "from-rose-500/20 to-pink-500/20 text-rose-500 dark:text-rose-400 border-rose-500/30",
                     },
@@ -1259,6 +1318,7 @@ export default function Home() {
                         type="button"
                         onClick={() => {
                           setModel(opt.id);
+                          safeStorage.setItem("lemur-model", opt.id);
                           setModelDropdownOpen(false);
                         }}
                         className={`group flex items-center justify-between w-full p-2.5 rounded-xl text-left apple-spring transition-all ${
@@ -1275,7 +1335,7 @@ export default function Home() {
                             <div className="flex items-center gap-1.5">
                               <p className="text-xs font-semibold truncate">{opt.name}</p>
                               {opt.badge && (
-                                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold font-mono bg-cyan-500/15 text-cyan-600 dark:text-cyan-300 border border-cyan-500/25 uppercase tracking-wide">
+                                <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold font-mono bg-cyan-500/15 text-cyan-600 dark:text-cyan-300 border border-cyan-500/25 uppercase tracking-wide">
                                   {opt.badge}
                                 </span>
                               )}
@@ -1427,6 +1487,7 @@ export default function Home() {
           ) : (
             /* Rendered Messages list */
             <div className="max-w-3xl 2xl:max-w-5xl mx-auto space-y-4 sm:space-y-6 w-full">
+              <h1 className="sr-only">Lemurs AI - Instant Advanced Chat Assistants</h1>
               {messages.map((msg, idx) => {
                 const isCurrentAssistantGenerating =
                   loading &&
@@ -1523,7 +1584,7 @@ export default function Home() {
             {/* Apple iPhone Floating Action Dock Capsule */}
             <form 
               onSubmit={handleSubmit}
-              className="ios-glass-dock relative flex flex-col rounded-2xl sm:rounded-2.5xl px-3 py-1.5 sm:px-3.5 sm:py-2 transition-all duration-200 border border-black/[0.08] dark:border-white/12 focus-within:border-primary/50 focus-within:shadow-[0_6px_24px_rgba(99,102,241,0.15)] shadow-[0_4px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_24px_rgba(0,0,0,0.45)]"
+              className="ios-glass-dock relative flex flex-col rounded-2xl sm:rounded-2xl px-3 py-1.5 sm:px-3.5 sm:py-2 transition-all duration-200 border border-black/[0.08] dark:border-white/12 focus-within:border-primary/50 focus-within:shadow-[0_6px_24px_rgba(99,102,241,0.15)] shadow-[0_4px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_24px_rgba(0,0,0,0.45)]"
             >
               {/* Top: Auto-growing Textarea */}
               <div className="w-full px-0.5 pt-0 pb-0">
@@ -1534,6 +1595,7 @@ export default function Home() {
                   onChange={handleTextAreaChange}
                   onKeyDown={handleKeyPress}
                   placeholder={t.placeholder}
+                  aria-label="Ask Lemur AI anything"
                   maxLength={4000}
                   className="w-full bg-transparent text-sm sm:text-[15px] text-foreground placeholder:text-neutral-500 dark:placeholder:text-neutral-400 border-0 outline-none ring-0 resize-none min-h-[26px] sm:min-h-[28px] max-h-[130px] leading-snug sm:leading-normal font-sans block shadow-none focus:outline-none focus:ring-0 py-0.5 selection:bg-primary/20"
                 />
@@ -1567,11 +1629,13 @@ export default function Home() {
                     )}
                     <span className="truncate">{
                       model === "smart-router" ? "Smart Router (Auto)" :
-                      model === "gemini-flash" ? "Gemini 3.8 Flash" :
+                      model === "gemini-flash" ? "Gemini 2.5 Flash" :
                       model === "gemini-lite" ? "Gemini 3.5 Lite" :
                       model === "nemotron-lightning" ? "Nemotron 3.5" :
-                      model === "cohere-code" ? "Cohere Code" :
-                      model === "gemma-31b" ? "Gemma 4 31B" :
+                      model === "nemotron-super" ? "Nemotron 120B" :
+                      model === "dots-note" ? "Dots 3 Note" :
+                      model === "cohere-code" ? "Nemotron 120B" :
+                      model === "gemma-31b" ? "Dots 3 Note" :
                       model === "nemotron-ultra" ? "Nemotron 550B" :
                       model === "openrouter-free" ? "OpenRouter Free" : model
                     }</span>

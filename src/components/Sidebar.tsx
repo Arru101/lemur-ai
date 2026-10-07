@@ -93,7 +93,7 @@ export default function Sidebar({
   const languageRef = useRef<HTMLDivElement>(null);
   const exportRef = useRef<HTMLDivElement>(null);
 
-  // Close language and export dropups when clicking outside
+  // Close language and export dropups when clicking outside or pressing Escape
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (languageRef.current && !languageRef.current.contains(e.target as Node)) {
@@ -103,8 +103,18 @@ export default function Sidebar({
         setShowExportMenu(false);
       }
     };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setLanguageDropupOpen(false);
+        setShowExportMenu(false);
+      }
+    };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
   const currentLanguageObj = useMemo(() => {
@@ -198,7 +208,7 @@ export default function Sidebar({
       <aside
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col w-[85vw] max-w-xs sm:w-80 lg:w-72 2xl:w-80 h-dvh-screen max-h-[100dvh] glass-sidebar transition-all duration-300 cubic-bezier(0.16, 1, 0.3, 1) safe-top safe-left select-none ${
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col w-[85vw] max-w-xs sm:w-80 lg:w-72 2xl:w-80 h-dvh-screen max-h-[100dvh] glass-sidebar transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] safe-top safe-left select-none ${
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         } ${
           isCollapsed
@@ -336,9 +346,9 @@ export default function Sidebar({
                     </span>
                   )}
                   
-                  {/* Action cluster on hover */}
+                  {/* Action cluster on hover and touch */}
                   {!isEditing && (
-                    <div className="absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
+                    <div className="absolute right-2 opacity-0 group-hover:opacity-100 touch-visible transition-opacity flex items-center gap-0.5">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();

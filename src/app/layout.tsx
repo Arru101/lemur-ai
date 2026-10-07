@@ -24,10 +24,25 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lemur AI - Instant Advanced Chat Assistants",
-  description: "Chat with the world's most powerful AI models (Gemini, Llama, DeepSeek, Qwen) instantly. No registration, no login, completely free.",
-  keywords: ["AI Chat", "Gemini Free", "DeepSeek", "Llama 3", "Qwen Coder", "Free AI", "No Login AI", "Lemur AI"],
+  metadataBase: new URL("https://lemursai.netlify.app"),
+  title: "Lemur AI - Instant Advanced Chat Assistants & Multimodal Intelligence",
+  description: "Chat with the world's most powerful AI models (Gemini 2.5 Flash, Gemini 3.5 Flash Lite, Nemotron 3.5, Nemotron Super 120B) instantly. Free, fast, private, and registration-free.",
+  keywords: [
+    "AI Chat",
+    "Gemini 2.5 Flash",
+    "Gemini 3.5 Flash Lite",
+    "Nemotron 3.5",
+    "Nemotron Super 120B",
+    "Dots 3 Note",
+    "Free AI Chat",
+    "No Login AI",
+    "Excel Learning Guide",
+    "Lemur AI",
+  ],
   authors: [{ name: "Lemur AI Team" }],
+  alternates: {
+    canonical: "/",
+  },
   icons: {
     icon: [
       { url: "/favicon.svg", type: "image/svg+xml" },
@@ -39,18 +54,27 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Lemur AI - Instant Advanced Chat Assistants",
-    description: "Chat with the world's most powerful AI models instantly, completely registration-free.",
-    type: "website",
+    description: "Chat with frontier AI models (Gemini 2.5 Flash, Nemotron 3.5, Nemotron Super) instantly. Completely registration-free.",
+    url: "https://lemursai.netlify.app",
     siteName: "Lemur AI",
+    type: "website",
+    locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
     title: "Lemur AI - Instant Advanced Chat Assistants",
-    description: "Free, registration-free access to advanced AI models including Gemini, DeepSeek, and Llama.",
+    description: "Free, registration-free access to advanced AI models including Gemini 3.8 Flash, Nemotron 3.5, and Cohere Code.",
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 
@@ -66,6 +90,21 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Lemur AI",
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "All",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+  },
+  description: "Next-generation autonomous AI chat assistant supporting frontier reasoning models, coding synthesis, and multimodal intelligence.",
+  url: "https://lemursai.netlify.app",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -74,9 +113,16 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-theme="dark"
       className={`${jakarta.variable} ${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className="h-full bg-background text-foreground font-sans selection:bg-primary/25 selection:text-primary">
         <div className="animated-bg pointer-events-none" />
         {children}

@@ -515,7 +515,21 @@ export default function ExcelGuideModal({
 
   const handleCopy = (e: React.MouseEvent, text: string) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(text);
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+    } catch {}
     triggerConfetti(e.clientX, e.clientY);
     setCopiedText(text);
     setTimeout(() => setCopiedText(null), 2000);
@@ -531,7 +545,12 @@ export default function ExcelGuideModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden select-none animate-in fade-in duration-200">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="excel-guide-modal-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden select-none"
+    >
       {/* Backdrop */}
       <div
         onClick={onClose}
@@ -549,7 +568,10 @@ export default function ExcelGuideModal({
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h2 className="text-sm sm:text-base font-bold text-neutral-900 dark:text-white truncate font-sans tracking-tight">
+                <h2
+                  id="excel-guide-modal-title"
+                  className="text-sm sm:text-base font-bold text-neutral-900 dark:text-white truncate font-sans tracking-tight"
+                >
                   Excel: Complete Job-Ready Learning Guide
                 </h2>
                 <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold font-mono bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25">
@@ -918,7 +940,7 @@ export default function ExcelGuideModal({
                     { step: "6", name: "Visualize", desc: "Line/Bar Charts" },
                     { step: "7", name: "Check", desc: "Reconcile totals" },
                   ].map((s) => (
-                    <div key={s.step} className="p-3 rounded-xl bg-black/[0.02] dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/08 text-center">
+                    <div key={s.step} className="p-3 rounded-xl bg-black/[0.02] dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/10 text-center">
                       <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold text-[10px] font-mono inline-flex items-center justify-center mb-1">
                         {s.step}
                       </span>

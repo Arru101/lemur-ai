@@ -3,26 +3,28 @@ import { NextRequest, NextResponse } from "next/server";
 export const maxDuration = 300; // 5-minute timeout for extensive long-answer generation
 export const dynamic = "force-dynamic";
 
-// In-memory rate limiting token bucket
+// In-memory rate limiting token bucket with per-client isolation
 const rateLimitMap = new Map<string, { tokens: number; lastRefill: number }>();
-const LIMIT_TOKENS = 30; // 30 requests per bucket
-const REFILL_RATE = 1000 * 15; // Refill 1 token every 15 seconds
+const LIMIT_TOKENS = 60; // 60 requests per bucket burst
+const REFILL_RATE = 2000; // Refill 1 token every 2 seconds (~30 requests per minute sustained per client)
 
-function checkRateLimit(ip: string): boolean {
+function checkRateLimit(clientKey: string): boolean {
   const now = Date.now();
-  if (!rateLimitMap.has(ip)) {
-    rateLimitMap.set(ip, { tokens: LIMIT_TOKENS - 1, lastRefill: now });
-    // Periodically sweep stale entries (older than 10 minutes) to prevent memory leak
-    if (rateLimitMap.size > 500) {
-      const cutoff = now - 10 * 60 * 1000;
-      for (const [key, val] of rateLimitMap.entries()) {
-        if (val.lastRefill < cutoff) rateLimitMap.delete(key);
-      }
+
+  // Periodically sweep stale entries (older than 10 minutes) to prevent memory leak
+  if (rateLimitMap.size > 500) {
+    const cutoff = now - 10 * 60 * 1000;
+    for (const [key, val] of rateLimitMap.entries()) {
+      if (val.lastRefill < cutoff) rateLimitMap.delete(key);
     }
+  }
+
+  if (!rateLimitMap.has(clientKey)) {
+    rateLimitMap.set(clientKey, { tokens: LIMIT_TOKENS - 1, lastRefill: now });
     return true;
   }
 
-  const record = rateLimitMap.get(ip)!;
+  const record = rateLimitMap.get(clientKey)!;
   const elapsed = now - record.lastRefill;
   const newTokens = Math.floor(elapsed / REFILL_RATE);
 
@@ -68,7 +70,7 @@ const LANGUAGE_MAP: Record<string, string> = {
   it: "Italian",
 };
 
-interface ModelInfo {
+export interface ModelInfo {
   name: string;
   provider: "google" | "openrouter" | "routing";
   id: string;
@@ -84,10 +86,10 @@ export const MODELS: Record<string, ModelInfo> = {
     description: "Auto-routes to the best model for your specific prompt",
   },
   "gemini-flash": {
-    name: "Gemini 3.8 Flash",
+    name: "Gemini 2.5 Flash",
     provider: "google",
-    id: "gemini-3.8-flash",
-    description: "Google flagship SOTA, vision, multimodal & deep reasoning",
+    id: "gemini-2.5-flash",
+    description: "Google flagship, vision, multimodal & deep reasoning",
   },
   "gemini-lite": {
     name: "Gemini 3.5 Flash Lite",
@@ -109,19 +111,19 @@ export const MODELS: Record<string, ModelInfo> = {
     openrouterId: "nvidia/nemotron-3-ultra-550b-a55b:free",
     description: "Massive 550B parameters for deep synthesis & analysis",
   },
-  "cohere-code": {
-    name: "Cohere North Mini Code (Free)",
+  "nemotron-super": {
+    name: "Nemotron 3 Super 120B (Free)",
     provider: "openrouter",
-    id: "cohere/north-mini-code:free",
-    openrouterId: "cohere/north-mini-code:free",
-    description: "256K context specialized high-accuracy code model",
+    id: "nvidia/nemotron-3-super-120b-a12b:free",
+    openrouterId: "nvidia/nemotron-3-super-120b-a12b:free",
+    description: "120B high-precision code & logic synthesis engine",
   },
-  "gemma-31b": {
-    name: "Gemma 4 31B (Free)",
+  "dots-note": {
+    name: "Dots 3 Note 512K (Free)",
     provider: "openrouter",
-    id: "google/gemma-4-31b-it:free",
-    openrouterId: "google/gemma-4-31b-it:free",
-    description: "Google's upgraded 31B open instruction-following model",
+    id: "dots-studio/dots-3-note-preview:free",
+    openrouterId: "dots-studio/dots-3-note-preview:free",
+    description: "512K massive context research & literature synthesis",
   },
   "openrouter-free": {
     name: "OpenRouter Dynamic (Free)",
@@ -131,6 +133,88 @@ export const MODELS: Record<string, ModelInfo> = {
     description: "Auto-routes dynamically across live healthy free models",
   },
 };
+
+// Legacy model ID mapping for stored conversations
+const MODEL_ALIASES: Record<string, keyof typeof MODELS> = {
+  "cohere-code": "nemotron-super",
+  "gemma-31b": "dots-note",
+};
+
+// Verified Google Gemini Pool with independent per-model quotas & active cooldowns
+interface GeminiPoolEntry {
+  id: string;
+  name: string;
+  isMultimodal: boolean;
+  cooldownUntil: number;
+}
+
+const GEMINI_POOL: GeminiPoolEntry[] = [
+  { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", isMultimodal: true, cooldownUntil: 0 },
+  { id: "gemini-3.5-flash-lite", name: "Gemini 3.5 Flash Lite", isMultimodal: false, cooldownUntil: 0 },
+  { id: "gemini-flash-lite-latest", name: "Gemini Flash-Lite Latest", isMultimodal: true, cooldownUntil: 0 },
+  { id: "gemini-3.6-flash", name: "Gemini 3.6 Flash", isMultimodal: true, cooldownUntil: 0 },
+  { id: "gemini-3.7-flash", name: "Gemini 3.7 Flash", isMultimodal: true, cooldownUntil: 0 },
+];
+
+let geminiPoolCounter = 0;
+
+function markGeminiCooldown(modelId: string) {
+  const entry = GEMINI_POOL.find((m) => m.id === modelId);
+  if (entry) {
+    // 60-second cooldown on rate-limit/overload
+    entry.cooldownUntil = Date.now() + 60000;
+  }
+}
+
+function getGeminiCandidates(preferredId?: string, requiresMultimodal = false): GeminiPoolEntry[] {
+  const now = Date.now();
+  // Filter models that support multimodal if needed
+  const eligible = GEMINI_POOL.filter((m) => {
+    if (requiresMultimodal && !m.isMultimodal) return false;
+    return true;
+  });
+
+  // Separate non-cooling from cooling
+  const ready = eligible.filter((m) => m.cooldownUntil <= now);
+  const cooling = eligible.filter((m) => m.cooldownUntil > now);
+
+  const candidates: GeminiPoolEntry[] = [];
+
+  // If preferred model is ready, put it first
+  if (preferredId) {
+    const pref = ready.find((m) => m.id === preferredId);
+    if (pref) candidates.push(pref);
+  }
+
+  // Load balance across the remaining ready models using round-robin offset
+  const remainingReady = ready.filter((m) => !candidates.some((c) => c.id === m.id));
+  if (remainingReady.length > 0) {
+    const offset = (geminiPoolCounter++) % remainingReady.length;
+    const rotated = [
+      ...remainingReady.slice(offset),
+      ...remainingReady.slice(0, offset),
+    ];
+    candidates.push(...rotated);
+  }
+
+  // If all are cooling down, still include them in case cooldown passed
+  for (const c of cooling) {
+    if (!candidates.some((x) => x.id === c.id)) {
+      candidates.push(c);
+    }
+  }
+
+  return candidates;
+}
+
+// Verified OpenRouter Free Fallback Pool
+const OPENROUTER_FALLBACK_POOL = [
+  { id: "openrouter/free", name: "OpenRouter Free" },
+  { id: "nvidia/nemotron-3.5-lightning:free", name: "Nemotron 3.5 Lightning" },
+  { id: "nvidia/nemotron-3-super-120b-a12b:free", name: "Nemotron 3 Super 120B" },
+  { id: "nvidia/nemotron-3-ultra-550b-a55b:free", name: "Nemotron 3 Ultra 550B" },
+  { id: "dots-studio/dots-3-note-preview:free", name: "Dots 3 Note 512K" },
+];
 
 interface SmartRoutingProfile {
   modelKey: keyof typeof MODELS;
@@ -142,7 +226,7 @@ interface SmartRoutingProfile {
 
 function classifyQuery(query: string, file?: AttachedFilePayload | null): SmartRoutingProfile {
   // 1. Multimodal Vision Routing
-  // If an image or document is attached, Gemini 3.8 Flash provides native multimodal vision & document processing
+  // If an image or document is attached, Gemini 2.5 Flash provides native multimodal vision & document processing
   if (file && (file.type?.startsWith("image/") || file.data)) {
     return {
       modelKey: "gemini-flash",
@@ -170,7 +254,6 @@ function classifyQuery(query: string, file?: AttachedFilePayload | null): SmartR
   }
 
   // 3. Mathematical Reasoning, Algorithmic Logic & Formal Proofs
-  // Nvidia Nemotron 3.5 Lightning is specialized for deep chain-of-thought mathematical reasoning with 1M context
   const mathReasoningRegex = /\b(solve|calculate|differential equation|integral|derivative|calculus|linear algebra|eigenvalue|eigenvector|matrix multiplication|fourier transform|laplace|probability distribution|bayes theorem|hypothesis test|p-value|combinatorics|permutation|discrete math|formal proof|prove that|theorem|lemma|corollary|qed|physics|quantum|thermodynamics|relativity|newtonian|boolean algebra|logic gate|turing machine|np-complete|dynamic programming|dijkstra|bellman-ford|a\* algorithm|simplex method)\b/i;
   const hasMathSymbols = /(\b(d\/dx|\\[a-zA-Z]+|\b\d+\s*[\^*/+-]\s*\d+\b|\b\d+!\b)|\b(x\^2|y\^2)\b)/.test(clean);
   if (mathReasoningRegex.test(q) || hasMathSymbols) {
@@ -200,11 +283,11 @@ function classifyQuery(query: string, file?: AttachedFilePayload | null): SmartR
   const hasCodeFences = /```|\b(def|class|const|let|var|function|import|export|interface|enum|public|private)\s+[a-zA-Z_$]/.test(clean);
   if (codeRegex.test(q) || hasCodeFences) {
     return {
-      modelKey: "cohere-code",
+      modelKey: "nemotron-super",
       intent: "code",
       temperature: 0.25,
       thinkingBudget: 2560,
-      reason: "Cohere 256K Specialized Code Engine",
+      reason: "Nvidia 120B Specialized Code Engine",
     };
   }
 
@@ -213,11 +296,11 @@ function classifyQuery(query: string, file?: AttachedFilePayload | null): SmartR
   const hasNonLatinScript = /[\u0600-\u06FF\u0900-\u097F\u0980-\u09FF\u0B80-\u0BFF\u0C00-\u0C7F\u4E00-\u9FFF\u3040-\u30FF]/.test(clean);
   if (creativeSynthesisRegex.test(q) || (hasNonLatinScript && clean.length > 70)) {
     return {
-      modelKey: "gemma-31b",
+      modelKey: "dots-note",
       intent: "creative",
       temperature: 0.65,
       thinkingBudget: 1536,
-      reason: "Google Gemma 31B Open Literary Synthesis",
+      reason: "Dots 3 Note 512K Literary & Research Synthesis",
     };
   }
 
@@ -239,7 +322,7 @@ function classifyQuery(query: string, file?: AttachedFilePayload | null): SmartR
     intent: "general",
     temperature: 0.35,
     thinkingBudget: 2048,
-    reason: "Google Gemini 3.8 Flash Frontier Multimodal",
+    reason: "Google Gemini 2.5 Flash Frontier Multimodal",
   };
 }
 
@@ -286,12 +369,16 @@ interface StreamEventPayload {
 }
 
 export async function POST(req: NextRequest) {
-  // 1. Rate Limiting Check
-  const ip = req.headers.get("x-forwarded-for") || "anonymous_ip";
-  if (!checkRateLimit(ip)) {
+  // 1. Client-Isolated Rate Limiting (Permits concurrent users behind shared IPs/NATs)
+  const clientId = req.headers.get("x-client-id")?.trim() || "";
+  const rawIp = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "127.0.0.1";
+  const ip = rawIp.split(",")[0].trim() || "127.0.0.1";
+  const clientKey = clientId ? `${ip}:${clientId}` : ip;
+
+  if (!checkRateLimit(clientKey)) {
     return NextResponse.json(
-      { error: "Too many requests. Please wait a moment before sending another message." },
-      { status: 429 }
+      { error: "Too many requests. Please wait a few moments before sending another message." },
+      { status: 429, headers: { "Retry-After": "2" } }
     );
   }
 
@@ -303,13 +390,31 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON request body." }, { status: 400 });
   }
 
-  const { messages, model: selectedModelId, language, file } = body;
+  const { messages, model: rawSelectedModelId, language, file } = body;
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return NextResponse.json({ error: "Messages array is required." }, { status: 400 });
   }
 
+  // Resolve legacy model aliases
+  let selectedModelId = rawSelectedModelId;
+  if (selectedModelId && selectedModelId in MODEL_ALIASES) {
+    selectedModelId = MODEL_ALIASES[selectedModelId];
+  }
+
+  // Defensive Request Size & Payload Guardrails
+  if (messages.length > 60) {
+    return NextResponse.json({ error: "Conversation history exceeds the 60-message limit." }, { status: 400 });
+  }
+  const totalChars = messages.reduce((acc, m) => acc + (m.content?.length || 0), 0);
+  if (totalChars > 120000) {
+    return NextResponse.json({ error: "Total conversation text exceeds maximum allowed size (120KB)." }, { status: 413 });
+  }
+  if (file && file.data && file.data.length > 10000000) {
+    return NextResponse.json({ error: "Uploaded file payload exceeds maximum allowed size (7.5MB)." }, { status: 413 });
+  }
+
   const lastMessage = messages[messages.length - 1];
-  const userPrompt = lastMessage?.content || "";
+  const userPrompt = lastMessage?.content?.trim() || (file ? "Please examine and provide a thorough, accurate analysis of this attached file." : "");
 
   // 3. Routing
   let activeModelKey: keyof typeof MODELS = "gemini-flash";
@@ -421,177 +526,164 @@ At the very end of your response, you MUST append exactly 3 short, insightful fo
     }
   };
 
-  // Asynchronous streaming worker with 6-Tier Bulletproof Resilience
+  // Asynchronous streaming worker with High-Concurrency Pool & Instant Seamless Failover
   (async () => {
-    let resolvedModelName = isSmartRouted ? `${activeModel.name} (Auto-Routed)` : activeModel.name;
-    let fallbackWarning: string | undefined;
+    const initialModelName = isSmartRouted ? `${activeModel.name} (Auto-Routed)` : activeModel.name;
 
     try {
       // Send initial metadata
       await sendEvent({
         type: "meta",
-        model: resolvedModelName,
+        model: initialModelName,
         routedModelKey: activeModelKey,
         isSmartRouted,
       });
 
       let streamed = false;
 
-      // --- TIER 1: Primary Target Provider ---
-      if (activeModel.provider === "openrouter" && openrouterKey) {
-        try {
-          console.log(`[Lemur AI] Streaming with OpenRouter model: ${activeModel.id}`);
-          streamed = await streamOpenRouter(
-            messages,
-            systemPrompt,
-            activeModel.id,
-            file,
-            openrouterKey,
-            sendEvent,
-            { temperature: customTemperature }
-          );
-        } catch (orErr: unknown) {
-          const errMsg = orErr instanceof Error ? orErr.message : String(orErr);
-          console.warn(`[Lemur AI] OpenRouter model ${activeModel.id} failed: ${errMsg}. Failing over.`);
-          fallbackWarning = `Model ${activeModel.name} was busy or rate-limited. Switched to Gemini 3.8 Flash backup.`;
-        }
-      } else if (activeModel.provider === "google" && geminiKey) {
-        try {
-          console.log(`[Lemur AI] Streaming with Google Gemini: ${activeModel.id}...`);
-          streamed = await streamDirectGemini(
-            messages,
-            systemPrompt,
-            activeModel.id,
-            file,
-            geminiKey,
-            sendEvent,
-            {
-              temperature: customTemperature,
-              thinkingBudget: customThinkingBudget,
+      // --- PRIMARY PROVIDER EXECUTION WITH CONCURRENT POOLING ---
+      if (activeModel.provider === "google") {
+        if (geminiKey) {
+          const candidates = getGeminiCandidates(activeModel.id, !!file);
+
+          for (const candidate of candidates) {
+            try {
+              console.log(`[Lemur AI] Streaming with Google Gemini candidate: ${candidate.id}...`);
+              streamed = await streamDirectGemini(
+                messages,
+                systemPrompt,
+                candidate.id,
+                file,
+                geminiKey,
+                sendEvent,
+                {
+                  temperature: customTemperature,
+                  thinkingBudget: customThinkingBudget,
+                  onTokenStart: async () => {
+                    const resolvedName = isSmartRouted ? `${candidate.name} (Auto-Routed)` : candidate.name;
+                    await sendEvent({ type: "meta", model: resolvedName });
+                  },
+                }
+              );
+
+              if (streamed) break;
+            } catch (gemErr: unknown) {
+              const errMsg = gemErr instanceof Error ? gemErr.message : String(gemErr);
+              console.warn(`[Lemur AI] Gemini [${candidate.id}] failed: ${errMsg}. Cooling down and failing over instantly.`);
+              markGeminiCooldown(candidate.id);
             }
-          );
-        } catch (gemErr: unknown) {
-          const errMsg = gemErr instanceof Error ? gemErr.message : String(gemErr);
-          console.warn(`[Lemur AI] Primary Gemini ${activeModel.id} failed: ${errMsg}. Triggering fallback.`);
-          fallbackWarning = `Primary Google Gemini was busy. Switched to high-capacity backup.`;
-        }
-      }
-
-      // --- TIER 2: Gemini 3.8 Flash Fallback ---
-      if (!streamed && geminiKey) {
-        if (fallbackWarning) {
-          resolvedModelName = "Gemini 3.8 Flash (Backup)";
-          await sendEvent({
-            type: "warning",
-            warning: fallbackWarning,
-            model: resolvedModelName,
-          });
+          }
         }
 
-        try {
-          console.log("[Lemur AI] Streaming with Direct Google Gemini 3.8 Flash fallback...");
-          streamed = await streamDirectGemini(
-            messages,
-            systemPrompt,
-            "gemini-3.8-flash",
-            file,
-            geminiKey,
-            sendEvent,
-            {
-              temperature: customTemperature,
-              thinkingBudget: customThinkingBudget,
+        // Fallback to OpenRouter free pool if Google Gemini endpoints are exhausted
+        if (!streamed && openrouterKey) {
+          console.warn("[Lemur AI] Google Gemini endpoints busy. Failing over to OpenRouter Free pool.");
+          for (const orCandidate of OPENROUTER_FALLBACK_POOL) {
+            try {
+              console.log(`[Lemur AI] Streaming with OpenRouter fallback: ${orCandidate.id}...`);
+              streamed = await streamOpenRouter(
+                messages,
+                systemPrompt,
+                orCandidate.id,
+                file,
+                openrouterKey,
+                sendEvent,
+                {
+                  temperature: customTemperature,
+                  onTokenStart: async () => {
+                    await sendEvent({ type: "meta", model: `${orCandidate.name} (Backup)` });
+                  },
+                }
+              );
+              if (streamed) break;
+            } catch {
+              console.warn(`[Lemur AI] OpenRouter candidate [${orCandidate.id}] failed. Trying next.`);
             }
-          );
-        } catch (gemErr: unknown) {
-          const errMsg = gemErr instanceof Error ? gemErr.message : String(gemErr);
-          console.warn(`[Lemur AI] Gemini 3.8 Flash fallback failed: ${errMsg}. Trying Gemini 2.5 Flash.`);
+          }
         }
-      }
+      } else if (activeModel.provider === "openrouter") {
+        // Target model is OpenRouter
+        if (openrouterKey) {
+          try {
+            console.log(`[Lemur AI] Streaming with OpenRouter model: ${activeModel.id}...`);
+            streamed = await streamOpenRouter(
+              messages,
+              systemPrompt,
+              activeModel.id,
+              file,
+              openrouterKey,
+              sendEvent,
+              {
+                temperature: customTemperature,
+                onTokenStart: async () => {
+                  await sendEvent({ type: "meta", model: activeModel.name });
+                },
+              }
+            );
+          } catch {
+            console.warn(`[Lemur AI] Primary OpenRouter [${activeModel.id}] failed. Trying alternate free models.`);
+          }
+        }
 
-      // --- TIER 3: Gemini 2.5 Flash Fallback ---
-      if (!streamed && geminiKey) {
-        try {
-          console.log("[Lemur AI] Streaming with Gemini 2.5 Flash fallback...");
-          streamed = await streamDirectGemini(
-            messages,
-            systemPrompt,
-            "gemini-2.5-flash",
-            file,
-            geminiKey,
-            sendEvent,
-            {
-              temperature: customTemperature,
-              thinkingBudget: customThinkingBudget,
+        // Try other verified free models on OpenRouter
+        if (!streamed && openrouterKey) {
+          for (const orCandidate of OPENROUTER_FALLBACK_POOL) {
+            if (orCandidate.id === activeModel.id) continue;
+            try {
+              console.log(`[Lemur AI] Streaming with OpenRouter fallback: ${orCandidate.id}...`);
+              streamed = await streamOpenRouter(
+                messages,
+                systemPrompt,
+                orCandidate.id,
+                file,
+                openrouterKey,
+                sendEvent,
+                {
+                  temperature: customTemperature,
+                  onTokenStart: async () => {
+                    await sendEvent({ type: "meta", model: `${orCandidate.name} (Backup)` });
+                  },
+                }
+              );
+              if (streamed) break;
+            } catch {}
+          }
+        }
+
+        // Fallback to Google Gemini pool if OpenRouter is exhausted
+        if (!streamed && geminiKey) {
+          console.warn("[Lemur AI] OpenRouter exhausted. Failing over to Google Gemini pool.");
+          const candidates = getGeminiCandidates("gemini-2.5-flash", !!file);
+          for (const candidate of candidates) {
+            try {
+              console.log(`[Lemur AI] Streaming with Gemini fallback: ${candidate.id}...`);
+              streamed = await streamDirectGemini(
+                messages,
+                systemPrompt,
+                candidate.id,
+                file,
+                geminiKey,
+                sendEvent,
+                {
+                  temperature: customTemperature,
+                  thinkingBudget: customThinkingBudget,
+                  onTokenStart: async () => {
+                    await sendEvent({ type: "meta", model: `${candidate.name} (Backup)` });
+                  },
+                }
+              );
+              if (streamed) break;
+            } catch {
+              markGeminiCooldown(candidate.id);
             }
-          );
-        } catch (g2Err: unknown) {
-          console.warn("[Lemur AI] Gemini 2.5 Flash fallback failed:", g2Err);
-        }
-      }
-
-      // --- TIER 4: Gemini 3.5 Flash Lite (Ultra-speed tertiary) ---
-      if (!streamed && geminiKey) {
-        try {
-          console.log("[Lemur AI] Streaming with Gemini 3.5 Flash Lite fallback...");
-          streamed = await streamDirectGemini(
-            messages,
-            systemPrompt,
-            "gemini-3.5-flash-lite",
-            file,
-            geminiKey,
-            sendEvent,
-            {
-              temperature: customTemperature,
-              thinkingBudget: customThinkingBudget,
-            }
-          );
-        } catch (liteErr: unknown) {
-          console.warn("[Lemur AI] Gemini 3.5 Flash Lite fallback failed:", liteErr);
-        }
-      }
-
-      // --- TIER 5: OpenRouter Dynamic Free Auto-Router (openrouter/free) ---
-      if (!streamed && openrouterKey) {
-        const fallbackId = "openrouter/free";
-        console.log(`[Lemur AI] Attempting fallback to OpenRouter Dynamic Free: ${fallbackId}`);
-        try {
-          streamed = await streamOpenRouter(
-            messages,
-            systemPrompt,
-            fallbackId,
-            file,
-            openrouterKey,
-            sendEvent,
-            { temperature: customTemperature }
-          );
-        } catch (orFreeErr: unknown) {
-          console.warn("[Lemur AI] OpenRouter dynamic free fallback failed:", orFreeErr);
-        }
-      }
-
-      // --- TIER 6: OpenRouter 1M Context Free Model (Nemotron 3.5 Lightning) ---
-      if (!streamed && openrouterKey) {
-        const fallbackId = "nvidia/nemotron-3.5-lightning:free";
-        console.log(`[Lemur AI] Attempting ultimate fallback to OpenRouter Nemotron: ${fallbackId}`);
-        try {
-          streamed = await streamOpenRouter(
-            messages,
-            systemPrompt,
-            fallbackId,
-            file,
-            openrouterKey,
-            sendEvent,
-            { temperature: customTemperature }
-          );
-        } catch (ultimateErr: unknown) {
-          console.error("[Lemur AI] Ultimate fallback failed:", ultimateErr);
+          }
         }
       }
 
       if (!streamed) {
         await sendEvent({
           type: "error",
-          error: "All AI model providers are temporarily busy or rate-limited. Please retry in a few moments.",
+          error: "All AI model providers are momentarily busy. Please retry your message.",
         });
       } else {
         await sendEvent({ type: "done" });
@@ -620,7 +712,7 @@ At the very end of your response, you MUST append exactly 3 short, insightful fo
   });
 }
 
-// Direct Google Gemini SSE Streaming Handler
+// Direct Google Gemini SSE Streaming Handler with Fast Initial Timeout
 async function streamDirectGemini(
   messages: ChatMessagePayload[],
   systemPrompt: string,
@@ -631,12 +723,9 @@ async function streamDirectGemini(
   options?: {
     temperature?: number;
     thinkingBudget?: number;
+    onTokenStart?: () => Promise<void>;
   }
 ): Promise<boolean> {
-  // Format contents for Gemini:
-  // 1. Only 'user' and 'model' roles allowed
-  // 2. Ensure non-empty text parts
-  // 3. Alternate turns between 'user' and 'model' (merge adjacent same-role messages)
   const rawContents: GeminiContent[] = [];
   for (const msg of messages) {
     if (msg.role === "system") continue;
@@ -660,13 +749,16 @@ async function streamDirectGemini(
     }
   }
 
-  // Ensure conversation always starts with a user turn (Gemini requirement)
+  // Ensure conversation always starts with a user turn
   while (contents.length > 0 && contents[0].role !== "user") {
     contents.shift();
   }
 
   if (contents.length === 0) {
-    contents.push({ role: "user", parts: [{ text: "Hello" }] });
+    contents.push({
+      role: "user",
+      parts: [{ text: file ? "Please examine and provide a thorough, accurate analysis of this attached file." : "Hello" }],
+    });
   }
 
   // Multimodal file support (vision + documents)
@@ -706,29 +798,59 @@ async function streamDirectGemini(
     ],
   };
 
-  const res = await fetch(endpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
+  // Fast timeout: Upstream must return headers and first token within 10 seconds or we failover immediately
+  const abortCtrl = new AbortController();
+  let connectTimer: NodeJS.Timeout | null = setTimeout(() => {
+    abortCtrl.abort(new Error(`Timeout waiting for initial response from ${modelName}`));
+  }, 10000);
+
+  let res: Response;
+  try {
+    res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: abortCtrl.signal,
+    });
+  } catch (fetchErr) {
+    if (connectTimer) clearTimeout(connectTimer);
+    throw fetchErr;
+  }
 
   if (!res.ok) {
+    if (connectTimer) clearTimeout(connectTimer);
     const errText = await res.text();
     throw new Error(`Direct Gemini API failed (${res.status}): ${errText}`);
   }
 
-  if (!res.body) return false;
+  if (!res.body) {
+    if (connectTimer) clearTimeout(connectTimer);
+    return false;
+  }
 
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
   let tokensStreamed = 0;
   let inReasoning = false;
+  let tokenStartNotified = false;
 
   const processCandidates = async (candidates: Array<{ content?: { parts?: Array<{ text?: string; thought?: boolean }> } }>) => {
     for (const cand of candidates || []) {
       for (const part of cand.content?.parts || []) {
         if (!part.text) continue;
+
+        // Clear the connection timeout once tokens flow
+        if (connectTimer) {
+          clearTimeout(connectTimer);
+          connectTimer = null;
+        }
+
+        if (!tokenStartNotified && options?.onTokenStart) {
+          tokenStartNotified = true;
+          await options.onTokenStart();
+        }
+
         if (part.thought) {
           if (!inReasoning) {
             inReasoning = true;
@@ -748,49 +870,53 @@ async function streamDirectGemini(
     }
   };
 
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
 
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split("\n");
-    buffer = lines.pop() || "";
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
 
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || !trimmed.startsWith("data: ")) continue;
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || !trimmed.startsWith("data: ")) continue;
 
-      const dataStr = trimmed.slice(6).trim();
-      if (!dataStr || dataStr === "[DONE]") continue;
+        const dataStr = trimmed.slice(6).trim();
+        if (!dataStr || dataStr === "[DONE]") continue;
 
+        try {
+          const parsed = JSON.parse(dataStr);
+          if (parsed.candidates) {
+            await processCandidates(parsed.candidates);
+          }
+        } catch {
+          // Skip unparseable lines
+        }
+      }
+    }
+
+    if (buffer.startsWith("data: ")) {
       try {
-        const parsed = JSON.parse(dataStr);
+        const parsed = JSON.parse(buffer.slice(6).trim());
         if (parsed.candidates) {
           await processCandidates(parsed.candidates);
         }
-      } catch {
-        // Skip unparseable lines
-      }
+      } catch {}
     }
-  }
 
-  if (buffer.startsWith("data: ")) {
-    try {
-      const parsed = JSON.parse(buffer.slice(6).trim());
-      if (parsed.candidates) {
-        await processCandidates(parsed.candidates);
-      }
-    } catch {}
-  }
-
-  if (inReasoning) {
-    await sendEvent({ type: "chunk", text: "\n</think>\n\n" });
+    if (inReasoning) {
+      await sendEvent({ type: "chunk", text: "\n</think>\n\n" });
+    }
+  } finally {
+    if (connectTimer) clearTimeout(connectTimer);
   }
 
   return tokensStreamed > 0;
 }
 
-// OpenRouter SSE Streaming Handler with delta.reasoning support & Heartbeat Pings
+// OpenRouter SSE Streaming Handler with Fast Timeout & Heartbeat Pings
 async function streamOpenRouter(
   messages: ChatMessagePayload[],
   systemPrompt: string,
@@ -800,11 +926,19 @@ async function streamOpenRouter(
   sendEvent: (payload: StreamEventPayload) => Promise<void>,
   options?: {
     temperature?: number;
+    onTokenStart?: () => Promise<void>;
   }
 ): Promise<boolean> {
   const validMessages = messages
     .filter((m) => (m.content || "").trim().length > 0)
     .map((m) => ({ role: m.role, content: m.content.trim() }));
+
+  if (validMessages.length === 0) {
+    validMessages.push({
+      role: "user",
+      content: file ? "Please examine and provide a thorough, accurate analysis of this attached file." : "Hello",
+    });
+  }
 
   const openrouterMessages: Array<{
     role: string;
@@ -815,7 +949,15 @@ async function streamOpenRouter(
   ];
 
   if (file && file.data && file.type) {
-    const lastMsg = openrouterMessages[openrouterMessages.length - 1];
+    let lastMsg = openrouterMessages[openrouterMessages.length - 1];
+    if (lastMsg.role !== "user") {
+      openrouterMessages.push({
+        role: "user",
+        content: "Please examine and provide a thorough, accurate analysis of this attached file.",
+      });
+      lastMsg = openrouterMessages[openrouterMessages.length - 1];
+    }
+
     if (file.type.startsWith("image/")) {
       lastMsg.content = [
         { type: "text", text: typeof lastMsg.content === "string" ? lastMsg.content : "" },
@@ -830,102 +972,137 @@ async function streamOpenRouter(
     }
   }
 
-  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-      "HTTP-Referer": "https://lemursai.netlify.app",
-      "X-Title": "Lemur AI",
-    },
-    body: JSON.stringify({
-      model: modelId,
-      messages: openrouterMessages,
-      temperature: options?.temperature ?? 0.45,
-      stream: true,
-    }),
-  });
+  const abortCtrl = new AbortController();
+  let connectTimer: NodeJS.Timeout | null = setTimeout(() => {
+    abortCtrl.abort(new Error(`Timeout waiting for initial response from OpenRouter ${modelId}`));
+  }, 10000);
+
+  let res: Response;
+  try {
+    res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://lemursai.netlify.app",
+        "X-Title": "Lemur AI",
+      },
+      signal: abortCtrl.signal,
+      body: JSON.stringify({
+        model: modelId,
+        messages: openrouterMessages,
+        temperature: options?.temperature ?? 0.45,
+        stream: true,
+      }),
+    });
+  } catch (fetchErr) {
+    if (connectTimer) clearTimeout(connectTimer);
+    throw fetchErr;
+  }
 
   if (!res.ok) {
+    if (connectTimer) clearTimeout(connectTimer);
     const errText = await res.text();
     throw new Error(`OpenRouter failed (${res.status}): ${errText}`);
   }
 
-  if (!res.body) return false;
+  if (!res.body) {
+    if (connectTimer) clearTimeout(connectTimer);
+    return false;
+  }
 
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
   let tokensStreamed = 0;
   let inReasoning = false;
+  let tokenStartNotified = false;
 
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
 
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split("\n");
-    buffer = lines.pop() || "";
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
 
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed) continue;
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
 
-      // OpenRouter keeps sending ": OPENROUTER PROCESSING" comments while in queue
-      if (trimmed.startsWith(":")) {
-        await sendEvent({ type: "ping" });
-        continue;
-      }
-
-      if (!trimmed.startsWith("data: ")) continue;
-
-      const dataStr = trimmed.slice(6).trim();
-      if (dataStr === "[DONE]") continue;
-
-      try {
-        const parsed = JSON.parse(dataStr);
-
-        // Detect upstream error payload
-        if (parsed.error) {
-          throw new Error(parsed.error.message || "OpenRouter provider error");
+        // OpenRouter keeps sending ": OPENROUTER PROCESSING" comments while in queue
+        if (trimmed.startsWith(":")) {
+          await sendEvent({ type: "ping" });
+          continue;
         }
 
-        const choice = parsed.choices?.[0];
-        const delta = choice?.delta;
+        if (!trimmed.startsWith("data: ")) continue;
 
-        // 1. Capture Reasoning tokens (Nemotron reasoning, DeepSeek, etc.)
-        const reasoningChunk = delta?.reasoning || delta?.thinking;
-        if (reasoningChunk) {
-          if (!inReasoning) {
-            inReasoning = true;
-            await sendEvent({ type: "chunk", text: "<think>\n" });
+        const dataStr = trimmed.slice(6).trim();
+        if (dataStr === "[DONE]") continue;
+
+        try {
+          const parsed = JSON.parse(dataStr);
+
+          // Detect upstream error payload
+          if (parsed.error) {
+            throw new Error(parsed.error.message || "OpenRouter provider error");
           }
-          await sendEvent({ type: "chunk", text: reasoningChunk });
-          tokensStreamed++;
-        }
 
-        // 2. Capture Content tokens
-        const contentChunk = delta?.content;
-        if (contentChunk) {
-          if (inReasoning) {
-            inReasoning = false;
-            await sendEvent({ type: "chunk", text: "\n</think>\n\n" });
+          const choice = parsed.choices?.[0];
+          const delta = choice?.delta;
+
+          // 1. Capture Reasoning tokens
+          const reasoningChunk = delta?.reasoning || delta?.thinking;
+          if (reasoningChunk) {
+            if (connectTimer) {
+              clearTimeout(connectTimer);
+              connectTimer = null;
+            }
+            if (!tokenStartNotified && options?.onTokenStart) {
+              tokenStartNotified = true;
+              await options.onTokenStart();
+            }
+            if (!inReasoning) {
+              inReasoning = true;
+              await sendEvent({ type: "chunk", text: "<think>\n" });
+            }
+            await sendEvent({ type: "chunk", text: reasoningChunk });
+            tokensStreamed++;
           }
-          await sendEvent({ type: "chunk", text: contentChunk });
-          tokensStreamed++;
-        }
-      } catch (e: unknown) {
-        // If error occurred before any tokens were streamed, rethrow to trigger failover
-        if (tokensStreamed === 0) {
-          throw e;
+
+          // 2. Capture Content tokens
+          const contentChunk = delta?.content;
+          if (contentChunk) {
+            if (connectTimer) {
+              clearTimeout(connectTimer);
+              connectTimer = null;
+            }
+            if (!tokenStartNotified && options?.onTokenStart) {
+              tokenStartNotified = true;
+              await options.onTokenStart();
+            }
+            if (inReasoning) {
+              inReasoning = false;
+              await sendEvent({ type: "chunk", text: "\n</think>\n\n" });
+            }
+            await sendEvent({ type: "chunk", text: contentChunk });
+            tokensStreamed++;
+          }
+        } catch (e: unknown) {
+          if (tokensStreamed === 0) {
+            throw e;
+          }
         }
       }
     }
-  }
 
-  // Ensure unclosed reasoning tag is gracefully closed
-  if (inReasoning) {
-    await sendEvent({ type: "chunk", text: "\n</think>\n\n" });
+    if (inReasoning) {
+      await sendEvent({ type: "chunk", text: "\n</think>\n\n" });
+    }
+  } finally {
+    if (connectTimer) clearTimeout(connectTimer);
   }
 
   return tokensStreamed > 0;

@@ -2,91 +2,97 @@ export function highlightCode(code: string, language: string = "javascript"): st
   const lang = language.toLowerCase();
 
   // Escape HTML characters to prevent XSS and rendering breakages
-  const escapeHtml = (text: string) => {
+  const escapeHtml = (text: string): string => {
     return text
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   };
 
-  const escapedCode = escapeHtml(code);
-
-  // Fallback for plain text or markdown
-  if (["txt", "text", "markdown", "md", "plaintext"].includes(lang)) {
-    return escapedCode;
+  // Fallback for plain text, markdown, or unstructured output
+  if (["txt", "text", "markdown", "md", "plaintext", ""].includes(lang)) {
+    return escapeHtml(code);
   }
 
-  // Dedicated JSON Highlighting
+  // Dedicated High-Fidelity JSON Highlighting
   if (lang === "json") {
-    return escapedCode.replace(
-      /("(?:\\.|[^"\\])*")(\s*:)?|(\btrue\b|\bfalse\b|\bnull\b)|(-?\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b)/g,
-      (_match, keyOrString, isColon, boolOrNull, num) => {
-        if (keyOrString) {
-          if (isColon) {
-            // JSON Property Key
-            return `<span class="text-sky-400 font-medium">${keyOrString}</span>:`;
-          }
-          // JSON String Value
-          return `<span class="text-emerald-400">${keyOrString}</span>`;
+    const jsonTokens = /("(?:\\.|[^"\\])*")(\s*:)?|(\btrue\b|\bfalse\b|\bnull\b)|(-?\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b)/g;
+    let lastIdx = 0;
+    let result = "";
+    let match: RegExpExecArray | null;
+
+    while ((match = jsonTokens.exec(code)) !== null) {
+      result += escapeHtml(code.slice(lastIdx, match.index));
+      const [, str, colon, boolNull, num] = match;
+      if (str) {
+        if (colon) {
+          result += `<span class="text-sky-400 font-medium">${escapeHtml(str)}</span>${escapeHtml(colon)}`;
+        } else {
+          result += `<span class="text-emerald-400">${escapeHtml(str)}</span>`;
         }
-        if (boolOrNull) {
-          return `<span class="text-violet-400 font-bold">${boolOrNull}</span>`;
-        }
-        if (num) {
-          return `<span class="text-amber-400 font-semibold">${num}</span>`;
-        }
-        return _match;
+      } else if (boolNull) {
+        result += `<span class="text-violet-400 font-bold">${escapeHtml(boolNull)}</span>`;
+      } else if (num) {
+        result += `<span class="text-amber-400 font-semibold">${escapeHtml(num)}</span>`;
+      } else {
+        result += escapeHtml(match[0]);
       }
-    );
+      lastIdx = jsonTokens.lastIndex;
+    }
+    result += escapeHtml(code.slice(lastIdx));
+    return result;
   }
 
-  // Token regex patterns for multi-language syntax
-  const tokens = {
-    comment: /(\/\/.*|\/\*[\s\S]*?\*\/|#.*|--.*)/g,
-    string: /("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)/g,
-    number: /\b(0x[0-9a-fA-F]+|\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\b/g,
-    keyword: /\b(break|case|catch|class|const|continue|debugger|default|delete|do|else|export|extends|finally|for|function|if|import|in|instanceof|new|return|super|switch|this|throw|try|typeof|var|void|while|with|yield|async|await|let|package|private|protected|public|static|any|string|number|boolean|unknown|never|from|def|elif|print|as|self|nil|undefined|null|true|false|True|False|None|fn|mut|impl|trait|pub|use|mod|match|loop|type|struct|enum|interface|defer|select|chan|range|SELECT|FROM|WHERE|INSERT|INTO|VALUES|UPDATE|SET|DELETE|JOIN|LEFT|RIGHT|INNER|OUTER|GROUP|BY|ORDER|ASC|DESC|LIMIT|HAVING|AND|OR|NOT|CREATE|TABLE|DROP|ALTER|INDEX|include|define|int|char|float|double|bool|auto|constexpr|virtual|override)\b/g,
-    function: /\b([a-zA-Z_$][a-zA-Z0-9_$]*)(?=\s*\()/g,
-    decorator: /(@[a-zA-Z_$][a-zA-Z0-9_$]*)/g,
-  };
+  // Single-pass scanner regex to prevent nested replacement collisions
+  // Group 0 (comment check): comments
+  // Group 1: strings
+  // Group 2: decorators (@Decorator)
+  // Group 3: keywords
+  // Group 4: function calls
+  // Group 5: numbers
+  const TOKEN_REGEX = /(?:\/\/.*|\/\*[\s\S]*?\*\/|#.*|--.*)|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)|(@[a-zA-Z_$][a-zA-Z0-9_$]*)|(\b(?:break|case|catch|class|const|continue|debugger|default|delete|do|else|export|extends|finally|for|function|if|import|in|instanceof|new|return|super|switch|this|throw|try|typeof|var|void|while|with|yield|async|await|let|package|private|protected|public|static|any|string|number|boolean|unknown|never|from|def|elif|print|as|self|nil|undefined|null|true|false|True|False|None|fn|mut|impl|trait|pub|use|mod|match|loop|type|struct|enum|interface|defer|select|chan|range|SELECT|FROM|WHERE|INSERT|INTO|VALUES|UPDATE|SET|DELETE|JOIN|LEFT|RIGHT|INNER|OUTER|GROUP|BY|ORDER|ASC|DESC|LIMIT|HAVING|AND|OR|NOT|CREATE|TABLE|DROP|ALTER|INDEX|include|define|int|char|float|double|bool|auto|constexpr|virtual|override)\b)|(\b[a-zA-Z_$][a-zA-Z0-9_$]*(?=\s*\())|(\b(?:0x[0-9a-fA-F]+|\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\b)/g;
 
-  // We tokenize by separating comments and strings first, so we don't highlight keywords inside them.
-  let tempCode = escapedCode;
-  const placeholders: { type: "comment" | "string"; val: string }[] = [];
+  let lastIndex = 0;
+  let out = "";
+  let m: RegExpExecArray | null;
 
-  const combinedRegex = new RegExp(`(${tokens.comment.source})|(${tokens.string.source})`, "g");
+  while ((m = TOKEN_REGEX.exec(code)) !== null) {
+    // Escape unstyled text between tokens
+    out += escapeHtml(code.slice(lastIndex, m.index));
 
-  tempCode = tempCode.replace(combinedRegex, (match) => {
-    const isComment = match.startsWith("//") || match.startsWith("/*") || match.startsWith("#") || match.startsWith("--");
-    const type = isComment ? "comment" : "string";
-    const placeholder = `___HL_TOKEN_${placeholders.length}___`;
-    placeholders.push({ type, val: match });
-    return placeholder;
-  });
+    const matchedText = m[0];
+    const isComment =
+      matchedText.startsWith("//") ||
+      matchedText.startsWith("/*") ||
+      matchedText.startsWith("#") ||
+      matchedText.startsWith("--");
 
-  // Decorators / Annotations (e.g. @Component, @override)
-  tempCode = tempCode.replace(tokens.decorator, '<span class="text-pink-400 font-semibold">$1</span>');
-
-  // Function calls
-  tempCode = tempCode.replace(tokens.function, '<span class="text-sky-400 font-semibold">$1</span>');
-
-  // Keywords
-  tempCode = tempCode.replace(tokens.keyword, '<span class="text-violet-400 font-bold">$1</span>');
-
-  // Numbers
-  tempCode = tempCode.replace(tokens.number, '<span class="text-amber-400 font-semibold">$1</span>');
-
-  // Restore strings and comments with proper syntax styling
-  placeholders.forEach((placeholder, idx) => {
-    const key = `___HL_TOKEN_${idx}___`;
-    let styledVal = "";
-    if (placeholder.type === "comment") {
-      styledVal = `<span class="text-neutral-400/90 dark:text-neutral-500 italic">${placeholder.val}</span>`;
+    if (isComment) {
+      out += `<span class="text-neutral-400/90 dark:text-neutral-500 italic">${escapeHtml(matchedText)}</span>`;
+    } else if (m[1]) {
+      // String literal
+      out += `<span class="text-emerald-400">${escapeHtml(m[1])}</span>`;
+    } else if (m[2]) {
+      // Decorator
+      out += `<span class="text-pink-400 font-semibold">${escapeHtml(m[2])}</span>`;
+    } else if (m[3]) {
+      // Keyword
+      out += `<span class="text-violet-400 font-bold">${escapeHtml(m[3])}</span>`;
+    } else if (m[4]) {
+      // Function identifier
+      out += `<span class="text-sky-400 font-semibold">${escapeHtml(m[4])}</span>`;
+    } else if (m[5]) {
+      // Number literal
+      out += `<span class="text-amber-400 font-semibold">${escapeHtml(m[5])}</span>`;
     } else {
-      styledVal = `<span class="text-emerald-400">${placeholder.val}</span>`;
+      out += escapeHtml(matchedText);
     }
-    tempCode = tempCode.replace(key, styledVal);
-  });
 
-  return tempCode;
+    lastIndex = TOKEN_REGEX.lastIndex;
+  }
+
+  out += escapeHtml(code.slice(lastIndex));
+  return out;
 }

@@ -145,7 +145,19 @@ function ChatMessageComponent({
   const copyToClipboard = async (e: React.MouseEvent, text: string) => {
     try {
       triggerConfetti(e.clientX, e.clientY);
-      await navigator.clipboard.writeText(text);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
       setCopiedText(true);
       setTimeout(() => setCopiedText(false), 2000);
     } catch (err) {
@@ -156,7 +168,19 @@ function ChatMessageComponent({
   const copyCode = async (e: React.MouseEvent, code: string, id: string) => {
     try {
       triggerConfetti(e.clientX, e.clientY);
-      await navigator.clipboard.writeText(code);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(code);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = code;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
       setCopiedCodeId(id);
       setTimeout(() => setCopiedCodeId(null), 2000);
     } catch (err) {
@@ -406,7 +430,7 @@ function ChatMessageComponent({
                     </h2>
                   ),
                   h3: ({ children }) => (
-                    <h3 className="text-base sm:text-lg font-semibold mt-4.5 mb-2 text-neutral-850 dark:text-neutral-100 tracking-tight font-sans first:mt-1">
+                    <h3 className="text-base sm:text-lg font-semibold mt-4 mb-2 text-neutral-800 dark:text-neutral-100 tracking-tight font-sans first:mt-1">
                       {children}
                     </h3>
                   ),
