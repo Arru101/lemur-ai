@@ -122,7 +122,7 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <script async src="https://pl31713317.profitableratecpmnetwork.com/33/51/6b/33516bfb4e46554ce9c7769e90148e8b.js" />
+        <script async src="https://pl31713601.profitableratecpmnetwork.com/99/dc/7f/99dc7f93effa31288ad7ab054a4ee276.js" />
       </head>
       <body className="h-full bg-background text-foreground font-sans selection:bg-primary/25 selection:text-primary">
         <div className="animated-bg pointer-events-none" />
