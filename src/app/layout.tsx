@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import { Plus_Jakarta_Sans, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -123,14 +122,11 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        <script async src="https://pl31713317.profitableratecpmnetwork.com/33/51/6b/33516bfb4e46554ce9c7769e90148e8b.js" />
       </head>
       <body className="h-full bg-background text-foreground font-sans selection:bg-primary/25 selection:text-primary">
         <div className="animated-bg pointer-events-none" />
         {children}
-        <Script
-          src="https://pl31713317.profitableratecpmnetwork.com/33/51/6b/33516bfb4e46554ce9c7769e90148e8b.js"
-          strategy="afterInteractive"
-        />
       </body>
     </html>
   );
