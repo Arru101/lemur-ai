@@ -6,6 +6,7 @@ import ChatMessage from "../components/ChatMessage";
 import LemurLogo from "../components/LemurLogo";
 import Toast, { ToastItem, ToastType, setGlobalToastFn } from "../components/Toast";
 import ExcelGuideModal from "../components/ExcelGuideModal";
+import AdBanner from "../components/AdBanner";
 import { translations } from "../utils/translations";
 import { 
   Menu, 
@@ -1378,7 +1379,7 @@ export default function Home() {
           ref={chatContainerRef}
           className={`flex-1 ${
             messages.length === 0
-              ? "overflow-hidden flex flex-col justify-center items-center p-2 sm:p-4 no-scrollbar"
+              ? "overflow-y-auto flex flex-col justify-center items-center p-2 sm:p-4 no-scrollbar scrollbar-thin"
               : "overflow-y-auto p-2.5 sm:p-4 md:p-6 2xl:p-8 space-y-4 sm:space-y-6 scrollbar-thin hardware-scroll"
           } safe-left safe-right`}
         >
@@ -1483,6 +1484,9 @@ export default function Home() {
                   </p>
                 </div>
               </div>
+
+              {/* Sponsored CPM Ad Banner */}
+              <AdBanner />
             </div>
           ) : (
             /* Rendered Messages list */
