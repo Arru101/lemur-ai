@@ -99,7 +99,6 @@ npm run build
   - `Toast.tsx`: Non-blocking, smooth toast notification system.
   - `ConfirmDialog.tsx`: Modal-based confirmation (replaces native `window.confirm`).
   - `LemurLogo.tsx`: SVG brand icon with squircle container and aurora gradient.
-  - `AdBanner.tsx`: Native CPM ad banner container with asynchronous script injector.
 - `src/utils/`:
   - `translations.ts`: Multi-language dictionary and localized UI text strings.
   - `confetti.ts`: Interactive visual effects.

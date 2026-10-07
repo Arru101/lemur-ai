@@ -6,7 +6,6 @@ import ChatMessage from "../components/ChatMessage";
 import LemurLogo from "../components/LemurLogo";
 import Toast, { ToastItem, ToastType, setGlobalToastFn } from "../components/Toast";
 import ExcelGuideModal from "../components/ExcelGuideModal";
-import AdBanner from "../components/AdBanner";
 import { translations } from "../utils/translations";
 import { 
   Menu, 
@@ -1484,9 +1483,6 @@ export default function Home() {
                   </p>
                 </div>
               </div>
-
-              {/* Sponsored CPM Ad Banner */}
-              <AdBanner />
             </div>
           ) : (
             /* Rendered Messages list */
