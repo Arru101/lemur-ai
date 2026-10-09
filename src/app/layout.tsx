@@ -146,8 +146,12 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
-                // Disable Right-Click Context Menu
+                // Disable Right-Click Context Menu (while preserving native paste/copy for inputs)
                 document.addEventListener('contextmenu', function(e) {
+                  var target = e.target;
+                  if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+                    return true;
+                  }
                   e.preventDefault();
                   return false;
                 }, { capture: true });
@@ -281,11 +285,14 @@ export default function RootLayout({
 
                 function mountAutonomousBanner() {
                   if (fallbackMounted || hasActiveAd()) return;
+                  if (typeof window !== "undefined" && window.sessionStorage && window.sessionStorage.getItem("lemur_ad_dismissed") === "1") {
+                    return;
+                  }
                   fallbackMounted = true;
 
                   var container = document.createElement("div");
                   container.id = "lemur-secure-ad-fallback";
-                  container.style.cssText = "position:fixed;bottom:16px;right:16px;z-index:99999;max-width:360px;width:calc(100vw - 32px);background:rgba(15,19,32,0.94);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.12);border-radius:14px;box-shadow:0 12px 36px rgba(0,0,0,0.5);padding:12px 14px;font-family:system-ui,-apple-system,sans-serif;color:#f8fafc;transition:opacity 0.25s ease,transform 0.25s ease;";
+                  container.style.cssText = "position:fixed;bottom:84px;right:16px;z-index:9999;max-width:340px;width:calc(100vw - 32px);background:rgba(15,19,32,0.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.14);border-radius:16px;box-shadow:0 16px 40px rgba(0,0,0,0.5);padding:12px 14px;font-family:system-ui,-apple-system,sans-serif;color:#f8fafc;transition:opacity 0.25s ease,transform 0.25s ease;";
 
                   container.innerHTML = [
                     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">',
@@ -293,7 +300,7 @@ export default function RootLayout({
                     '    <span style="font-size:10px;text-transform:uppercase;letter-spacing:0.05em;font-weight:700;color:#818cf8;background:rgba(99,102,241,0.15);padding:2px 7px;border-radius:999px;border:1px solid rgba(99,102,241,0.25);">Sponsored</span>',
                     '    <span style="font-size:11px;color:#94a3b8;font-weight:500;">Verified Ad Partner</span>',
                     '  </div>',
-                    '  <button id="lemur-ad-close" type="button" aria-label="Close" style="background:transparent;border:none;color:#94a3b8;cursor:pointer;padding:2px 6px;font-size:14px;line-height:1;border-radius:6px;">&times;</button>',
+                    '  <button id="lemur-ad-close" type="button" aria-label="Close" style="background:transparent;border:none;color:#94a3b8;cursor:pointer;padding:2px 6px;font-size:15px;line-height:1;border-radius:6px;transition:color 0.15s ease;">&times;</button>',
                     '</div>',
                     '<div style="margin-bottom:10px;">',
                     '  <a id="lemur-ad-link" href="https://pl31713601.profitableratecpmnetwork.com/99/dc/7f/99dc7f93effa31288ad7ab054a4ee276.js" target="_blank" rel="noopener noreferrer" style="color:#f8fafc;text-decoration:none;font-size:13px;line-height:1.4;font-weight:600;display:block;">',
@@ -302,7 +309,7 @@ export default function RootLayout({
                     '  <p style="margin:4px 0 0 0;font-size:11px;color:#94a3b8;line-height:1.35;">High-speed models, cutting-edge GPU instances & next-generation toolkits.</p>',
                     '</div>',
                     '<div style="display:flex;justify-content:flex-end;">',
-                    '  <a id="lemur-ad-cta" href="https://pl31713601.profitableratecpmnetwork.com/99/dc/7f/99dc7f93effa31288ad7ab054a4ee276.js" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#ffffff;font-size:11.5px;font-weight:600;padding:5px 12px;border-radius:8px;text-decoration:none;box-shadow:0 2px 8px rgba(99,102,241,0.3);">',
+                    '  <a id="lemur-ad-cta" href="https://pl31713601.profitableratecpmnetwork.com/99/dc/7f/99dc7f93effa31288ad7ab054a4ee276.js" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#ffffff;font-size:11.5px;font-weight:600;padding:5px 12px;border-radius:8px;text-decoration:none;box-shadow:0 2px 8px rgba(99,102,241,0.3);transition:transform 0.15s ease;">',
                     '    Learn More &rarr;',
                     '  </a>',
                     '</div>'
@@ -313,6 +320,9 @@ export default function RootLayout({
                   var closeBtn = document.getElementById("lemur-ad-close");
                   if (closeBtn) {
                     closeBtn.onclick = function() {
+                      try {
+                        if (window.sessionStorage) window.sessionStorage.setItem("lemur_ad_dismissed", "1");
+                      } catch(e) {}
                       container.style.opacity = "0";
                       container.style.transform = "translateY(8px)";
                       setTimeout(function() {
