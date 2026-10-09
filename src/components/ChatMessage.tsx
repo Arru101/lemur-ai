@@ -73,6 +73,8 @@ function ChatMessageComponent({
 
   // State for collapsible thought process
   const [thoughtExpanded, setThoughtExpanded] = useState(false);
+  const [userCollapsedLiveThinking, setUserCollapsedLiveThinking] = useState(false);
+  const thinkingScrollRef = React.useRef<HTMLDivElement>(null);
 
   // Parse <think>...</think> reasoning tags, <related_questions>, and auto-heal unclosed code blocks
   const { thinkingText, isThinkingActive, content: displayContent, rawCleanedContent, isCodeBlockUnclosed, questions } = useMemo(() => {
@@ -95,8 +97,14 @@ function ChatMessageComponent({
       const openMatch = rawContent.match(openThinkRegex);
       if (openMatch) {
         thinkPart = openMatch[1].trim();
-        remainingContent = ""; // Main answer has not started yet
-        isThinkingOngoing = true;
+        if (isGenerating) {
+          remainingContent = ""; // Main answer has not started yet
+          isThinkingOngoing = true;
+        } else {
+          // Stream ended with unclosed <think>: auto-close so message never gets stuck in thinking!
+          isThinkingOngoing = false;
+          remainingContent = "";
+        }
       }
     }
 
@@ -131,13 +139,20 @@ function ChatMessageComponent({
 
     return {
       thinkingText: thinkPart,
-      isThinkingActive: isThinkingOngoing,
+      isThinkingActive: isThinkingOngoing && isGenerating,
       content: safeContent,
       rawCleanedContent: cleaned,
       isCodeBlockUnclosed: isCodeFenceUnclosed,
       questions: parsedQuestions,
     };
-  }, [message.content]);
+  }, [message.content, isGenerating]);
+
+  // Auto-scroll thinking container as real-time thoughts stream
+  React.useEffect(() => {
+    if (isThinkingActive && thinkingScrollRef.current) {
+      thinkingScrollRef.current.scrollTop = thinkingScrollRef.current.scrollHeight;
+    }
+  }, [thinkingText, isThinkingActive]);
 
   // Inline user edit states
   const [isEditing, setIsEditing] = useState(false);
@@ -376,13 +391,19 @@ function ChatMessageComponent({
                 <div className="mb-4 rounded-2xl border border-black/[0.08] dark:border-white/10 overflow-hidden bg-black/[0.02] dark:bg-white/[0.03] transition-colors shadow-sm">
                   <button
                     type="button"
-                    onClick={() => setThoughtExpanded((prev) => !prev)}
+                    onClick={() => {
+                      if (isThinkingActive) {
+                        setUserCollapsedLiveThinking((prev) => !prev);
+                      } else {
+                        setThoughtExpanded((prev) => !prev);
+                      }
+                    }}
                     className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-black/[0.04] dark:hover:bg-white/[0.05] transition-colors cursor-pointer select-none text-xs text-neutral-500 dark:text-neutral-400"
                   >
                     <div className="flex items-center gap-2">
                       <Brain className={`w-3.5 h-3.5 ${isThinkingActive ? "text-cyan-500 dark:text-cyan-400 animate-pulse" : "text-neutral-500 dark:text-neutral-400"}`} />
                       <span className="font-semibold font-sans text-foreground/90">
-                        {isThinkingActive ? "Thinking in real-time..." : "Thought process"}
+                        {isThinkingActive ? (userCollapsedLiveThinking ? "Thinking in real-time (Hidden)" : "Thinking in real-time...") : "Thought process"}
                       </span>
                       {!isThinkingActive && (
                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/[0.04] dark:bg-white/[0.06] text-neutral-600 dark:text-neutral-300 font-mono border border-black/[0.08] dark:border-white/10">
@@ -394,7 +415,7 @@ function ChatMessageComponent({
                       {isThinkingActive && (
                         <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 dark:bg-cyan-400 animate-ping mr-1" />
                       )}
-                      {(isThinkingActive || thoughtExpanded) ? (
+                      {(isThinkingActive ? !userCollapsedLiveThinking : thoughtExpanded) ? (
                         <ChevronUp className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
                       ) : (
                         <ChevronDown className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
@@ -402,11 +423,34 @@ function ChatMessageComponent({
                     </div>
                   </button>
 
-                  {(isThinkingActive || thoughtExpanded) && (
-                    <div className="px-4 py-3.5 text-[12px] sm:text-[12.5px] text-neutral-200 dark:text-neutral-300 font-mono whitespace-pre-wrap leading-[1.7] max-h-72 overflow-y-auto scrollbar-thin bg-neutral-900/95 dark:bg-black/40 border-t border-black/[0.08] dark:border-white/10 selection:bg-cyan-500/20">
+                  {(isThinkingActive ? !userCollapsedLiveThinking : thoughtExpanded) && (
+                    <div
+                      ref={thinkingScrollRef}
+                      className="px-4 py-3.5 text-[12px] sm:text-[12.5px] text-neutral-200 dark:text-neutral-300 font-mono whitespace-pre-wrap leading-[1.7] max-h-72 overflow-y-auto scrollbar-thin bg-neutral-900/95 dark:bg-black/40 border-t border-black/[0.08] dark:border-white/10 selection:bg-cyan-500/20"
+                    >
                       {thinkingText}
                       {isThinkingActive && <span className="streaming-cursor ml-1" />}
                     </div>
+                  )}
+                </div>
+              )}
+
+              {/* Incomplete reasoning recovery banner */}
+              {!isGenerating && !displayContent && thinkingText && (
+                <div className="mb-3 p-3 rounded-2xl bg-amber-500/[0.08] dark:bg-amber-400/[0.06] border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 flex items-center justify-between gap-2.5">
+                  <span className="flex items-center gap-1.5 font-medium">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+                    Thinking process concluded.
+                  </span>
+                  {onContinue && (
+                    <button
+                      type="button"
+                      onClick={onContinue}
+                      className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-semibold text-[11px] shadow-sm apple-spring active:scale-95 transition-all flex items-center gap-1 cursor-pointer"
+                    >
+                      Generate Full Answer
+                      <ArrowRight className="w-3 h-3" />
+                    </button>
                   )}
                 </div>
               )}

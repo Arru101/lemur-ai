@@ -343,6 +343,7 @@ interface RequestPayload {
   model?: string;
   language?: string;
   file?: AttachedFilePayload | null;
+  enableThinking?: boolean;
 }
 
 interface GeminiPart {
@@ -391,7 +392,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON request body." }, { status: 400 });
   }
 
-  const { messages, model: rawSelectedModelId, language, file } = body;
+  const { messages, model: rawSelectedModelId, language, file, enableThinking } = body;
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return NextResponse.json({ error: "Messages array is required." }, { status: 400 });
   }
@@ -433,6 +434,11 @@ export async function POST(req: NextRequest) {
     isSmartRouted = true;
   } else if (selectedModelId && selectedModelId in MODELS) {
     activeModelKey = selectedModelId as keyof typeof MODELS;
+  }
+
+  // Explicit user preference for disabling live reasoning
+  if (enableThinking === false) {
+    customThinkingBudget = 0;
   }
 
   const activeModel = MODELS[activeModelKey];
@@ -866,6 +872,7 @@ async function streamDirectGemini(
     const decoder = new TextDecoder();
     let buffer = "";
     let passOutputText = "";
+    let passAllTokens = "";
     let lastFinishReason: string | null = null;
 
     const processCandidates = async (
@@ -891,6 +898,8 @@ async function streamDirectGemini(
             tokenStartNotified = true;
             await options.onTokenStart();
           }
+
+          passAllTokens += part.text;
 
           if (part.thought) {
             if (!inReasoning) {
@@ -953,6 +962,12 @@ async function streamDirectGemini(
         await sendEvent({ type: "chunk", text: "\n</think>\n\n" });
       }
     } catch (readErr) {
+      if (inReasoning) {
+        inReasoning = false;
+        try {
+          await sendEvent({ type: "chunk", text: "\n</think>\n\n" });
+        } catch {}
+      }
       if (totalTokensStreamed === 0) throw readErr;
       console.warn(`[Lemur AI] Gemini stream read interrupted:`, readErr);
       await sendEvent({ type: "truncated", reason: "stream_interrupted" });
@@ -962,14 +977,21 @@ async function streamDirectGemini(
     }
 
     // Check if Gemini hit token ceiling and needs auto-continuation
-    if (lastFinishReason === "MAX_TOKENS" && continuationPass < MAX_CONTINUATION_PASSES && passOutputText.length > 0) {
+    if (lastFinishReason === "MAX_TOKENS" && continuationPass < MAX_CONTINUATION_PASSES) {
+      if (inReasoning) {
+        inReasoning = false;
+        await sendEvent({ type: "chunk", text: "\n</think>\n\n" });
+      }
       console.log(`[Lemur AI] Gemini reached MAX_TOKENS on pass ${continuationPass + 1}. Auto-continuing response seamlessly...`);
       continuationPass++;
-      contents.push({ role: "model", parts: [{ text: passOutputText }] });
-      contents.push({
-        role: "user",
-        parts: [{ text: "Please continue writing seamlessly from exactly where you left off. Do not repeat any words, phrases, or code already written. Continue immediately with the next part of the answer." }],
-      });
+      const textToAppend = passOutputText.length > 0 ? passOutputText : (passAllTokens.length > 0 ? "Reasoning complete." : "");
+      if (textToAppend) {
+        contents.push({ role: "model", parts: [{ text: textToAppend }] });
+        contents.push({
+          role: "user",
+          parts: [{ text: "Please continue writing seamlessly from exactly where you left off. Do not repeat any words, phrases, or code already written. Continue immediately with the next part of the answer without thinking." }],
+        });
+      }
       continue;
     }
 
@@ -1191,6 +1213,12 @@ async function streamOpenRouter(
         await sendEvent({ type: "chunk", text: "\n</think>\n\n" });
       }
     } catch (readErr) {
+      if (inReasoning) {
+        inReasoning = false;
+        try {
+          await sendEvent({ type: "chunk", text: "\n</think>\n\n" });
+        } catch {}
+      }
       if (totalTokensStreamed === 0) throw readErr;
       console.warn(`[Lemur AI] OpenRouter read interrupted:`, readErr);
       await sendEvent({ type: "truncated", reason: "stream_interrupted" });

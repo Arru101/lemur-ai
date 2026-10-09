@@ -147,6 +147,9 @@ export default function Home() {
   // Custom dropdown selector state
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
   
+  // Live Thinking / Deep Reasoning Toggle State
+  const [liveThinkingEnabled, setLiveThinkingEnabled] = useState(true);
+
   // Excel Learning Guide (32-Page) PDF Session state
   const [excelGuideOpen, setExcelGuideOpen] = useState(false);
   
@@ -238,6 +241,12 @@ export default function Home() {
         if (savedModel === "cohere-code") setModel("nemotron-super");
         else if (savedModel === "gemma-31b") setModel("dots-note");
         else setModel(savedModel);
+      }
+
+      // Live Reasoning Preference Loading
+      const savedThinking = safeStorage.getItem("lemur-live-thinking");
+      if (savedThinking !== null) {
+        setLiveThinkingEnabled(savedThinking === "1");
       }
 
       // Conversations Loading (using session storage)
@@ -817,6 +826,7 @@ export default function Home() {
           model,
           language,
           file: fileObj || null,
+          enableThinking: liveThinkingEnabled,
         }),
       });
 
@@ -1406,6 +1416,26 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Live Thinking Toggle */}
+            <button
+              type="button"
+              onClick={() => {
+                const nextState = !liveThinkingEnabled;
+                setLiveThinkingEnabled(nextState);
+                safeStorage.setItem("lemur-live-thinking", nextState ? "1" : "0");
+                addToast("info", nextState ? "Live Reasoning ON (Deep thinking active)" : "Live Reasoning OFF (Instant fast answers)");
+              }}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[11px] font-semibold apple-spring active:scale-95 transition-all cursor-pointer ${
+                liveThinkingEnabled
+                  ? "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/25 shadow-sm"
+                  : "bg-black/[0.04] dark:bg-[#131625] text-neutral-500 dark:text-neutral-400 border-black/[0.08] dark:border-white/10"
+              }`}
+              title={liveThinkingEnabled ? "Live Reasoning ON: Models show deep thought process. Click to disable for instant fast answers." : "Live Reasoning OFF: Fast instant answers without thinking. Click to enable deep reasoning."}
+            >
+              <Brain className={`w-3.5 h-3.5 ${liveThinkingEnabled ? "text-cyan-500 dark:text-cyan-400 animate-pulse" : "text-neutral-400"}`} />
+              <span className="hidden sm:inline">{liveThinkingEnabled ? "Thinking On" : "Thinking Off"}</span>
+            </button>
+
             <button
               onClick={handleNewChat}
               className="group w-9 h-9 flex items-center justify-center rounded-xl bg-black/[0.04] dark:bg-[#131625] hover:bg-black/[0.08] dark:hover:bg-[#1a1f33] border border-black/[0.08] dark:border-white/12 hover:dark:border-indigo-400/40 text-foreground apple-spring shadow-sm active:scale-95"
