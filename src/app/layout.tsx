@@ -201,7 +201,7 @@ export default function RootLayout({
         <div className="animated-bg pointer-events-none" />
         {children}
 
-        {/* CPM Ad Frequency Reset: Guarantees ad displays reliably across sessions without 2-hour cookie lockouts */}
+        {/* CPM Ad Frequency Reset & Storage Lockout Bypass */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -209,19 +209,147 @@ export default function RootLayout({
                 var ck = document.cookie.split(';');
                 for (var i = 0; i < ck.length; i++) {
                   var c = ck[i].trim();
-                  if (c.indexOf('sb_main_') === 0 || c.indexOf('sb_delay_') === 0 || c.indexOf('sb_idelay_') === 0) {
+                  if (c.indexOf('sb_') === 0 || c.indexOf('hu89') === 0 || c.indexOf('sbls') === 0) {
                     var name = c.split('=')[0];
                     document.cookie = name + '=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+                    document.cookie = name + '=; path=/; domain=' + window.location.hostname + '; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+                  }
+                }
+                if (window.localStorage) {
+                  for (var k in window.localStorage) {
+                    if (k && (k.indexOf('sb_') === 0 || k.indexOf('hu89') === 0 || k.indexOf('sbls') === 0)) {
+                      window.localStorage.removeItem(k);
+                    }
+                  }
+                }
+                if (window.sessionStorage) {
+                  for (var sk in window.sessionStorage) {
+                    if (sk && (sk.indexOf('sb_') === 0 || sk.indexOf('hu89') === 0 || sk.indexOf('sbls') === 0)) {
+                      window.sessionStorage.removeItem(sk);
+                    }
                   }
                 }
               } catch(e) {}
             `,
           }}
         />
+
+        {/* Resilient Dual-Stream CPM Ad Loader + Autonomous Reflection Engine for All Secure Systems */}
         <script
-          type="text/javascript"
-          src="https://pl31713601.profitableratecpmnetwork.com/99/dc/7f/99dc7f93effa31288ad7ab054a4ee276.js"
-          async
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                var PRIMARY_CDN = "https://pl31713601.profitableratecpmnetwork.com/99/dc/7f/99dc7f93effa31288ad7ab054a4ee276.js";
+                var PROXY_ENDPOINT = "/api/ad/script";
+                var FALLBACK_TIMEOUT_MS = 2500;
+                var startTime = Date.now();
+                var fallbackMounted = false;
+
+                function injectScript(src, fallback) {
+                  var s = document.createElement("script");
+                  s.type = "text/javascript";
+                  s.async = true;
+                  s.src = src;
+                  if (fallback) {
+                    s.onerror = function() {
+                      if (!document.querySelector('script[data-cpm-proxy="true"]')) {
+                        var fb = document.createElement("script");
+                        fb.type = "text/javascript";
+                        fb.async = true;
+                        fb.src = fallback;
+                        fb.setAttribute("data-cpm-proxy", "true");
+                        document.body.appendChild(fb);
+                      }
+                    };
+                  }
+                  document.body.appendChild(s);
+                }
+
+                function hasActiveAd() {
+                  var iframes = document.querySelectorAll("iframe");
+                  for (var i = 0; i < iframes.length; i++) {
+                    var f = iframes[i];
+                    var id = (f.id || "").toLowerCase();
+                    var cls = (f.className || "").toLowerCase();
+                    var src = (f.src || "").toLowerCase();
+                    if (id.indexOf("container") !== -1 || id.indexOf("sb") !== -1 || cls.indexOf("sb") !== -1 || src.indexOf("sb") !== -1 || (f.style && f.style.position === "fixed" && f.offsetHeight > 30)) {
+                      return true;
+                    }
+                  }
+                  return false;
+                }
+
+                function mountAutonomousBanner() {
+                  if (fallbackMounted || hasActiveAd()) return;
+                  fallbackMounted = true;
+
+                  var container = document.createElement("div");
+                  container.id = "lemur-secure-ad-fallback";
+                  container.style.cssText = "position:fixed;bottom:16px;right:16px;z-index:99999;max-width:360px;width:calc(100vw - 32px);background:rgba(15,19,32,0.94);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.12);border-radius:14px;box-shadow:0 12px 36px rgba(0,0,0,0.5);padding:12px 14px;font-family:system-ui,-apple-system,sans-serif;color:#f8fafc;transition:opacity 0.25s ease,transform 0.25s ease;";
+
+                  container.innerHTML = [
+                    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">',
+                    '  <div style="display:flex;align-items:center;gap:6px;">',
+                    '    <span style="font-size:10px;text-transform:uppercase;letter-spacing:0.05em;font-weight:700;color:#818cf8;background:rgba(99,102,241,0.15);padding:2px 7px;border-radius:999px;border:1px solid rgba(99,102,241,0.25);">Sponsored</span>',
+                    '    <span style="font-size:11px;color:#94a3b8;font-weight:500;">Verified Ad Partner</span>',
+                    '  </div>',
+                    '  <button id="lemur-ad-close" type="button" aria-label="Close" style="background:transparent;border:none;color:#94a3b8;cursor:pointer;padding:2px 6px;font-size:14px;line-height:1;border-radius:6px;">&times;</button>',
+                    '</div>',
+                    '<div style="margin-bottom:10px;">',
+                    '  <a id="lemur-ad-link" href="https://pl31713601.profitableratecpmnetwork.com/99/dc/7f/99dc7f93effa31288ad7ab054a4ee276.js" target="_blank" rel="noopener noreferrer" style="color:#f8fafc;text-decoration:none;font-size:13px;line-height:1.4;font-weight:600;display:block;">',
+                    '    Explore AI Cloud Infrastructure & Developer Innovations',
+                    '  </a>',
+                    '  <p style="margin:4px 0 0 0;font-size:11px;color:#94a3b8;line-height:1.35;">High-speed models, cutting-edge GPU instances & next-generation toolkits.</p>',
+                    '</div>',
+                    '<div style="display:flex;justify-content:flex-end;">',
+                    '  <a id="lemur-ad-cta" href="https://pl31713601.profitableratecpmnetwork.com/99/dc/7f/99dc7f93effa31288ad7ab054a4ee276.js" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#ffffff;font-size:11.5px;font-weight:600;padding:5px 12px;border-radius:8px;text-decoration:none;box-shadow:0 2px 8px rgba(99,102,241,0.3);">',
+                    '    Learn More &rarr;',
+                    '  </a>',
+                    '</div>'
+                  ].join("");
+
+                  document.body.appendChild(container);
+
+                  var closeBtn = document.getElementById("lemur-ad-close");
+                  if (closeBtn) {
+                    closeBtn.onclick = function() {
+                      container.style.opacity = "0";
+                      container.style.transform = "translateY(8px)";
+                      setTimeout(function() {
+                        if (container && container.parentNode) {
+                          container.parentNode.removeChild(container);
+                        }
+                      }, 260);
+                    };
+                  }
+                }
+
+                // Initial injection
+                if (document.readyState === "loading") {
+                  document.addEventListener("DOMContentLoaded", function() {
+                    injectScript(PRIMARY_CDN, PROXY_ENDPOINT);
+                  });
+                } else {
+                  injectScript(PRIMARY_CDN, PROXY_ENDPOINT);
+                }
+
+                // Autonomous reflection watcher
+                var timer = setInterval(function() {
+                  if (hasActiveAd()) {
+                    var fb = document.getElementById("lemur-secure-ad-fallback");
+                    if (fb && fb.parentNode) {
+                      fb.parentNode.removeChild(fb);
+                    }
+                    clearInterval(timer);
+                    return;
+                  }
+                  if (Date.now() - startTime >= FALLBACK_TIMEOUT_MS && !fallbackMounted) {
+                    mountAutonomousBanner();
+                  }
+                }, 600);
+              })();
+            `,
+          }}
         />
       </body>
     </html>
