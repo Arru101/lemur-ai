@@ -38,6 +38,7 @@ interface Message {
   model?: string;
   feedback?: "up" | "down" | null;
   timestamp: number;
+  truncated?: boolean;
 }
 
 interface Conversation {
@@ -746,7 +747,7 @@ export default function Home() {
     });
   }, []);
 
-  const updateLastAssistantMessage = useCallback((chatId: string, content: string, modelName?: string) => {
+  const updateLastAssistantMessage = useCallback((chatId: string, content: string, modelName?: string, truncated?: boolean) => {
     setConversations((prev) => {
       const updated = prev.map((c) => {
         if (c.id === chatId) {
@@ -757,6 +758,7 @@ export default function Home() {
               ...msgs[lastIdx],
               content,
               model: modelName || msgs[lastIdx].model,
+              truncated: truncated !== undefined ? truncated : msgs[lastIdx].truncated,
             };
           }
           return { ...c, messages: msgs };
@@ -773,26 +775,33 @@ export default function Home() {
     chatId: string,
     existingMessages: Message[],
     payloadMessages: ChatPayloadMessage[],
-    fileObj?: AttachedFilePayload | null
+    fileObj?: AttachedFilePayload | null,
+    initialAssistantContent?: string,
+    initialModelName?: string
   ) => {
     setLoading(true);
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
-    // Append initial assistant placeholder
-    const placeholderMessage: Message = {
-      role: "assistant",
-      content: "",
-      model: "Lemur AI",
-      timestamp: getNow(),
-    };
+    let accumulatedText = initialAssistantContent || "";
+    let activeModelName = initialModelName || "Lemur AI";
+    let isTruncated = false;
 
-    const messagesWithAssistant = [...existingMessages, placeholderMessage];
-    updateChatMessages(chatId, messagesWithAssistant);
+    if (!initialAssistantContent) {
+      // Append initial assistant placeholder
+      const placeholderMessage: Message = {
+        role: "assistant",
+        content: "",
+        model: "Lemur AI",
+        timestamp: getNow(),
+      };
+      const messagesWithAssistant = [...existingMessages, placeholderMessage];
+      updateChatMessages(chatId, messagesWithAssistant);
+    } else {
+      updateChatMessages(chatId, existingMessages);
+    }
     setTimeout(scrollToBottom, 50);
 
-    let accumulatedText = "";
-    let activeModelName = "Lemur AI";
     let streamRafId: number | null = null;
 
     try {
@@ -833,7 +842,7 @@ export default function Home() {
             cancelAnimationFrame(streamRafId);
             streamRafId = null;
           }
-          updateLastAssistantMessage(chatId, accumulatedText, activeModelName);
+          updateLastAssistantMessage(chatId, accumulatedText, activeModelName, isTruncated);
           autoScrollToBottom();
           lastRenderTime = now;
           return;
@@ -845,14 +854,14 @@ export default function Home() {
           streamRafId = requestAnimationFrame(() => {
             streamRafId = null;
             lastRenderTime = performance.now();
-            updateLastAssistantMessage(chatId, accumulatedText, activeModelName);
+            updateLastAssistantMessage(chatId, accumulatedText, activeModelName, isTruncated);
             autoScrollToBottom();
           });
         } else if (!streamRafId) {
           streamRafId = requestAnimationFrame(() => {
             streamRafId = null;
             lastRenderTime = performance.now();
-            updateLastAssistantMessage(chatId, accumulatedText, activeModelName);
+            updateLastAssistantMessage(chatId, accumulatedText, activeModelName, isTruncated);
             autoScrollToBottom();
           });
         }
@@ -889,6 +898,9 @@ export default function Home() {
             } else if (data.type === "ping") {
               // Heartbeat ping keeping connection alive during deep reasoning / long answer queues
               continue;
+            } else if (data.type === "truncated") {
+              isTruncated = true;
+              hasNewTokens = true;
             } else if (data.type === "error") {
               if (!accumulatedText) {
                 throw new Error(data.error || "Streaming error from model.");
@@ -1125,6 +1137,43 @@ export default function Home() {
 
     scrollToBottom("smooth");
     await streamChatResponse(activeId, poppedMessages, payloadMessages);
+  };
+
+  // --- Message Continuation (Seamless, non-destructive extension of partial answers) ---
+  const handleContinueMessage = async (msgIdx?: number) => {
+    if (!activeId || loading) return;
+
+    const currentChat =
+      conversationsRef.current.find((c) => c.id === activeId) ||
+      conversations.find((c) => c.id === activeId);
+    if (!currentChat || currentChat.messages.length === 0) return;
+
+    const targetIdx = msgIdx !== undefined ? msgIdx : currentChat.messages.length - 1;
+    const targetMsg = currentChat.messages[targetIdx];
+    if (!targetMsg || targetMsg.role !== "assistant") return;
+
+    // Preserve all messages up to the target message
+    const historyUpToTarget = currentChat.messages.slice(0, targetIdx + 1);
+
+    const payloadMessages = historyUpToTarget.map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+
+    payloadMessages.push({
+      role: "user",
+      content: "Please continue writing seamlessly from exactly where you left off. Do not repeat any words, phrases, or code already written. Continue immediately with the next part of the answer.",
+    });
+
+    scrollToBottom("smooth");
+    await streamChatResponse(
+      activeId,
+      historyUpToTarget,
+      payloadMessages,
+      null,
+      targetMsg.content,
+      targetMsg.model
+    );
   };
 
   // --- Auto-grow textarea (rAF batched to eliminate layout thrash) ---
@@ -1500,6 +1549,7 @@ export default function Home() {
                     idx={idx}
                     message={msg}
                     onRegenerate={idx === messages.length - 1 ? handleRegenerate : undefined}
+                    onContinue={idx === messages.length - 1 && msg.role === "assistant" ? () => handleContinueMessage(idx) : undefined}
                     onFeedback={(type) => handleFeedback(idx, type)}
                     onEdit={(newContent) => handleEditUserMessage(idx, newContent)}
                     onSelectQuestion={(q) => handleSubmit(null, q)}

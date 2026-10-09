@@ -359,13 +359,14 @@ interface GeminiContent {
 }
 
 interface StreamEventPayload {
-  type: "meta" | "chunk" | "warning" | "error" | "done" | "ping";
+  type: "meta" | "chunk" | "warning" | "error" | "done" | "ping" | "truncated";
   model?: string;
   routedModelKey?: string;
   isSmartRouted?: boolean;
   text?: string;
   warning?: string;
   error?: string;
+  reason?: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -525,6 +526,15 @@ At the very end of your response, you MUST append exactly 3 short, insightful fo
       // Client disconnected
     }
   };
+
+  // Active 3-second heartbeat ping to prevent connection timeout across Netlify, proxies, and cellular data
+  const heartbeatTimer = setInterval(async () => {
+    try {
+      await sendEvent({ type: "ping" });
+    } catch {
+      clearInterval(heartbeatTimer);
+    }
+  }, 3000);
 
   // Asynchronous streaming worker with High-Concurrency Pool & Instant Seamless Failover
   (async () => {
@@ -696,6 +706,7 @@ At the very end of your response, you MUST append exactly 3 short, insightful fo
         error: errMsg,
       });
     } finally {
+      clearInterval(heartbeatTimer);
       try {
         await writer.close();
       } catch {}
@@ -712,7 +723,7 @@ At the very end of your response, you MUST append exactly 3 short, insightful fo
   });
 }
 
-// Direct Google Gemini SSE Streaming Handler with Fast Initial Timeout
+// Direct Google Gemini SSE Streaming Handler with Fast Timeout & Smart Auto-Continuation
 async function streamDirectGemini(
   messages: ChatMessagePayload[],
   systemPrompt: string,
@@ -780,143 +791,202 @@ async function streamDirectGemini(
   const thinkingBudget = options?.thinkingBudget !== undefined ? options.thinkingBudget : defaultBudget;
 
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:streamGenerateContent?alt=sse&key=${apiKey}`;
-  const payload = {
-    contents,
-    systemInstruction: {
-      parts: [{ text: systemPrompt }],
-    },
-    generationConfig: {
-      temperature: options?.temperature ?? 0.45,
-      maxOutputTokens: 8192,
-      ...(thinkingBudget > 0 ? { thinkingConfig: { thinkingBudget } } : {}),
-    },
-    safetySettings: [
-      { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
-      { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
-      { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_ONLY_HIGH" },
-      { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" },
-    ],
-  };
 
-  // Fast timeout: Upstream must return headers and first token within 10 seconds or we failover immediately
-  const abortCtrl = new AbortController();
-  let connectTimer: NodeJS.Timeout | null = setTimeout(() => {
-    abortCtrl.abort(new Error(`Timeout waiting for initial response from ${modelName}`));
-  }, 10000);
-
-  let res: Response;
-  try {
-    res = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      signal: abortCtrl.signal,
-    });
-  } catch (fetchErr) {
-    if (connectTimer) clearTimeout(connectTimer);
-    throw fetchErr;
-  }
-
-  if (!res.ok) {
-    if (connectTimer) clearTimeout(connectTimer);
-    const errText = await res.text();
-    throw new Error(`Direct Gemini API failed (${res.status}): ${errText}`);
-  }
-
-  if (!res.body) {
-    if (connectTimer) clearTimeout(connectTimer);
-    return false;
-  }
-
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-  let tokensStreamed = 0;
-  let inReasoning = false;
+  let totalTokensStreamed = 0;
   let tokenStartNotified = false;
+  let inReasoning = false;
+  let continuationPass = 0;
+  const MAX_CONTINUATION_PASSES = 2; // Up to 3 total passes = ~24,576 output tokens!
 
-  const processCandidates = async (candidates: Array<{ content?: { parts?: Array<{ text?: string; thought?: boolean }> } }>) => {
-    for (const cand of candidates || []) {
-      for (const part of cand.content?.parts || []) {
-        if (!part.text) continue;
+  while (continuationPass <= MAX_CONTINUATION_PASSES) {
+    const payload: {
+      contents: GeminiContent[];
+      systemInstruction: { parts: [{ text: string }] };
+      generationConfig: {
+        temperature: number;
+        maxOutputTokens: number;
+        thinkingConfig?: { thinkingBudget: number };
+      };
+      safetySettings: Array<{ category: string; threshold: string }>;
+    } = {
+      contents,
+      systemInstruction: {
+        parts: [{ text: systemPrompt }],
+      },
+      generationConfig: {
+        temperature: options?.temperature ?? 0.45,
+        maxOutputTokens: 8192,
+        ...(continuationPass === 0 && thinkingBudget > 0 ? { thinkingConfig: { thinkingBudget } } : {}),
+      },
+      safetySettings: [
+        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
+        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_ONLY_HIGH" },
+        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" },
+      ],
+    };
 
-        // Clear the connection timeout once tokens flow
-        if (connectTimer) {
-          clearTimeout(connectTimer);
-          connectTimer = null;
+    const abortCtrl = new AbortController();
+    let connectTimer: NodeJS.Timeout | null = setTimeout(() => {
+      abortCtrl.abort(new Error(`Timeout waiting for initial response from ${modelName}`));
+    }, 10000);
+
+    let res: Response;
+    try {
+      res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal: abortCtrl.signal,
+      });
+    } catch (fetchErr) {
+      if (connectTimer) clearTimeout(connectTimer);
+      if (totalTokensStreamed === 0) throw fetchErr;
+      console.warn(`[Lemur AI] Gemini stream cut off during pass ${continuationPass}:`, fetchErr);
+      await sendEvent({ type: "truncated", reason: "stream_interrupted" });
+      return true;
+    }
+
+    if (!res.ok) {
+      if (connectTimer) clearTimeout(connectTimer);
+      if (totalTokensStreamed === 0) {
+        const errText = await res.text();
+        throw new Error(`Direct Gemini API failed (${res.status}): ${errText}`);
+      }
+      await sendEvent({ type: "truncated", reason: "provider_error" });
+      return true;
+    }
+
+    if (!res.body) {
+      if (connectTimer) clearTimeout(connectTimer);
+      return totalTokensStreamed > 0;
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let passOutputText = "";
+    let lastFinishReason: string | null = null;
+
+    const processCandidates = async (
+      candidates: Array<{
+        content?: { parts?: Array<{ text?: string; thought?: boolean }> };
+        finishReason?: string;
+      }>
+    ) => {
+      for (const cand of candidates || []) {
+        if (cand.finishReason) {
+          lastFinishReason = cand.finishReason;
         }
 
-        if (!tokenStartNotified && options?.onTokenStart) {
-          tokenStartNotified = true;
-          await options.onTokenStart();
-        }
+        for (const part of cand.content?.parts || []) {
+          if (!part.text) continue;
 
-        if (part.thought) {
-          if (!inReasoning) {
-            inReasoning = true;
-            await sendEvent({ type: "chunk", text: "<think>\n" });
+          if (connectTimer) {
+            clearTimeout(connectTimer);
+            connectTimer = null;
           }
-          await sendEvent({ type: "chunk", text: part.text });
-          tokensStreamed++;
-        } else {
-          if (inReasoning) {
-            inReasoning = false;
-            await sendEvent({ type: "chunk", text: "\n</think>\n\n" });
+
+          if (!tokenStartNotified && options?.onTokenStart) {
+            tokenStartNotified = true;
+            await options.onTokenStart();
           }
-          await sendEvent({ type: "chunk", text: part.text });
-          tokensStreamed++;
+
+          if (part.thought) {
+            if (!inReasoning) {
+              inReasoning = true;
+              await sendEvent({ type: "chunk", text: "<think>\n" });
+            }
+            await sendEvent({ type: "chunk", text: part.text });
+            totalTokensStreamed++;
+          } else {
+            if (inReasoning) {
+              inReasoning = false;
+              await sendEvent({ type: "chunk", text: "\n</think>\n\n" });
+            }
+            await sendEvent({ type: "chunk", text: part.text });
+            passOutputText += part.text;
+            totalTokensStreamed++;
+          }
         }
       }
-    }
-  };
+    };
 
-  try {
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
 
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
 
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed || !trimmed.startsWith("data: ")) continue;
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || !trimmed.startsWith("data: ")) continue;
 
-        const dataStr = trimmed.slice(6).trim();
-        if (!dataStr || dataStr === "[DONE]") continue;
+          const dataStr = trimmed.slice(6).trim();
+          if (!dataStr || dataStr === "[DONE]") continue;
 
+          try {
+            const parsed = JSON.parse(dataStr);
+            if (parsed.candidates) {
+              await processCandidates(parsed.candidates);
+            }
+          } catch {
+            // Skip unparseable lines
+          }
+        }
+      }
+
+      if (buffer.startsWith("data: ")) {
         try {
-          const parsed = JSON.parse(dataStr);
+          const parsed = JSON.parse(buffer.slice(6).trim());
           if (parsed.candidates) {
             await processCandidates(parsed.candidates);
           }
-        } catch {
-          // Skip unparseable lines
-        }
+        } catch {}
       }
+
+      if (inReasoning) {
+        inReasoning = false;
+        await sendEvent({ type: "chunk", text: "\n</think>\n\n" });
+      }
+    } catch (readErr) {
+      if (totalTokensStreamed === 0) throw readErr;
+      console.warn(`[Lemur AI] Gemini stream read interrupted:`, readErr);
+      await sendEvent({ type: "truncated", reason: "stream_interrupted" });
+      return true;
+    } finally {
+      if (connectTimer) clearTimeout(connectTimer);
     }
 
-    if (buffer.startsWith("data: ")) {
-      try {
-        const parsed = JSON.parse(buffer.slice(6).trim());
-        if (parsed.candidates) {
-          await processCandidates(parsed.candidates);
-        }
-      } catch {}
+    // Check if Gemini hit token ceiling and needs auto-continuation
+    if (lastFinishReason === "MAX_TOKENS" && continuationPass < MAX_CONTINUATION_PASSES && passOutputText.length > 0) {
+      console.log(`[Lemur AI] Gemini reached MAX_TOKENS on pass ${continuationPass + 1}. Auto-continuing response seamlessly...`);
+      continuationPass++;
+      contents.push({ role: "model", parts: [{ text: passOutputText }] });
+      contents.push({
+        role: "user",
+        parts: [{ text: "Please continue writing seamlessly from exactly where you left off. Do not repeat any words, phrases, or code already written. Continue immediately with the next part of the answer." }],
+      });
+      continue;
     }
 
-    if (inReasoning) {
-      await sendEvent({ type: "chunk", text: "\n</think>\n\n" });
+    if (lastFinishReason === "MAX_TOKENS" && continuationPass >= MAX_CONTINUATION_PASSES) {
+      console.log(`[Lemur AI] Gemini reached max continuation passes. Marking truncated.`);
+      await sendEvent({ type: "truncated", reason: "max_tokens" });
+      break;
     }
-  } finally {
-    if (connectTimer) clearTimeout(connectTimer);
+
+    // Normal termination (e.g. STOP)
+    break;
   }
 
-  return tokensStreamed > 0;
+  return totalTokensStreamed > 0;
 }
 
-// OpenRouter SSE Streaming Handler with Fast Timeout & Heartbeat Pings
+// OpenRouter SSE Streaming Handler with Fast Timeout, Heartbeat Pings & Smart Auto-Continuation
 async function streamOpenRouter(
   messages: ChatMessagePayload[],
   systemPrompt: string,
@@ -972,138 +1042,183 @@ async function streamOpenRouter(
     }
   }
 
-  const abortCtrl = new AbortController();
-  let connectTimer: NodeJS.Timeout | null = setTimeout(() => {
-    abortCtrl.abort(new Error(`Timeout waiting for initial response from OpenRouter ${modelId}`));
-  }, 10000);
-
-  let res: Response;
-  try {
-    res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://lemursai.netlify.app",
-        "X-Title": "Lemur AI",
-      },
-      signal: abortCtrl.signal,
-      body: JSON.stringify({
-        model: modelId,
-        messages: openrouterMessages,
-        temperature: options?.temperature ?? 0.45,
-        stream: true,
-      }),
-    });
-  } catch (fetchErr) {
-    if (connectTimer) clearTimeout(connectTimer);
-    throw fetchErr;
-  }
-
-  if (!res.ok) {
-    if (connectTimer) clearTimeout(connectTimer);
-    const errText = await res.text();
-    throw new Error(`OpenRouter failed (${res.status}): ${errText}`);
-  }
-
-  if (!res.body) {
-    if (connectTimer) clearTimeout(connectTimer);
-    return false;
-  }
-
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-  let tokensStreamed = 0;
-  let inReasoning = false;
+  let totalTokensStreamed = 0;
   let tokenStartNotified = false;
+  let inReasoning = false;
+  let continuationPass = 0;
+  const MAX_CONTINUATION_PASSES = 2;
 
-  try {
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
+  while (continuationPass <= MAX_CONTINUATION_PASSES) {
+    const abortCtrl = new AbortController();
+    let connectTimer: NodeJS.Timeout | null = setTimeout(() => {
+      abortCtrl.abort(new Error(`Timeout waiting for initial response from OpenRouter ${modelId}`));
+    }, 10000);
 
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
+    let res: Response;
+    try {
+      res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "https://lemursai.netlify.app",
+          "X-Title": "Lemur AI",
+        },
+        signal: abortCtrl.signal,
+        body: JSON.stringify({
+          model: modelId,
+          messages: openrouterMessages,
+          temperature: options?.temperature ?? 0.45,
+          max_tokens: 8192,
+          stream: true,
+        }),
+      });
+    } catch (fetchErr) {
+      if (connectTimer) clearTimeout(connectTimer);
+      if (totalTokensStreamed === 0) throw fetchErr;
+      console.warn(`[Lemur AI] OpenRouter stream cut off during pass ${continuationPass}:`, fetchErr);
+      await sendEvent({ type: "truncated", reason: "stream_interrupted" });
+      return true;
+    }
 
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed) continue;
+    if (!res.ok) {
+      if (connectTimer) clearTimeout(connectTimer);
+      if (totalTokensStreamed === 0) {
+        const errText = await res.text();
+        throw new Error(`OpenRouter failed (${res.status}): ${errText}`);
+      }
+      await sendEvent({ type: "truncated", reason: "provider_error" });
+      return true;
+    }
 
-        // OpenRouter keeps sending ": OPENROUTER PROCESSING" comments while in queue
-        if (trimmed.startsWith(":")) {
-          await sendEvent({ type: "ping" });
-          continue;
-        }
+    if (!res.body) {
+      if (connectTimer) clearTimeout(connectTimer);
+      return totalTokensStreamed > 0;
+    }
 
-        if (!trimmed.startsWith("data: ")) continue;
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let passOutputText = "";
+    let lastFinishReason: string | null = null;
 
-        const dataStr = trimmed.slice(6).trim();
-        if (dataStr === "[DONE]") continue;
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
 
-        try {
-          const parsed = JSON.parse(dataStr);
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
 
-          // Detect upstream error payload
-          if (parsed.error) {
-            throw new Error(parsed.error.message || "OpenRouter provider error");
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+
+          // OpenRouter keeps sending ": OPENROUTER PROCESSING" comments while in queue
+          if (trimmed.startsWith(":")) {
+            await sendEvent({ type: "ping" });
+            continue;
           }
 
-          const choice = parsed.choices?.[0];
-          const delta = choice?.delta;
+          if (!trimmed.startsWith("data: ")) continue;
 
-          // 1. Capture Reasoning tokens
-          const reasoningChunk = delta?.reasoning || delta?.thinking;
-          if (reasoningChunk) {
-            if (connectTimer) {
-              clearTimeout(connectTimer);
-              connectTimer = null;
-            }
-            if (!tokenStartNotified && options?.onTokenStart) {
-              tokenStartNotified = true;
-              await options.onTokenStart();
-            }
-            if (!inReasoning) {
-              inReasoning = true;
-              await sendEvent({ type: "chunk", text: "<think>\n" });
-            }
-            await sendEvent({ type: "chunk", text: reasoningChunk });
-            tokensStreamed++;
-          }
+          const dataStr = trimmed.slice(6).trim();
+          if (dataStr === "[DONE]") continue;
 
-          // 2. Capture Content tokens
-          const contentChunk = delta?.content;
-          if (contentChunk) {
-            if (connectTimer) {
-              clearTimeout(connectTimer);
-              connectTimer = null;
+          try {
+            const parsed = JSON.parse(dataStr);
+
+            if (parsed.error) {
+              throw new Error(parsed.error.message || "OpenRouter provider error");
             }
-            if (!tokenStartNotified && options?.onTokenStart) {
-              tokenStartNotified = true;
-              await options.onTokenStart();
+
+            const choice = parsed.choices?.[0];
+            if (choice?.finish_reason) {
+              lastFinishReason = choice.finish_reason;
             }
-            if (inReasoning) {
-              inReasoning = false;
-              await sendEvent({ type: "chunk", text: "\n</think>\n\n" });
+
+            const delta = choice?.delta;
+
+            // 1. Capture Reasoning tokens
+            const reasoningChunk = delta?.reasoning || delta?.thinking;
+            if (reasoningChunk) {
+              if (connectTimer) {
+                clearTimeout(connectTimer);
+                connectTimer = null;
+              }
+              if (!tokenStartNotified && options?.onTokenStart) {
+                tokenStartNotified = true;
+                await options.onTokenStart();
+              }
+              if (!inReasoning) {
+                inReasoning = true;
+                await sendEvent({ type: "chunk", text: "<think>\n" });
+              }
+              await sendEvent({ type: "chunk", text: reasoningChunk });
+              totalTokensStreamed++;
             }
-            await sendEvent({ type: "chunk", text: contentChunk });
-            tokensStreamed++;
-          }
-        } catch (e: unknown) {
-          if (tokensStreamed === 0) {
-            throw e;
+
+            // 2. Capture Content tokens
+            const contentChunk = delta?.content;
+            if (contentChunk) {
+              if (connectTimer) {
+                clearTimeout(connectTimer);
+                connectTimer = null;
+              }
+              if (!tokenStartNotified && options?.onTokenStart) {
+                tokenStartNotified = true;
+                await options.onTokenStart();
+              }
+              if (inReasoning) {
+                inReasoning = false;
+                await sendEvent({ type: "chunk", text: "\n</think>\n\n" });
+              }
+              await sendEvent({ type: "chunk", text: contentChunk });
+              passOutputText += contentChunk;
+              totalTokensStreamed++;
+            }
+          } catch (e: unknown) {
+            if (totalTokensStreamed === 0) {
+              throw e;
+            }
           }
         }
       }
+
+      if (inReasoning) {
+        inReasoning = false;
+        await sendEvent({ type: "chunk", text: "\n</think>\n\n" });
+      }
+    } catch (readErr) {
+      if (totalTokensStreamed === 0) throw readErr;
+      console.warn(`[Lemur AI] OpenRouter read interrupted:`, readErr);
+      await sendEvent({ type: "truncated", reason: "stream_interrupted" });
+      return true;
+    } finally {
+      if (connectTimer) clearTimeout(connectTimer);
     }
 
-    if (inReasoning) {
-      await sendEvent({ type: "chunk", text: "\n</think>\n\n" });
+    // Check if OpenRouter hit length limit and needs auto-continuation
+    if (lastFinishReason === "length" && continuationPass < MAX_CONTINUATION_PASSES && passOutputText.length > 0) {
+      console.log(`[Lemur AI] OpenRouter reached length limit on pass ${continuationPass + 1}. Auto-continuing response seamlessly...`);
+      continuationPass++;
+      openrouterMessages.push({ role: "assistant", content: passOutputText });
+      openrouterMessages.push({
+        role: "user",
+        content: "Please continue writing seamlessly from exactly where you left off. Do not repeat any words, phrases, or code already written. Continue immediately with the next part of the answer.",
+      });
+      continue;
     }
-  } finally {
-    if (connectTimer) clearTimeout(connectTimer);
+
+    if (lastFinishReason === "length" && continuationPass >= MAX_CONTINUATION_PASSES) {
+      console.log(`[Lemur AI] OpenRouter reached max continuation passes. Marking truncated.`);
+      await sendEvent({ type: "truncated", reason: "max_tokens" });
+      break;
+    }
+
+    break;
   }
 
-  return tokensStreamed > 0;
+  return totalTokensStreamed > 0;
 }

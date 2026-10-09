@@ -37,6 +37,7 @@ interface Message {
   model?: string;
   feedback?: "up" | "down" | null;
   timestamp: number;
+  truncated?: boolean;
 }
 
 interface ChatMessageProps {
@@ -50,6 +51,7 @@ interface ChatMessageProps {
   isLast: boolean;
   isGenerating?: boolean;
   onSelectQuestion?: (question: string) => void;
+  onContinue?: () => void;
 }
 
 function ChatMessageComponent({
@@ -63,6 +65,7 @@ function ChatMessageComponent({
   isLast,
   isGenerating = false,
   onSelectQuestion,
+  onContinue,
 }: ChatMessageProps) {
   const isUser = message.role === "user";
   const [copiedText, setCopiedText] = useState(false);
@@ -71,8 +74,8 @@ function ChatMessageComponent({
   // State for collapsible thought process
   const [thoughtExpanded, setThoughtExpanded] = useState(false);
 
-  // Parse <think>...</think> reasoning tags and <related_questions> tags with memoization
-  const { thinkingText, isThinkingActive, content: displayContent, questions } = useMemo(() => {
+  // Parse <think>...</think> reasoning tags, <related_questions>, and auto-heal unclosed code blocks
+  const { thinkingText, isThinkingActive, content: displayContent, rawCleanedContent, isCodeBlockUnclosed, questions } = useMemo(() => {
     const rawContent = message.content || "";
 
     let thinkPart: string | null = null;
@@ -101,40 +104,38 @@ function ChatMessageComponent({
     const regex = /<related_questions>([\s\S]*?)<\/related_questions>/i;
     const match = remainingContent.match(regex);
 
+    let cleaned = remainingContent;
+    let parsedQuestions: string[] = [];
+
     if (match) {
       const questionsText = match[1];
-      const cleanedContent = remainingContent.replace(regex, "").trim();
+      cleaned = remainingContent.replace(regex, "").trim();
 
-      const parsedQuestions = questionsText
+      parsedQuestions = questionsText
         .split("\n")
         .map((q) => q.trim().replace(/^[-*\d.]+\s*/, ""))
         .filter((q) => q.length > 0)
         .slice(0, 3);
-
-      return {
-        thinkingText: thinkPart,
-        isThinkingActive: isThinkingOngoing,
-        content: cleanedContent,
-        questions: parsedQuestions,
-      };
+    } else {
+      // Clean any partial unclosed <related_questions tag during real-time streaming
+      const partialTagIdx = remainingContent.indexOf("<related_questions>");
+      if (partialTagIdx !== -1) {
+        cleaned = remainingContent.slice(0, partialTagIdx).trim();
+      }
     }
 
-    // Clean any partial unclosed <related_questions tag during real-time streaming
-    const partialTagIdx = remainingContent.indexOf("<related_questions>");
-    if (partialTagIdx !== -1) {
-      return {
-        thinkingText: thinkPart,
-        isThinkingActive: isThinkingOngoing,
-        content: remainingContent.slice(0, partialTagIdx).trim(),
-        questions: [],
-      };
-    }
+    // Auto-heal unclosed code blocks so partial stream or truncation never breaks markdown rendering
+    const fenceMatches = cleaned.match(/```/g) || [];
+    const isCodeFenceUnclosed = fenceMatches.length % 2 === 1;
+    const safeContent = isCodeFenceUnclosed ? `${cleaned}\n\`\`\`` : cleaned;
 
     return {
       thinkingText: thinkPart,
       isThinkingActive: isThinkingOngoing,
-      content: remainingContent,
-      questions: [],
+      content: safeContent,
+      rawCleanedContent: cleaned,
+      isCodeBlockUnclosed: isCodeFenceUnclosed,
+      questions: parsedQuestions,
     };
   }, [message.content]);
 
@@ -661,6 +662,24 @@ function ChatMessageComponent({
           )}
         </div>
 
+        {/* Token ceiling or cut-off continuation prompt banner */}
+        {!isUser && !isGenerating && (message.truncated || isCodeBlockUnclosed) && onContinue && (
+          <div className="mt-2.5 pt-2 flex items-center justify-between gap-2.5 px-3 py-2 rounded-xl bg-amber-500/[0.08] dark:bg-amber-400/[0.06] border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300">
+            <span className="flex items-center gap-1.5 font-medium">
+              <Sparkles className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 animate-pulse" />
+              Response paused at length limit.
+            </span>
+            <button
+              type="button"
+              onClick={onContinue}
+              className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-semibold text-[11px] shadow-sm apple-spring active:scale-95 transition-all flex items-center gap-1 cursor-pointer"
+            >
+              Continue Answer
+              <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
+        )}
+
         {/* Modern Minimal Action Bar */}
         {!isGenerating && (
           <div className="flex items-center gap-1 mt-1.5 select-none text-neutral-500 dark:text-neutral-400 opacity-90 md:opacity-0 md:group-hover:opacity-100 touch-visible transition-all duration-150 w-fit">
@@ -682,7 +701,7 @@ function ChatMessageComponent({
             {/* Copy message button */}
             {!isEditing && (
               <button
-                onClick={(e) => copyToClipboard(e, displayContent)}
+                onClick={(e) => copyToClipboard(e, rawCleanedContent || displayContent)}
                 className="p-1.5 rounded-xl hover:bg-black/[0.06] dark:hover:bg-white/10 hover:text-foreground text-neutral-500 dark:text-neutral-400 apple-spring active:scale-95"
                 title="Copy Message"
               >
@@ -736,6 +755,17 @@ function ChatMessageComponent({
                   <ThumbsDown className="w-3.5 h-3.5" />
                 </button>
               </>
+            )}
+
+            {/* Continue response */}
+            {!isUser && !isEditing && isLast && onContinue && (
+              <button
+                onClick={onContinue}
+                className="p-1.5 rounded-xl hover:bg-black/[0.06] dark:hover:bg-white/10 hover:text-foreground text-amber-500 dark:text-amber-400 apple-spring active:scale-95"
+                title="Continue Generating"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+              </button>
             )}
 
             {/* Regenerate response */}
@@ -792,7 +822,8 @@ const ChatMessage = React.memo(ChatMessageComponent, (prevProps, nextProps) => {
     prevProps.isSpeaking === nextProps.isSpeaking &&
     prevProps.isLast === nextProps.isLast &&
     prevProps.isGenerating === nextProps.isGenerating &&
-    prevProps.idx === nextProps.idx
+    prevProps.idx === nextProps.idx &&
+    prevProps.onContinue === nextProps.onContinue
   );
 });
 
