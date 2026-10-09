@@ -141,65 +141,7 @@ export default function RootLayout({
           }}
         />
 
-        {/* Security Shield: Locks Right-Click, DevTools (F12, Ctrl/Cmd+Shift+I/J/C), Source Viewing, and Drag-Inspect */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                // Disable Right-Click Context Menu (while preserving native paste/copy for inputs)
-                document.addEventListener('contextmenu', function(e) {
-                  var target = e.target;
-                  if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
-                    return true;
-                  }
-                  e.preventDefault();
-                  return false;
-                }, { capture: true });
 
-                // Disable Developer Tools & Inspection Shortcuts
-                document.addEventListener('keydown', function(e) {
-                  // F12 key
-                  if (e.key === 'F12' || e.keyCode === 123) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    return false;
-                  }
-
-                  var isCtrlOrMeta = e.ctrlKey || e.metaKey;
-                  var isOptionOrShift = e.shiftKey || e.altKey;
-
-                  // Ctrl/Cmd + Shift/Option + (I, J, C, K, U) -> DevTools, Console, Inspector
-                  if (isCtrlOrMeta && isOptionOrShift) {
-                    var k = (e.key || '').toUpperCase();
-                    if (k === 'I' || k === 'J' || k === 'C' || k === 'K' || k === 'U') {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      return false;
-                    }
-                  }
-
-                  // Ctrl/Cmd + (U, S) -> View Page Source, Save Page
-                  if (isCtrlOrMeta && !isOptionOrShift) {
-                    var key = (e.key || '').toUpperCase();
-                    if (key === 'U' || key === 'S') {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      return false;
-                    }
-                  }
-                }, { capture: true });
-
-                // Prevent Image & Asset Dragging
-                document.addEventListener('dragstart', function(e) {
-                  if (e.target && (e.target.tagName === 'IMG' || e.target.tagName === 'A')) {
-                    e.preventDefault();
-                    return false;
-                  }
-                }, { capture: true });
-              })();
-            `,
-          }}
-        />
       </head>
       <body className="h-full bg-background text-foreground font-sans selection:bg-primary/25 selection:text-primary">
         <div className="animated-bg pointer-events-none" />
