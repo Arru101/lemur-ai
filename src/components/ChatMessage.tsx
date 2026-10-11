@@ -648,6 +648,7 @@ function ChatMessageComponent({
                               onClick={() => downloadCode(codeContent, lang)}
                               className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-neutral-300 hover:text-white transition-all duration-150 active:scale-95 text-xs font-medium border border-white/10 select-none cursor-pointer"
                               title="Download Code File"
+                              aria-label="Download Code File"
                             >
                               <Download className="w-3.5 h-3.5 opacity-75" />
                               <span className="text-[11px] hidden sm:inline">Save</span>
@@ -658,6 +659,7 @@ function ChatMessageComponent({
                               onClick={(e) => copyCode(e, codeContent, codeBlockId)}
                               className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-neutral-300 hover:text-white transition-all duration-150 active:scale-95 text-xs font-medium border border-white/10 select-none cursor-pointer"
                               title="Copy Code"
+                              aria-label="Copy Code"
                             >
                               {copiedCodeId === codeBlockId ? (
                                 <>
@@ -735,8 +737,9 @@ function ChatMessageComponent({
                   setEditContent(message.content);
                   setIsEditing(true);
                 }}
-                className="p-1.5 rounded-xl hover:bg-black/[0.06] dark:hover:bg-white/10 hover:text-foreground text-neutral-500 dark:text-neutral-400 apple-spring active:scale-95"
+                className="p-1.5 rounded-xl hover:bg-black/[0.06] dark:hover:bg-white/10 hover:text-foreground text-neutral-500 dark:text-neutral-400 apple-spring active:scale-95 cursor-pointer"
                 title="Edit Prompt"
+                aria-label="Edit Prompt"
               >
                 <Edit className="w-3.5 h-3.5" />
               </button>
@@ -746,8 +749,9 @@ function ChatMessageComponent({
             {!isEditing && (
               <button
                 onClick={(e) => copyToClipboard(e, rawCleanedContent || displayContent)}
-                className="p-1.5 rounded-xl hover:bg-black/[0.06] dark:hover:bg-white/10 hover:text-foreground text-neutral-500 dark:text-neutral-400 apple-spring active:scale-95"
+                className="p-1.5 rounded-xl hover:bg-black/[0.06] dark:hover:bg-white/10 hover:text-foreground text-neutral-500 dark:text-neutral-400 apple-spring active:scale-95 cursor-pointer"
                 title="Copy Message"
+                aria-label="Copy Message"
               >
                 {copiedText ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
@@ -757,10 +761,11 @@ function ChatMessageComponent({
             {!isUser && !isEditing && (
               <button
                 onClick={onToggleSpeech}
-                className={`flex items-center gap-1.5 p-1.5 rounded-xl hover:bg-black/[0.06] dark:hover:bg-white/10 hover:text-foreground text-neutral-500 dark:text-neutral-400 apple-spring active:scale-95 ${
+                className={`flex items-center gap-1.5 p-1.5 rounded-xl hover:bg-black/[0.06] dark:hover:bg-white/10 hover:text-foreground text-neutral-500 dark:text-neutral-400 apple-spring active:scale-95 cursor-pointer ${
                   isSpeaking ? "text-primary bg-primary/15 border border-primary/20" : ""
                 }`}
                 title={isSpeaking ? "Stop Reading" : "Read Aloud"}
+                aria-label={isSpeaking ? "Stop Reading" : "Read Aloud"}
               >
                 {isSpeaking ? (
                   <>
@@ -782,19 +787,21 @@ function ChatMessageComponent({
               <>
                 <button
                   onClick={() => onFeedback("up")}
-                  className={`p-1.5 rounded-xl hover:bg-black/[0.06] dark:hover:bg-white/10 hover:text-foreground text-neutral-500 dark:text-neutral-400 apple-spring active:scale-95 ${
+                  className={`p-1.5 rounded-xl hover:bg-black/[0.06] dark:hover:bg-white/10 hover:text-foreground text-neutral-500 dark:text-neutral-400 apple-spring active:scale-95 cursor-pointer ${
                     message.feedback === "up" ? "text-emerald-500 dark:text-emerald-400 bg-emerald-500/15 border border-emerald-500/20" : ""
                   }`}
                   title="Helpful response"
+                  aria-label="Helpful response"
                 >
                   <ThumbsUp className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={() => onFeedback("down")}
-                  className={`p-1.5 rounded-xl hover:bg-black/[0.06] dark:hover:bg-white/10 hover:text-foreground text-neutral-500 dark:text-neutral-400 apple-spring active:scale-95 ${
+                  className={`p-1.5 rounded-xl hover:bg-black/[0.06] dark:hover:bg-white/10 hover:text-foreground text-neutral-500 dark:text-neutral-400 apple-spring active:scale-95 cursor-pointer ${
                     message.feedback === "down" ? "text-rose-500 dark:text-rose-400 bg-rose-500/15 border border-rose-500/20" : ""
                   }`}
                   title="Not helpful"
+                  aria-label="Not helpful response"
                 >
                   <ThumbsDown className="w-3.5 h-3.5" />
                 </button>
@@ -805,8 +812,9 @@ function ChatMessageComponent({
             {!isUser && !isEditing && isLast && onContinue && (
               <button
                 onClick={onContinue}
-                className="p-1.5 rounded-xl hover:bg-black/[0.06] dark:hover:bg-white/10 hover:text-foreground text-amber-500 dark:text-amber-400 apple-spring active:scale-95"
+                className="p-1.5 rounded-xl hover:bg-black/[0.06] dark:hover:bg-white/10 hover:text-foreground text-amber-500 dark:text-amber-400 apple-spring active:scale-95 cursor-pointer"
                 title="Continue Generating"
+                aria-label="Continue Generating"
               >
                 <Sparkles className="w-3.5 h-3.5" />
               </button>
@@ -816,8 +824,9 @@ function ChatMessageComponent({
             {!isUser && !isEditing && isLast && onRegenerate && (
               <button
                 onClick={onRegenerate}
-                className="p-1.5 rounded-xl hover:bg-black/[0.06] dark:hover:bg-white/10 hover:text-foreground text-neutral-500 dark:text-neutral-400 apple-spring active:scale-95"
+                className="p-1.5 rounded-xl hover:bg-black/[0.06] dark:hover:bg-white/10 hover:text-foreground text-neutral-500 dark:text-neutral-400 apple-spring active:scale-95 cursor-pointer"
                 title="Regenerate Response"
+                aria-label="Regenerate Response"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
               </button>

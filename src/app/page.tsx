@@ -1483,8 +1483,17 @@ export default function Home() {
               {/* Grid Suggestions cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 w-full max-w-xl mt-2">
                 <div 
+                  role="button"
+                  tabIndex={0}
                   onClick={(e) => handleSubmit(e, t.suggestDescCoding)}
-                  className="ios-glass-card p-3 sm:p-3.5 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-2px] hover:border-primary/40 transition-all duration-200"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleSubmit(null, t.suggestDescCoding);
+                    }
+                  }}
+                  className="ios-glass-card p-3 sm:p-3.5 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-2px] hover:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary/50 transition-all duration-200 outline-none"
+                  aria-label={`${t.suggestTitleCoding}: ${t.suggestDescCoding}`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
@@ -1503,8 +1512,17 @@ export default function Home() {
                 </div>
 
                 <div 
+                  role="button"
+                  tabIndex={0}
                   onClick={(e) => handleSubmit(e, t.suggestDescMath)}
-                  className="ios-glass-card p-3 sm:p-3.5 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-2px] hover:border-emerald-500/40 transition-all duration-200"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleSubmit(null, t.suggestDescMath);
+                    }
+                  }}
+                  className="ios-glass-card p-3 sm:p-3.5 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-2px] hover:border-emerald-500/40 focus-visible:ring-2 focus-visible:ring-emerald-500/50 transition-all duration-200 outline-none"
+                  aria-label={`${t.suggestTitleMath}: ${t.suggestDescMath}`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
@@ -1523,8 +1541,17 @@ export default function Home() {
                 </div>
 
                 <div 
+                  role="button"
+                  tabIndex={0}
                   onClick={(e) => handleSubmit(e, t.suggestDescCreative)}
-                  className="ios-glass-card p-3 sm:p-3.5 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-2px] hover:border-rose-500/40 transition-all duration-200"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleSubmit(null, t.suggestDescCreative);
+                    }
+                  }}
+                  className="ios-glass-card p-3 sm:p-3.5 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-2px] hover:border-rose-500/40 focus-visible:ring-2 focus-visible:ring-rose-500/50 transition-all duration-200 outline-none"
+                  aria-label={`${t.suggestTitleCreative}: ${t.suggestDescCreative}`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
@@ -1543,8 +1570,17 @@ export default function Home() {
                 </div>
 
                 <div 
+                  role="button"
+                  tabIndex={0}
                   onClick={(e) => handleSubmit(e, t.suggestDescExplain)}
-                  className="ios-glass-card p-3 sm:p-3.5 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-2px] hover:border-indigo-500/40 transition-all duration-200"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleSubmit(null, t.suggestDescExplain);
+                    }
+                  }}
+                  className="ios-glass-card p-3 sm:p-3.5 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-2px] hover:border-indigo-500/40 focus-visible:ring-2 focus-visible:ring-indigo-500/50 transition-all duration-200 outline-none"
+                  aria-label={`${t.suggestTitleExplain}: ${t.suggestDescExplain}`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
@@ -1697,6 +1733,7 @@ export default function Home() {
                     onClick={handleFileClick}
                     className="p-1 sm:p-1.5 rounded-lg text-neutral-500 dark:text-neutral-400 hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] active:scale-95 transition-all duration-150 border-0 outline-none"
                     title={t.uploadFile}
+                    aria-label={t.uploadFile}
                   >
                     <Paperclip className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </button>
@@ -1740,6 +1777,7 @@ export default function Home() {
                         : "text-neutral-500 dark:text-neutral-400 hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] active:scale-95"
                     }`}
                     title={t.voiceInput}
+                    aria-label={isListening ? "Stop voice listening" : t.voiceInput}
                   >
                     {isListening ? (
                       <div className="flex items-center gap-1">
@@ -1756,8 +1794,9 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={handleCancelResponse}
-                      className="flex items-center justify-center w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-full bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:opacity-90 active:scale-95 transition-all duration-150 border-0 outline-none shadow-sm"
+                      className="flex items-center justify-center w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-full bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:opacity-90 active:scale-95 transition-all duration-150 border-0 outline-none shadow-sm cursor-pointer"
                       title="Stop generating"
+                      aria-label="Stop generating response"
                     >
                       <Square className="w-3 h-3 fill-current" />
                     </button>
@@ -1765,9 +1804,10 @@ export default function Home() {
                     <button
                       type="submit"
                       disabled={(!input.trim() && !attachedFile) || loading}
+                      aria-label="Send message"
                       className={`flex items-center justify-center w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-full transition-all duration-150 border-0 outline-none ${
                         input.trim() || attachedFile
-                          ? "bg-primary hover:bg-primary/90 text-white shadow-[0_2px_12px_rgba(99,102,241,0.45),inset_0_1px_0_rgba(255,255,255,0.3)] active:scale-95"
+                          ? "bg-primary hover:bg-primary/90 text-white shadow-[0_2px_12px_rgba(99,102,241,0.45),inset_0_1px_0_rgba(255,255,255,0.3)] active:scale-95 cursor-pointer"
                           : "bg-black/[0.06] dark:bg-white/[0.08] text-neutral-400 dark:text-neutral-500 cursor-not-allowed"
                       }`}
                     >

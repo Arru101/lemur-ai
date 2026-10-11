@@ -266,12 +266,14 @@ export default function Sidebar({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search conversations..."
+                aria-label="Search conversations"
                 className="w-full pl-8 pr-7 py-1.5 text-xs bg-transparent border-0 outline-none ring-0 text-foreground placeholder-neutral-500 dark:placeholder-neutral-400 font-sans"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-2 p-0.5 rounded-full hover:bg-black/[0.06] dark:hover:bg-white/10 text-neutral-500 dark:text-neutral-400 hover:text-foreground"
+                  aria-label="Clear search"
+                  className="absolute right-2 p-0.5 rounded-full hover:bg-black/[0.06] dark:hover:bg-white/10 text-neutral-500 dark:text-neutral-400 hover:text-foreground cursor-pointer"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -384,7 +386,10 @@ export default function Sidebar({
               <button
                 type="button"
                 onClick={() => setLanguageDropupOpen((prev) => !prev)}
-                className={`relative flex items-center justify-center w-10 h-10 rounded-xl apple-spring ${
+                aria-haspopup="listbox"
+                aria-expanded={languageDropupOpen}
+                aria-label={`${t.language}: ${currentLanguageObj.native}`}
+                className={`relative flex items-center justify-center w-10 h-10 rounded-xl apple-spring cursor-pointer ${
                   languageDropupOpen
                     ? "bg-primary/20 text-primary"
                     : "hover:bg-black/[0.06] dark:hover:bg-white/10 text-neutral-600 dark:text-neutral-400 hover:text-foreground"
@@ -414,7 +419,7 @@ export default function Sidebar({
                             onLanguageChange(opt.code);
                             setLanguageDropupOpen(false);
                           }}
-                          className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs apple-spring text-left border-0 ${
+                          className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs apple-spring text-left border-0 cursor-pointer ${
                             isSelected
                               ? "bg-primary/20 text-primary font-semibold"
                               : "hover:bg-black/[0.05] dark:hover:bg-white/[0.08] text-neutral-700 dark:text-neutral-300 hover:text-foreground dark:hover:text-white"
@@ -437,7 +442,8 @@ export default function Sidebar({
             <button
               type="button"
               onClick={onThemeToggle}
-              className="group flex items-center justify-center w-10 h-10 rounded-xl hover:bg-black/[0.06] dark:hover:bg-white/10 text-neutral-600 dark:text-neutral-400 hover:text-foreground apple-spring active:scale-95 border-0 outline-none"
+              aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+              className="group flex items-center justify-center w-10 h-10 rounded-xl hover:bg-black/[0.06] dark:hover:bg-white/10 text-neutral-600 dark:text-neutral-400 hover:text-foreground apple-spring active:scale-95 border-0 outline-none cursor-pointer"
               title={`${t.theme}: ${theme === "dark" ? t.dark : t.light}`}
             >
               {theme === "dark" ? (
@@ -455,6 +461,7 @@ export default function Sidebar({
                   onOpenPdf();
                   onClose();
                 }}
+                aria-label="Open Excel Learning Guide 32-page curriculum"
                 className="group relative flex items-center justify-center w-10 h-10 rounded-xl hover:bg-emerald-500/15 text-neutral-600 dark:text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 apple-spring active:scale-95 border-0 outline-none cursor-pointer"
                 title="Excel Job-Ready Learning Guide (32 Pages) (Alt+P)"
               >
@@ -471,7 +478,10 @@ export default function Sidebar({
                 type="button"
                 onClick={() => setShowExportMenu((prev) => !prev)}
                 disabled={conversations.length === 0}
-                className={`flex items-center justify-center w-10 h-10 rounded-xl apple-spring ${
+                aria-haspopup="menu"
+                aria-expanded={showExportMenu}
+                aria-label={t.exportChat || "Export conversation"}
+                className={`flex items-center justify-center w-10 h-10 rounded-xl apple-spring cursor-pointer ${
                   showExportMenu
                     ? "bg-primary/20 text-primary"
                     : "hover:bg-black/[0.06] dark:hover:bg-white/10 text-neutral-600 dark:text-neutral-400 hover:text-foreground disabled:opacity-25 disabled:pointer-events-none"
@@ -489,21 +499,21 @@ export default function Sidebar({
                   <button
                     type="button"
                     onClick={(e) => handleExportClick(e, "md")}
-                    className="w-full text-left text-xs px-2.5 py-2 rounded-xl hover:bg-black/[0.05] dark:hover:bg-white/10 text-neutral-700 dark:text-neutral-300 hover:text-primary transition-colors border-0 font-sans mt-0.5"
+                    className="w-full text-left text-xs px-2.5 py-2 rounded-xl hover:bg-black/[0.05] dark:hover:bg-white/10 text-neutral-700 dark:text-neutral-300 hover:text-primary transition-colors border-0 font-sans mt-0.5 cursor-pointer"
                   >
                     {t.exportMarkdown}
                   </button>
                   <button
                     type="button"
                     onClick={(e) => handleExportClick(e, "txt")}
-                    className="w-full text-left text-xs px-2.5 py-2 rounded-xl hover:bg-black/[0.05] dark:hover:bg-white/10 text-neutral-700 dark:text-neutral-300 hover:text-primary transition-colors border-0 font-sans"
+                    className="w-full text-left text-xs px-2.5 py-2 rounded-xl hover:bg-black/[0.05] dark:hover:bg-white/10 text-neutral-700 dark:text-neutral-300 hover:text-primary transition-colors border-0 font-sans cursor-pointer"
                   >
                     {t.exportText}
                   </button>
                   <button
                     type="button"
                     onClick={(e) => handleExportClick(e, "pdf")}
-                    className="w-full text-left text-xs px-2.5 py-2 rounded-xl hover:bg-black/[0.05] dark:hover:bg-white/10 text-neutral-700 dark:text-neutral-300 hover:text-primary transition-colors border-0 font-sans"
+                    className="w-full text-left text-xs px-2.5 py-2 rounded-xl hover:bg-black/[0.05] dark:hover:bg-white/10 text-neutral-700 dark:text-neutral-300 hover:text-primary transition-colors border-0 font-sans cursor-pointer"
                   >
                     {t.exportPDF}
                   </button>
@@ -516,7 +526,8 @@ export default function Sidebar({
               type="button"
               onClick={handleClearAll}
               disabled={conversations.length === 0}
-              className="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-rose-500/15 text-neutral-600 dark:text-neutral-400 hover:text-rose-500 dark:hover:text-rose-400 disabled:opacity-25 disabled:pointer-events-none apple-spring active:scale-95 border-0 outline-none"
+              aria-label={t.clearHistory || "Clear all conversation history"}
+              className="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-rose-500/15 text-neutral-600 dark:text-neutral-400 hover:text-rose-500 dark:hover:text-rose-400 disabled:opacity-25 disabled:pointer-events-none apple-spring active:scale-95 border-0 outline-none cursor-pointer"
               title={t.clearHistory}
             >
               <Trash2 className="w-4 h-4 stroke-[1.75]" />
