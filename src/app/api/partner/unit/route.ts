@@ -90,18 +90,10 @@ function buildNativeSocialBarDoc(redirectUrl: string): string {
       border-radius: 4px;
       border: 1px solid rgba(99, 102, 241, 0.3);
     }
-    .sb-title {
-      font-size: 12.5px;
-      font-weight: 600;
-      color: #f8fafc;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      line-height: 1.3;
-    }
     .sb-desc {
-      font-size: 11px;
-      color: #94a3b8;
+      font-size: 12px;
+      font-weight: 500;
+      color: #cbd5e1;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -156,13 +148,12 @@ function buildNativeSocialBarDoc(redirectUrl: string): string {
     </div>
     <div class="sb-content">
       <div class="sb-badge-line">
-        <span class="sb-badge">Featured</span>
-        <span class="sb-desc">Partner Network</span>
+        <span class="sb-badge">Sponsor</span>
+        <span class="sb-desc">Special Recommendation</span>
       </div>
-      <div class="sb-title">High-Speed GPU Compute & AI Cloud</div>
     </div>
     <div class="sb-actions">
-      <a href="${redirectUrl}" target="_blank" rel="noopener noreferrer" class="sb-cta">Explore &rarr;</a>
+      <a href="${redirectUrl}" target="_blank" rel="noopener noreferrer" class="sb-cta">Visit &rarr;</a>
       <button class="sb-close" type="button" aria-label="Dismiss">&times;</button>
     </div>
   </div>
@@ -201,7 +192,7 @@ export async function GET(request: NextRequest) {
     // Attempt upstream creative resolution
     let upstreamDoc: string | null = null;
     let width = 380;
-    let height = 84;
+    let height = 64;
 
     try {
       const sbarRes = await fetch(CPM_SBAR_URL, {
@@ -348,7 +339,7 @@ export async function GET(request: NextRequest) {
         success: true,
         srcdoc: buildNativeSocialBarDoc(REDIRECT_TARGET),
         width: 380,
-        height: 84,
+        height: 64,
       },
       {
         status: 200,

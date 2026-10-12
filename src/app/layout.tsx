@@ -293,7 +293,7 @@ export default function RootLayout({
                       frame.srcdoc = data.srcdoc;
                       frame.setAttribute("scrolling", "no");
                       var isMobile = window.innerWidth < 640;
-                      var frameHeight = (data.height || 84) + "px";
+                      var frameHeight = (data.height || 64) + "px";
                       var posStyles = isMobile
                         ? "top:64px!important;left:12px!important;right:12px!important;width:calc(100vw - 24px)!important;max-width:440px!important;margin:0 auto!important;"
                         : "bottom:24px!important;right:24px!important;width:" + (data.width || 380) + "px!important;max-width:calc(100vw - 32px)!important;";
