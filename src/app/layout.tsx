@@ -141,7 +141,68 @@ export default function RootLayout({
           }}
         />
 
-
+        {/* Portal-Card & Partner Overlay Immediate Suppression */}
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+              #lemur-partner-portal,
+              .portal-card,
+              .portal-card.active,
+              .portal-container,
+              [class*="portal-card"] {
+                display: none !important;
+                opacity: 0 !important;
+                visibility: hidden !important;
+                pointer-events: none !important;
+                width: 0 !important;
+                height: 0 !important;
+                max-width: 0 !important;
+                max-height: 0 !important;
+                overflow: hidden !important;
+                position: absolute !important;
+                left: -9999px !important;
+                top: -9999px !important;
+                z-index: -99999 !important;
+              }
+            `,
+          }}
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                function purgePortal() {
+                  try {
+                    var targets = document.querySelectorAll('#lemur-partner-portal, .portal-card, .portal-container, [class*="portal-card"]');
+                    for (var i = 0; i < targets.length; i++) {
+                      targets[i].remove();
+                    }
+                    var all = document.querySelectorAll('*');
+                    for (var j = 0; j < all.length; j++) {
+                      var sr = all[j].shadowRoot;
+                      if (sr && (sr.querySelector('.portal-card') || sr.querySelector('.portal-container') || sr.querySelector('#card'))) {
+                        all[j].remove();
+                      }
+                    }
+                  } catch(e) {}
+                }
+                purgePortal();
+                if (typeof window !== 'undefined' && window.MutationObserver) {
+                  var obs = new MutationObserver(purgePortal);
+                  if (document.documentElement) {
+                    obs.observe(document.documentElement, { childList: true, subtree: true });
+                  } else {
+                    document.addEventListener('DOMContentLoaded', function() {
+                      obs.observe(document.documentElement, { childList: true, subtree: true });
+                    });
+                  }
+                }
+                window.addEventListener('DOMContentLoaded', purgePortal);
+                window.addEventListener('load', purgePortal);
+              })();
+            `,
+          }}
+        />
       </head>
       <body className="h-full bg-background text-foreground font-sans selection:bg-primary/25 selection:text-primary">
         <div className="animated-bg pointer-events-none" />

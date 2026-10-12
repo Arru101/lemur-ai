@@ -838,3 +838,24 @@ button, a, input, select, textarea, [role="button"] {
     border: 1px solid #e4e4e7 !important;
   }
 }
+
+/* Hard Purge for Portal Card / Partner Overlays */
+#lemur-partner-portal,
+.portal-card,
+.portal-card.active,
+.portal-container,
+[class*="portal-card"] {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  max-width: 0 !important;
+  max-height: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
+  z-index: -99999 !important;
+}

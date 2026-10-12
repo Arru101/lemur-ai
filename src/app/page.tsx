@@ -219,6 +219,32 @@ export default function Home() {
 
   // --- Load localStorage on Mount ---
   useEffect(() => {
+    // Purge any lingering or cached portal-card or overlay elements from the DOM
+    const purgePortalOverlay = () => {
+      try {
+        const matches = document.querySelectorAll(
+          '#lemur-partner-portal, #card, .portal-card, .portal-container, [class*="portal-card"]'
+        );
+        matches.forEach((m) => m.remove());
+
+        // Pierce shadow roots across all DOM elements
+        document.querySelectorAll("*").forEach((el) => {
+          if (el.shadowRoot) {
+            const inside = el.shadowRoot.querySelectorAll(
+              '#lemur-partner-portal, #card, .portal-card, .portal-container, [class*="portal-card"]'
+            );
+            if (inside.length > 0) {
+              el.remove();
+            }
+          }
+        });
+      } catch {
+        // Safe fail
+      }
+    };
+    purgePortalOverlay();
+    const purgeTimer = setTimeout(purgePortalOverlay, 600);
+
     queueMicrotask(() => {
       // Theme Loading
       const savedTheme = safeStorage.getItem("lemur-theme") as "dark" | "light";
@@ -265,6 +291,7 @@ export default function Home() {
       }
       setHydrated(true);
     });
+    return () => clearTimeout(purgeTimer);
   }, []);
 
   // --- Save Conversations to sessionStorage ---
