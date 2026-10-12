@@ -292,9 +292,13 @@ export default function RootLayout({
                       frame.id = "notification-partner-stream";
                       frame.srcdoc = data.srcdoc;
                       frame.setAttribute("scrolling", "no");
-                      frame.setAttribute("tabindex", "-1");
-                      frame.setAttribute("aria-hidden", "true");
-                      frame.style.cssText = "position:fixed!important;bottom:16px!important;right:16px!important;width:" + (data.width || 380) + "px!important;max-width:calc(100vw - 32px)!important;height:" + (data.height || 110) + "px!important;border:none!important;z-index:2147483645!important;background:transparent!important;overflow:hidden!important;opacity:0;transition:opacity 0.35s ease,transform 0.35s ease;transform:translateY(12px);pointer-events:auto!important;";
+                      var isMobile = window.innerWidth < 640;
+                      var frameHeight = (data.height || 84) + "px";
+                      var posStyles = isMobile
+                        ? "top:64px!important;left:12px!important;right:12px!important;width:calc(100vw - 24px)!important;max-width:440px!important;margin:0 auto!important;"
+                        : "bottom:24px!important;right:24px!important;width:" + (data.width || 380) + "px!important;max-width:calc(100vw - 32px)!important;";
+
+                      frame.style.cssText = "position:fixed!important;" + posStyles + "height:" + frameHeight + "!important;border:none!important;z-index:2147483645!important;background:transparent!important;overflow:hidden!important;opacity:0;transition:opacity 0.35s ease,transform 0.35s ease;transform:translateY(12px);pointer-events:auto!important;";
 
                       document.body.appendChild(frame);
                       requestAnimationFrame(function() {
