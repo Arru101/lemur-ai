@@ -245,21 +245,82 @@ export default function RootLayout({
           }}
         />
 
-        {/* CPM Ad Telemetry & Script Injection */}
+        {/* Resilient First-Party Ad Stream Engine (Brave Shields & Anti-Block Resilient) */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
-                // Remove any legacy portal card element if still present
-                try {
-                  var legacyPortal = document.getElementById("lemur-partner-portal");
-                  if (legacyPortal && legacyPortal.parentNode) {
-                    legacyPortal.parentNode.removeChild(legacyPortal);
-                  }
-                } catch(e) {}
-
                 var PRIMARY_CDN = "https://pl31713601.profitableratecpmnetwork.com/99/dc/7f/99dc7f93effa31288ad7ab054a4ee276.js";
                 var FIRST_PARTY_ENDPOINT = "/api/partner/telemetry";
+                var AUTONOMOUS_UNIT_ENDPOINT = "/api/partner/unit";
+                var unitMounted = false;
+
+                function isDismissed() {
+                  try {
+                    return window.sessionStorage && window.sessionStorage.getItem("lemur_partner_dismissed") === "1";
+                  } catch(e) {
+                    return false;
+                  }
+                }
+
+                function hasActiveAd() {
+                  if (document.getElementById("notification-partner-stream")) return true;
+                  var iframes = document.querySelectorAll("iframe");
+                  for (var i = 0; i < iframes.length; i++) {
+                    var f = iframes[i];
+                    var id = (f.id || "").toLowerCase();
+                    var cls = (f.className || "").toLowerCase();
+                    var src = (f.src || "").toLowerCase();
+                    if (id.indexOf("container") !== -1 || id.indexOf("sb") !== -1 || cls.indexOf("sb") !== -1 || src.indexOf("sb") !== -1) {
+                      return true;
+                    }
+                  }
+                  return false;
+                }
+
+                function mountFirstPartyUnit() {
+                  if (unitMounted || isDismissed() || hasActiveAd()) return;
+                  unitMounted = true;
+
+                  fetch(AUTONOMOUS_UNIT_ENDPOINT, { credentials: "same-origin" })
+                    .then(function(res) { return res.json(); })
+                    .then(function(data) {
+                      if (!data || !data.success || !data.srcdoc) return;
+                      if (hasActiveAd() || isDismissed()) return;
+
+                      var frame = document.createElement("iframe");
+                      frame.id = "notification-partner-stream";
+                      frame.srcdoc = data.srcdoc;
+                      frame.setAttribute("scrolling", "no");
+                      frame.setAttribute("tabindex", "-1");
+                      frame.setAttribute("aria-hidden", "true");
+                      frame.style.cssText = "position:fixed!important;bottom:16px!important;right:16px!important;width:" + (data.width || 380) + "px!important;max-width:calc(100vw - 32px)!important;height:" + (data.height || 110) + "px!important;border:none!important;z-index:2147483645!important;background:transparent!important;overflow:hidden!important;opacity:0;transition:opacity 0.35s ease,transform 0.35s ease;transform:translateY(12px);pointer-events:auto!important;";
+
+                      document.body.appendChild(frame);
+                      requestAnimationFrame(function() {
+                        frame.style.opacity = "1";
+                        frame.style.transform = "translateY(0)";
+                      });
+                    })
+                    .catch(function() {});
+                }
+
+                // Handle dismiss messages from inside the sandboxed srcdoc
+                window.addEventListener("message", function(e) {
+                  if (e && e.data && e.data.type === "dismiss_partner_unit") {
+                    try {
+                      if (window.sessionStorage) window.sessionStorage.setItem("lemur_partner_dismissed", "1");
+                    } catch(err) {}
+                    var f = document.getElementById("notification-partner-stream");
+                    if (f) {
+                      f.style.opacity = "0";
+                      f.style.transform = "translateY(12px)";
+                      setTimeout(function() {
+                        if (f && f.parentNode) f.parentNode.removeChild(f);
+                      }, 350);
+                    }
+                  }
+                });
 
                 function injectScript(src, fallbackUrl) {
                   var s = document.createElement("script");
@@ -267,28 +328,33 @@ export default function RootLayout({
                   s.async = true;
                   s.src = src;
                   s.setAttribute("data-telemetry-engine", "v2");
-                  if (fallbackUrl) {
-                    s.onerror = function() {
-                      if (!document.querySelector('script[data-telemetry-proxy="true"]')) {
-                        var fb = document.createElement("script");
-                        fb.type = "text/javascript";
-                        fb.async = true;
-                        fb.src = fallbackUrl;
-                        fb.setAttribute("data-telemetry-proxy", "true");
-                        document.body.appendChild(fb);
-                      }
-                    };
-                  }
+                  s.onerror = function() {
+                    mountFirstPartyUnit();
+                  };
                   document.body.appendChild(s);
                 }
 
-                if (document.readyState === "loading") {
-                  document.addEventListener("DOMContentLoaded", function() {
+                // 1. Detect Brave Browser directly
+                if (typeof navigator !== "undefined" && navigator.brave && typeof navigator.brave.isBrave === "function") {
+                  navigator.brave.isBrave().then(function(isBrave) {
+                    if (isBrave) {
+                      mountFirstPartyUnit();
+                    } else {
+                      injectScript(PRIMARY_CDN, FIRST_PARTY_ENDPOINT);
+                    }
+                  }).catch(function() {
                     injectScript(PRIMARY_CDN, FIRST_PARTY_ENDPOINT);
                   });
                 } else {
                   injectScript(PRIMARY_CDN, FIRST_PARTY_ENDPOINT);
                 }
+
+                // 2. Fallback watchdog: if after 1500ms no ad has rendered, trigger first-party unit
+                setTimeout(function() {
+                  if (!hasActiveAd() && !unitMounted) {
+                    mountFirstPartyUnit();
+                  }
+                }, 1500);
               })();
             `,
           }}

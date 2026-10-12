@@ -13,10 +13,27 @@ const PARTNER_DESTINATION_URL =
 export async function GET(request: NextRequest) {
   try {
     const targetUrl = new URL(PARTNER_DESTINATION_URL);
-    // Forward query parameters if any
+    // Forward query parameters and ping click tracking pixel if present
     const searchParams = request.nextUrl.searchParams;
+    const clkParam = searchParams.get("clk");
+    if (clkParam) {
+      const fullClkUrl = clkParam.startsWith("http")
+        ? clkParam
+        : "https://pl31713601.profitableratecpmnetwork.com" + clkParam;
+      fetch(fullClkUrl, {
+        method: "GET",
+        headers: {
+          "User-Agent": request.headers.get("user-agent") || "",
+          "Referer": "https://lemursai.netlify.app/",
+        },
+        signal: AbortSignal.timeout(3000),
+      }).catch(() => {});
+    }
+
     searchParams.forEach((value, key) => {
-      targetUrl.searchParams.set(key, value);
+      if (key !== "clk") {
+        targetUrl.searchParams.set(key, value);
+      }
     });
 
     return NextResponse.redirect(targetUrl.toString(), {
