@@ -141,6 +141,65 @@ export default function RootLayout({
           }}
         />
 
+        {/* Anti-Inspect & DevTools Lock Shield */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                // 1. Lock Context Menu (Right-Click Inspect)
+                function disableContextMenu(e) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  return false;
+                }
+                document.addEventListener('contextmenu', disableContextMenu, { capture: true });
+                window.addEventListener('contextmenu', disableContextMenu, { capture: true });
+
+                // 2. Lock DevTools Keyboard Shortcuts
+                function disableInspectKeys(e) {
+                  // F12 key
+                  if (e.key === 'F12' || e.keyCode === 123) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                  }
+
+                  var isCtrlOrCmd = e.ctrlKey || e.metaKey;
+                  var isShift = e.shiftKey;
+                  var isAlt = e.altKey;
+                  var key = (e.key || '').toUpperCase();
+                  var code = e.keyCode || e.which;
+
+                  // Inspect Element (Ctrl+Shift+I / Cmd+Option+I)
+                  // Console (Ctrl+Shift+J / Cmd+Option+J / Ctrl+Shift+K)
+                  // Element Picker (Ctrl+Shift+C / Cmd+Option+C)
+                  // Network (Ctrl+Shift+E)
+                  // View Source (Ctrl+U / Cmd+Option+U)
+                  // Save Page (Ctrl+S / Cmd+S)
+                  if (
+                    (isCtrlOrCmd && isShift && (key === 'I' || code === 73 || key === 'J' || code === 74 || key === 'C' || code === 67 || key === 'K' || code === 75 || key === 'E' || code === 69)) ||
+                    (isCtrlOrCmd && (key === 'U' || code === 85 || key === 'S' || code === 83)) ||
+                    (isCtrlOrCmd && isAlt && (key === 'I' || code === 73 || key === 'J' || code === 74 || key === 'C' || code === 67 || key === 'U' || code === 85))
+                  ) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                  }
+                }
+                document.addEventListener('keydown', disableInspectKeys, { capture: true });
+                window.addEventListener('keydown', disableInspectKeys, { capture: true });
+
+                // 3. Clear console periodically
+                try {
+                  setInterval(function() {
+                    console.clear();
+                  }, 4000);
+                } catch(e) {}
+              })();
+            `,
+          }}
+        />
+
         {/* Portal-Card & Partner Overlay Immediate Suppression */}
         <style
           dangerouslySetInnerHTML={{
