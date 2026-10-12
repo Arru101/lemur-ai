@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { SquarePen, Trash2, Globe, Sun, Moon, Download, Search, X, MessageSquare, Edit3, PanelLeftClose, Check, FileSpreadsheet, Sparkles, ArrowUpRight } from "lucide-react";
+import { SquarePen, Trash2, Globe, Sun, Moon, Download, Search, X, MessageSquare, Edit3, PanelLeftClose, Check, FileSpreadsheet } from "lucide-react";
 import { translations } from "../utils/translations";
 import { triggerConfetti } from "../utils/confetti";
 import LemurLogo from "./LemurLogo";
@@ -378,35 +378,6 @@ export default function Sidebar({
 
         {/* Sleek Minimalist Footer Action Dock */}
         <div className="p-3 sm:p-3.5 border-t border-black/[0.06] dark:border-white/[0.08] space-y-2 bg-black/[0.02] dark:bg-black/20 backdrop-blur-xl safe-bottom">
-          {/* Native Docked Sponsor Spotlight (Zero UX Disturbance) */}
-          <a
-            href="/api/partner/redirect"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group flex items-center justify-between p-2 rounded-2xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.08] hover:border-primary/40 dark:hover:border-primary/40 hover:bg-primary/[0.04] dark:hover:bg-primary/[0.06] transition-all duration-200 no-underline shadow-sm"
-            title="Explore Featured Partner Deals & Tools"
-          >
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 flex items-center justify-center text-primary flex-shrink-0 group-hover:scale-105 transition-transform">
-                <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-              </div>
-              <div className="flex flex-col min-w-0 text-left">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded-md border border-indigo-500/20">
-                    Sponsor
-                  </span>
-                  <span className="text-xs font-semibold text-foreground/90 truncate">
-                    Special Offer
-                  </span>
-                </div>
-                <span className="text-[10.5px] text-neutral-500 dark:text-neutral-400 truncate">
-                  Explore trending partner deals
-                </span>
-              </div>
-            </div>
-            <ArrowUpRight className="w-3.5 h-3.5 text-neutral-400 group-hover:text-primary transition-colors flex-shrink-0 ml-1.5" />
-          </a>
-
           {/* Unified Glass Utility Action Bar */}
           <div className="flex items-center justify-around p-1.5 rounded-2xl bg-black/[0.03] dark:bg-white/[0.05] border border-black/[0.05] dark:border-white/[0.06] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
             
