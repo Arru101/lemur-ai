@@ -71,9 +71,8 @@ function ChatMessageComponent({
   const [copiedText, setCopiedText] = useState(false);
   const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null);
 
-  // State for collapsible thought process
-  const [thoughtExpanded, setThoughtExpanded] = useState(false);
-  const [userCollapsedLiveThinking, setUserCollapsedLiveThinking] = useState(false);
+  // State for collapsible thought process (starts open so live thinking is visible without flickering)
+  const [isThoughtOpen, setIsThoughtOpen] = useState(true);
   const thinkingScrollRef = React.useRef<HTMLDivElement>(null);
 
   // Parse <think>...</think> reasoning tags, <related_questions>, and auto-heal unclosed code blocks
@@ -96,14 +95,24 @@ function ChatMessageComponent({
       const openThinkRegex = /<think>([\s\S]*)$/i;
       const openMatch = rawContent.match(openThinkRegex);
       if (openMatch) {
-        thinkPart = openMatch[1].trim();
+        const afterThink = openMatch[1];
         if (isGenerating) {
+          thinkPart = afterThink.trim();
           remainingContent = ""; // Main answer has not started yet
           isThinkingOngoing = true;
         } else {
-          // Stream ended with unclosed <think>: auto-close so message never gets stuck in thinking!
-          isThinkingOngoing = false;
-          remainingContent = "";
+          // Stream ended with unclosed <think>:
+          // Auto-recover so the user never gets an empty response
+          const splitMatch = afterThink.match(/\n\n(?=(?:#|\*\*|[A-Z]|\bHere|\bTherefore|\bIn summary|\bSo\b|\bTo\b|\bThe\b))/);
+          if (splitMatch && splitMatch.index !== undefined) {
+            thinkPart = afterThink.slice(0, splitMatch.index).trim();
+            remainingContent = afterThink.slice(splitMatch.index).trim();
+            isThinkingOngoing = false;
+          } else {
+            thinkPart = null;
+            remainingContent = afterThink.trim();
+            isThinkingOngoing = false;
+          }
         }
       }
     }
@@ -391,19 +400,13 @@ function ChatMessageComponent({
                 <div className="mb-4 rounded-2xl border border-black/[0.08] dark:border-white/10 overflow-hidden bg-black/[0.02] dark:bg-white/[0.03] transition-colors shadow-sm">
                   <button
                     type="button"
-                    onClick={() => {
-                      if (isThinkingActive) {
-                        setUserCollapsedLiveThinking((prev) => !prev);
-                      } else {
-                        setThoughtExpanded((prev) => !prev);
-                      }
-                    }}
+                    onClick={() => setIsThoughtOpen((prev) => !prev)}
                     className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-black/[0.04] dark:hover:bg-white/[0.05] transition-colors cursor-pointer select-none text-xs text-neutral-500 dark:text-neutral-400"
                   >
                     <div className="flex items-center gap-2">
                       <Brain className={`w-3.5 h-3.5 ${isThinkingActive ? "text-cyan-500 dark:text-cyan-400 animate-pulse" : "text-neutral-500 dark:text-neutral-400"}`} />
                       <span className="font-semibold font-sans text-foreground/90">
-                        {isThinkingActive ? (userCollapsedLiveThinking ? "Thinking in real-time (Hidden)" : "Thinking in real-time...") : "Thought process"}
+                        {isThinkingActive ? "Thinking in real-time..." : "Thought process"}
                       </span>
                       {!isThinkingActive && (
                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/[0.04] dark:bg-white/[0.06] text-neutral-600 dark:text-neutral-300 font-mono border border-black/[0.08] dark:border-white/10">
@@ -415,7 +418,7 @@ function ChatMessageComponent({
                       {isThinkingActive && (
                         <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 dark:bg-cyan-400 animate-ping mr-1" />
                       )}
-                      {(isThinkingActive ? !userCollapsedLiveThinking : thoughtExpanded) ? (
+                      {isThoughtOpen ? (
                         <ChevronUp className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
                       ) : (
                         <ChevronDown className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
@@ -423,7 +426,7 @@ function ChatMessageComponent({
                     </div>
                   </button>
 
-                  {(isThinkingActive ? !userCollapsedLiveThinking : thoughtExpanded) && (
+                  {isThoughtOpen && (
                     <div
                       ref={thinkingScrollRef}
                       className="px-4 py-3.5 text-[12px] sm:text-[12.5px] text-neutral-200 dark:text-neutral-300 font-mono whitespace-pre-wrap leading-[1.7] max-h-72 overflow-y-auto scrollbar-thin bg-neutral-900/95 dark:bg-black/40 border-t border-black/[0.08] dark:border-white/10 selection:bg-cyan-500/20"

@@ -152,8 +152,12 @@ const GEMINI_POOL: GeminiPoolEntry[] = [
   { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", isMultimodal: true, cooldownUntil: 0 },
   { id: "gemini-3.5-flash-lite", name: "Gemini 3.5 Flash Lite", isMultimodal: false, cooldownUntil: 0 },
   { id: "gemini-flash-lite-latest", name: "Gemini Flash-Lite Latest", isMultimodal: true, cooldownUntil: 0 },
-  { id: "gemini-3.6-flash", name: "Gemini 3.6 Flash", isMultimodal: true, cooldownUntil: 0 },
+  { id: "gemini-3.8-flash", name: "Gemini 3.8 Flash", isMultimodal: true, cooldownUntil: 0 },
   { id: "gemini-3.7-flash", name: "Gemini 3.7 Flash", isMultimodal: true, cooldownUntil: 0 },
+  { id: "gemini-3.6-flash", name: "Gemini 3.6 Flash", isMultimodal: true, cooldownUntil: 0 },
+  { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash", isMultimodal: true, cooldownUntil: 0 },
+  { id: "gemini-2.5-flash-lite", name: "Gemini 2.5 Flash Lite", isMultimodal: true, cooldownUntil: 0 },
+  { id: "gemini-flash-latest", name: "Gemini Flash Latest", isMultimodal: true, cooldownUntil: 0 },
 ];
 
 let geminiPoolCounter = 0;
@@ -214,6 +218,10 @@ const OPENROUTER_FALLBACK_POOL = [
   { id: "nvidia/nemotron-3-super-120b-a12b:free", name: "Nemotron 3 Super 120B" },
   { id: "nvidia/nemotron-3-ultra-550b-a55b:free", name: "Nemotron 3 Ultra 550B" },
   { id: "dots-studio/dots-3-note-preview:free", name: "Dots 3 Note 512K" },
+  { id: "google/gemma-4-31b-it:free", name: "Gemma 4 31B" },
+  { id: "cohere/north-mini-code:free", name: "Cohere North Mini Code" },
+  { id: "inclusionai/ling-3.1-flash", name: "Ling 3.1 Flash" },
+  { id: "apodex/apodex-1.1-mini:free", name: "Apodex 1.1 Mini" },
 ];
 
 interface SmartRoutingProfile {
@@ -525,12 +533,16 @@ At the very end of your response, you MUST append exactly 3 short, insightful fo
   const stream = new TransformStream();
   const writer = stream.writable.getWriter();
 
+  let writeChain = Promise.resolve();
   const sendEvent = async (payload: StreamEventPayload) => {
-    try {
-      await writer.write(encoder.encode(`data: ${JSON.stringify(payload)}\n\n`));
-    } catch {
-      // Client disconnected
-    }
+    writeChain = writeChain.then(async () => {
+      try {
+        await writer.write(encoder.encode(`data: ${JSON.stringify(payload)}\n\n`));
+      } catch {
+        // Client disconnected or stream closed
+      }
+    });
+    await writeChain;
   };
 
   // Active 3-second heartbeat ping to prevent connection timeout across Netlify, proxies, and cellular data
@@ -714,6 +726,7 @@ At the very end of your response, you MUST append exactly 3 short, insightful fo
     } finally {
       clearInterval(heartbeatTimer);
       try {
+        await writeChain;
         await writer.close();
       } catch {}
     }

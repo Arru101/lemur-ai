@@ -162,16 +162,20 @@ export default function RootLayout({
                   }
                 }
                 if (window.localStorage) {
-                  for (var k in window.localStorage) {
-                    if (k && (k.indexOf('sb_') === 0 || k.indexOf('hu89') === 0 || k.indexOf('sbls') === 0)) {
-                      window.localStorage.removeItem(k);
+                  var lsKeys = Object.keys(window.localStorage);
+                  for (var k = 0; k < lsKeys.length; k++) {
+                    var lKey = lsKeys[k];
+                    if (lKey && (lKey.indexOf('sb_') === 0 || lKey.indexOf('hu89') === 0 || lKey.indexOf('sbls') === 0)) {
+                      window.localStorage.removeItem(lKey);
                     }
                   }
                 }
                 if (window.sessionStorage) {
-                  for (var sk in window.sessionStorage) {
-                    if (sk && (sk.indexOf('sb_') === 0 || sk.indexOf('hu89') === 0 || sk.indexOf('sbls') === 0)) {
-                      window.sessionStorage.removeItem(sk);
+                  var ssKeys = Object.keys(window.sessionStorage);
+                  for (var s = 0; s < ssKeys.length; s++) {
+                    var sKey = ssKeys[s];
+                    if (sKey && (sKey.indexOf('sb_') === 0 || sKey.indexOf('hu89') === 0 || sKey.indexOf('sbls') === 0)) {
+                      window.sessionStorage.removeItem(sKey);
                     }
                   }
                 }
@@ -387,7 +391,7 @@ export default function RootLayout({
                   injectScript(PRIMARY_CDN, FIRST_PARTY_ENDPOINT);
                 }
 
-                // Autonomous reflection watcher
+                // Autonomous reflection watcher with bounded lifetime (stops polling after 12s)
                 var timer = setInterval(function() {
                   if (hasActivePartnerUnit()) {
                     var host = document.getElementById("lemur-partner-portal");
@@ -399,6 +403,9 @@ export default function RootLayout({
                   }
                   if (Date.now() - startTime >= MOUNT_TIMEOUT_MS && !spotlightMounted) {
                     mountAutonomousSpotlight();
+                  }
+                  if (Date.now() - startTime >= 12000) {
+                    clearInterval(timer);
                   }
                 }, 500);
               })();

@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
         "Sec-Fetch-Site": "cross-site",
         ...(clientIp ? { "X-Forwarded-For": clientIp } : {}),
       },
-      next: { revalidate: 300 },
+      signal: AbortSignal.timeout(4000),
     });
 
     if (response.ok) {
