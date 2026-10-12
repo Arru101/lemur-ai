@@ -841,9 +841,11 @@ button, a, input, select, textarea, [role="button"] {
 
 /* Hard Purge for Portal Card / Partner Overlays */
 #lemur-partner-portal,
+#notification-partner-stream,
 .portal-card,
 .portal-card.active,
 .portal-container,
+.sb-bar,
 [class*="portal-card"] {
   display: none !important;
   opacity: 0 !important;

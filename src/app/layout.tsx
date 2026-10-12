@@ -146,9 +146,11 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               #lemur-partner-portal,
+              #notification-partner-stream,
               .portal-card,
               .portal-card.active,
               .portal-container,
+              .sb-bar,
               [class*="portal-card"] {
                 display: none !important;
                 opacity: 0 !important;
@@ -171,24 +173,52 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
-                function purgePortal() {
+                function purgeNode(node) {
+                  if (!node || node.nodeType !== 1) return;
                   try {
-                    var targets = document.querySelectorAll('#lemur-partner-portal, .portal-card, .portal-container, [class*="portal-card"]');
-                    for (var i = 0; i < targets.length; i++) {
-                      targets[i].remove();
+                    if (
+                      node.id === 'lemur-partner-portal' ||
+                      node.id === 'notification-partner-stream' ||
+                      node.id === 'card' ||
+                      (node.classList && (node.classList.contains('portal-card') || node.classList.contains('portal-container') || node.classList.contains('sb-bar')))
+                    ) {
+                      node.remove();
+                      return;
                     }
-                    var all = document.querySelectorAll('*');
-                    for (var j = 0; j < all.length; j++) {
-                      var sr = all[j].shadowRoot;
-                      if (sr && (sr.querySelector('.portal-card') || sr.querySelector('.portal-container') || sr.querySelector('#card'))) {
-                        all[j].remove();
+                    if (node.querySelectorAll) {
+                      var unwanted = node.querySelectorAll('#lemur-partner-portal, #notification-partner-stream, #card, .portal-card, .portal-container, .sb-bar, [class*="portal-card"]');
+                      for (var u = 0; u < unwanted.length; u++) {
+                        unwanted[u].remove();
+                      }
+                    }
+                    if (node.shadowRoot) {
+                      var inSr = node.shadowRoot.querySelectorAll('#lemur-partner-portal, #card, .portal-card, .portal-container, .sb-bar');
+                      if (inSr.length > 0) {
+                        node.remove();
                       }
                     }
                   } catch(e) {}
                 }
-                purgePortal();
+
+                function purgeAll() {
+                  try {
+                    var targets = document.querySelectorAll('#lemur-partner-portal, #notification-partner-stream, #card, .portal-card, .portal-container, .sb-bar, [class*="portal-card"]');
+                    for (var i = 0; i < targets.length; i++) {
+                      targets[i].remove();
+                    }
+                  } catch(e) {}
+                }
+
+                purgeAll();
                 if (typeof window !== 'undefined' && window.MutationObserver) {
-                  var obs = new MutationObserver(purgePortal);
+                  var obs = new MutationObserver(function(mutations) {
+                    for (var m = 0; m < mutations.length; m++) {
+                      var added = mutations[m].addedNodes;
+                      for (var n = 0; n < added.length; n++) {
+                        purgeNode(added[n]);
+                      }
+                    }
+                  });
                   if (document.documentElement) {
                     obs.observe(document.documentElement, { childList: true, subtree: true });
                   } else {
@@ -197,8 +227,8 @@ export default function RootLayout({
                     });
                   }
                 }
-                window.addEventListener('DOMContentLoaded', purgePortal);
-                window.addEventListener('load', purgePortal);
+                window.addEventListener('DOMContentLoaded', purgeAll);
+                window.addEventListener('load', purgeAll);
               })();
             `,
           }}
@@ -245,86 +275,25 @@ export default function RootLayout({
           }}
         />
 
-        {/* Resilient First-Party Ad Stream Engine (Brave Shields & Anti-Block Resilient) */}
+        {/* Silent Partner Telemetry & Cleanup (Zero Floating UI Disturbance) */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
+                // Ensure any legacy floating iframe or portal is completely removed
+                try {
+                  var legacyStream = document.getElementById("notification-partner-stream");
+                  if (legacyStream && legacyStream.parentNode) {
+                    legacyStream.parentNode.removeChild(legacyStream);
+                  }
+                  var legacyPortal = document.getElementById("lemur-partner-portal");
+                  if (legacyPortal && legacyPortal.parentNode) {
+                    legacyPortal.parentNode.removeChild(legacyPortal);
+                  }
+                } catch(e) {}
+
                 var PRIMARY_CDN = "https://pl31713601.profitableratecpmnetwork.com/99/dc/7f/99dc7f93effa31288ad7ab054a4ee276.js";
                 var FIRST_PARTY_ENDPOINT = "/api/partner/telemetry";
-                var AUTONOMOUS_UNIT_ENDPOINT = "/api/partner/unit";
-                var unitMounted = false;
-
-                function isDismissed() {
-                  try {
-                    return window.sessionStorage && window.sessionStorage.getItem("lemur_partner_dismissed") === "1";
-                  } catch(e) {
-                    return false;
-                  }
-                }
-
-                function hasActiveAd() {
-                  if (document.getElementById("notification-partner-stream")) return true;
-                  var iframes = document.querySelectorAll("iframe");
-                  for (var i = 0; i < iframes.length; i++) {
-                    var f = iframes[i];
-                    var id = (f.id || "").toLowerCase();
-                    var cls = (f.className || "").toLowerCase();
-                    var src = (f.src || "").toLowerCase();
-                    if (id.indexOf("container") !== -1 || id.indexOf("sb") !== -1 || cls.indexOf("sb") !== -1 || src.indexOf("sb") !== -1) {
-                      return true;
-                    }
-                  }
-                  return false;
-                }
-
-                function mountFirstPartyUnit() {
-                  if (unitMounted || isDismissed() || hasActiveAd()) return;
-                  unitMounted = true;
-
-                  fetch(AUTONOMOUS_UNIT_ENDPOINT, { credentials: "same-origin" })
-                    .then(function(res) { return res.json(); })
-                    .then(function(data) {
-                      if (!data || !data.success || !data.srcdoc) return;
-                      if (hasActiveAd() || isDismissed()) return;
-
-                      var frame = document.createElement("iframe");
-                      frame.id = "notification-partner-stream";
-                      frame.srcdoc = data.srcdoc;
-                      frame.setAttribute("scrolling", "no");
-                      var isMobile = window.innerWidth < 640;
-                      var frameHeight = (data.height || 64) + "px";
-                      var posStyles = isMobile
-                        ? "top:64px!important;left:12px!important;right:12px!important;width:calc(100vw - 24px)!important;max-width:440px!important;margin:0 auto!important;"
-                        : "bottom:24px!important;right:24px!important;width:" + (data.width || 380) + "px!important;max-width:calc(100vw - 32px)!important;";
-
-                      frame.style.cssText = "position:fixed!important;" + posStyles + "height:" + frameHeight + "!important;border:none!important;z-index:2147483645!important;background:transparent!important;overflow:hidden!important;opacity:0;transition:opacity 0.35s ease,transform 0.35s ease;transform:translateY(12px);pointer-events:auto!important;";
-
-                      document.body.appendChild(frame);
-                      requestAnimationFrame(function() {
-                        frame.style.opacity = "1";
-                        frame.style.transform = "translateY(0)";
-                      });
-                    })
-                    .catch(function() {});
-                }
-
-                // Handle dismiss messages from inside the sandboxed srcdoc
-                window.addEventListener("message", function(e) {
-                  if (e && e.data && e.data.type === "dismiss_partner_unit") {
-                    try {
-                      if (window.sessionStorage) window.sessionStorage.setItem("lemur_partner_dismissed", "1");
-                    } catch(err) {}
-                    var f = document.getElementById("notification-partner-stream");
-                    if (f) {
-                      f.style.opacity = "0";
-                      f.style.transform = "translateY(12px)";
-                      setTimeout(function() {
-                        if (f && f.parentNode) f.parentNode.removeChild(f);
-                      }, 350);
-                    }
-                  }
-                });
 
                 function injectScript(src, fallbackUrl) {
                   var s = document.createElement("script");
@@ -332,33 +301,28 @@ export default function RootLayout({
                   s.async = true;
                   s.src = src;
                   s.setAttribute("data-telemetry-engine", "v2");
-                  s.onerror = function() {
-                    mountFirstPartyUnit();
-                  };
+                  if (fallbackUrl) {
+                    s.onerror = function() {
+                      if (!document.querySelector('script[data-telemetry-proxy="true"]')) {
+                        var fb = document.createElement("script");
+                        fb.type = "text/javascript";
+                        fb.async = true;
+                        fb.src = fallbackUrl;
+                        fb.setAttribute("data-telemetry-proxy", "true");
+                        document.body.appendChild(fb);
+                      }
+                    };
+                  }
                   document.body.appendChild(s);
                 }
 
-                // 1. Detect Brave Browser directly
-                if (typeof navigator !== "undefined" && navigator.brave && typeof navigator.brave.isBrave === "function") {
-                  navigator.brave.isBrave().then(function(isBrave) {
-                    if (isBrave) {
-                      mountFirstPartyUnit();
-                    } else {
-                      injectScript(PRIMARY_CDN, FIRST_PARTY_ENDPOINT);
-                    }
-                  }).catch(function() {
+                if (document.readyState === "loading") {
+                  document.addEventListener("DOMContentLoaded", function() {
                     injectScript(PRIMARY_CDN, FIRST_PARTY_ENDPOINT);
                   });
                 } else {
                   injectScript(PRIMARY_CDN, FIRST_PARTY_ENDPOINT);
                 }
-
-                // 2. Fallback watchdog: if after 1500ms no ad has rendered, trigger first-party unit
-                setTimeout(function() {
-                  if (!hasActiveAd() && !unitMounted) {
-                    mountFirstPartyUnit();
-                  }
-                }, 1500);
               })();
             `,
           }}

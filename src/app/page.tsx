@@ -1624,6 +1624,31 @@ export default function Home() {
                     {t.suggestDescExplain}
                   </p>
                 </div>
+
+                {/* Native Sponsor / Partner Recommendation Tile */}
+                <a
+                  href="/api/partner/redirect"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="sm:col-span-2 ios-glass-card p-2.5 sm:p-3 rounded-2xl cursor-pointer text-left apple-spring group active:scale-[0.99] hover:translate-y-[-1px] hover:border-primary/40 transition-all duration-200 outline-none flex items-center justify-between no-underline"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="p-1.5 rounded-xl bg-primary/15 text-primary border border-primary/20 shadow-sm flex-shrink-0 group-hover:scale-105 transition-transform duration-200">
+                      <Sparkles className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">
+                          Partner
+                        </span>
+                        <span className="text-xs font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-primary transition-colors font-sans truncate">
+                          Explore Featured Developer Deals & Cloud Tools
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <ArrowUpRight className="w-3.5 h-3.5 text-neutral-400 group-hover:text-primary transition-colors flex-shrink-0 ml-2" />
+                </a>
               </div>
             </div>
           ) : (
